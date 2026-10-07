@@ -70,7 +70,7 @@ class TireContracts(unittest.TestCase):
         self.assertEqual(sorted({c[0] for c in loaded}), [0, 1])  # no hub, no missing wheel
         thermal = {c[0]: c[2] for c in loaded if c[1] == "thermal"}
         curve = {c[0]: c[2] for c in loaded if c[1] == "curve"}
-        self.assertEqual(thermal[0][6], 0.05)           # friction heat on
+        self.assertEqual(thermal[0][6], 0.06)           # friction heat on
         self.assertGreater(thermal[0][0], 0)            # environment cooling on
         self.assertEqual(thermal[1][9:11], [500, 600])  # wheel keeps its own smoke/melt temps
         # Flat curve: native thresholds out of reach, all three coefficients the ramp value.

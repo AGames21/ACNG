@@ -11,13 +11,16 @@ local PSI_PA = 6894.757
 local ATM_PA = 101325
 local SEND_INTERVAL_S = 0.1
 
--- Heat (T002 sweep and T004 skidpad, etkc kc6). Friction heat is linear in its
--- coefficient. At 0.1 a front tire held at the limit (0.95 g circle) passed 240 C with
--- its core over 110 C (+13 psi); 0.05 is aimed at about 130 C there, with launches and
--- brisk driving warming tires into the window. Environment 0.04 cools a parked tire
--- in about half a minute; core coupling 0.01 lets the carcass lag behind.
-M.HEAT = {nodeToEnv=0.04, envMultStationary=0.4, envTerminalSpeed=20, nodeToCore=0.01,
-  coreToNodes=0.01, nodeToSurface=0, friction=0.05, flashFriction=0, strain=0,
+-- Heat (T002 sweep, T004 skidpad, T007 lap cycles; etkc kc6). Friction heat is linear in
+-- its coefficient. T007 drove 20 s limit corners and 15 s straights at about 31 m/s: the
+-- old set (friction 0.05, environment 0.04 full at 20 m/s, core coupling 0.01) kept
+-- soaking heat into the core, so every lap started hotter and a parked tire stayed hot.
+-- Now air cooling is stronger and keeps rising with speed up to 40 m/s (x0.3 parked),
+-- so the surface heats in a corner and comes back down on a straight, and the core is
+-- coupled half as hard, so it follows the lap average slowly and settles instead of
+-- holding the surface up. Friction 0.06 keeps the warm-up into the window about the same.
+M.HEAT = {nodeToEnv=0.10, envMultStationary=0.3, envTerminalSpeed=40, nodeToCore=0.005,
+  coreToNodes=0.005, nodeToSurface=0, friction=0.06, flashFriction=0, strain=0,
   heatAffectsPressure=true}
 
 -- Grip window. Full grip from WINDOW_LOW_C to WINDOW_HIGH_C; below it grip ramps down

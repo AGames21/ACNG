@@ -34,10 +34,10 @@ From GE Lua: `extensions.acng_core.setEnabled(true); extensions.acng_core.setFea
 
   | Setting | Value |
   |---|---|
-  | friction heat | 0.05 |
-  | node to env | 0.04 (x0.4 when stationary, full at 20 m/s) |
-  | node to core | 0.01 |
-  | core to nodes | 0.01 |
+  | friction heat | 0.06 |
+  | node to env | 0.10 (x0.3 when stationary, full at 40 m/s) |
+  | node to core | 0.005 |
+  | core to nodes | 0.005 |
   | strain, flash and surface heat | 0 |
   | heat affects pressure | yes |
 
@@ -87,3 +87,6 @@ From GE Lua: `extensions.acng_core.setEnabled(true); extensions.acng_core.setFea
 - Worn tread only changes grip. It does not change pressure, heat, rolling resistance or puncture risk, and tread is not kept between sessions.
 - There are no compounds, blankets or per-car windows.
 - A physical mouse click on the app buttons is unverified. The harnesses sent the buttons' exact commands.
+
+## Heat balance (T007)
+The first heat set (friction 0.05, air cooling 0.04 full at 20 m/s, core coupling 0.01) kept soaking heat into the tire core on lap-like driving, so tires started every lap hotter and stayed hot when parked. The current set cools harder with speed and couples the core half as hard: in T007b the hot tire's corner peaks settled at 103-105 C, the straights brought it back to about 41 C every lap, and the core rose to 71 C instead of 91 C. Details in `docs/test-results/T007-tire-heat-balance.md`.

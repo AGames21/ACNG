@@ -1,0 +1,261 @@
+{
+ "schema_version": 1,
+ "test": "T007b tire heat balance, old against new",
+ "cycle": {
+  "brake_to_m_s": 12,
+  "corner_s": 20,
+  "corner_speed_m_s": 10,
+  "corner_steer": 0.5,
+  "cycles": 12,
+  "park_s": 30,
+  "straight_s": 15,
+  "straight_speed_m_s": 38
+ },
+ "checks": {
+  "core_reports_tires_off": true,
+  "core_reports_tires_on": true,
+  "default_master_off": true,
+  "default_tires_off": true
+ },
+ "completed": true,
+ "summary": [
+  {
+   "name": "A_old",
+   "heat": {
+    "coreToNodes": 0.01,
+    "envMultStationary": 0.4,
+    "envTerminalSpeed": 20,
+    "friction": 0.05,
+    "nodeToCore": 0.01,
+    "nodeToEnv": 0.04,
+    "nodeToSurface": 0
+   },
+   "applied_friction": 0.05,
+   "hot_tire": "FL",
+   "cycles": [
+    {
+     "cycle": 1,
+     "corner_peak_c": 72.1,
+     "core_end_c": 26.3,
+     "straight_start_c": 74.6,
+     "straight_end_c": 47.0,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 2,
+     "corner_peak_c": 95.8,
+     "core_end_c": 42.1,
+     "straight_start_c": 97.2,
+     "straight_end_c": 58.9,
+     "straight_mean_speed_m_s": 31.3
+    },
+    {
+     "cycle": 3,
+     "corner_peak_c": 98.9,
+     "core_end_c": 54.6,
+     "straight_start_c": 100.2,
+     "straight_end_c": 61.9,
+     "straight_mean_speed_m_s": 31.2
+    },
+    {
+     "cycle": 4,
+     "corner_peak_c": 102.8,
+     "core_end_c": 64.3,
+     "straight_start_c": 104.3,
+     "straight_end_c": 67.1,
+     "straight_mean_speed_m_s": 31.4
+    },
+    {
+     "cycle": 5,
+     "corner_peak_c": 104.3,
+     "core_end_c": 71.4,
+     "straight_start_c": 104.9,
+     "straight_end_c": 65.6,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 6,
+     "corner_peak_c": 112.1,
+     "core_end_c": 78.8,
+     "straight_start_c": 116.1,
+     "straight_end_c": 72.2,
+     "straight_mean_speed_m_s": 31.6
+    },
+    {
+     "cycle": 7,
+     "corner_peak_c": 107.4,
+     "core_end_c": 82.5,
+     "straight_start_c": 109.6,
+     "straight_end_c": 69.6,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 8,
+     "corner_peak_c": 109.4,
+     "core_end_c": 85.2,
+     "straight_start_c": 109.6,
+     "straight_end_c": 69.4,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 9,
+     "corner_peak_c": 107.7,
+     "core_end_c": 86.8,
+     "straight_start_c": 108.1,
+     "straight_end_c": 69.0,
+     "straight_mean_speed_m_s": 31.8
+    },
+    {
+     "cycle": 10,
+     "corner_peak_c": 108.0,
+     "core_end_c": 88.0,
+     "straight_start_c": 110.3,
+     "straight_end_c": 70.4,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 11,
+     "corner_peak_c": 110.1,
+     "core_end_c": 89.1,
+     "straight_start_c": 109.2,
+     "straight_end_c": 71.6,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 12,
+     "corner_peak_c": 108.7,
+     "core_end_c": 90.5
+    }
+   ],
+   "peak_c": 116.1,
+   "last_two_cycles_mean_hot_c": 93.8,
+   "last_two_cycles_mean_all_c": 62.2,
+   "peak_climb_last_cycle_k": -1.4,
+   "straight_drop_mean_k": 39.4,
+   "core_end_c": 90.5,
+   "psi_rise_hot": 10.3,
+   "park_start_c": 108.7,
+   "park_end_c": 81.6,
+   "park_core_end_c": 92.9
+  },
+  {
+   "name": "F_new",
+   "heat": {
+    "coreToNodes": 0.005,
+    "envMultStationary": 0.3,
+    "envTerminalSpeed": 40,
+    "friction": 0.06,
+    "nodeToCore": 0.005,
+    "nodeToEnv": 0.1,
+    "nodeToSurface": 0
+   },
+   "applied_friction": 0.06,
+   "hot_tire": "FL",
+   "cycles": [
+    {
+     "cycle": 1,
+     "corner_peak_c": 72.5,
+     "core_end_c": 20.3,
+     "straight_start_c": 74.9,
+     "straight_end_c": 32.7,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 2,
+     "corner_peak_c": 88.9,
+     "core_end_c": 28.1,
+     "straight_start_c": 90.5,
+     "straight_end_c": 36.8,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 3,
+     "corner_peak_c": 89.5,
+     "core_end_c": 35.1,
+     "straight_start_c": 90.6,
+     "straight_end_c": 37.9,
+     "straight_mean_speed_m_s": 30.3
+    },
+    {
+     "cycle": 4,
+     "corner_peak_c": 103.5,
+     "core_end_c": 42.4,
+     "straight_start_c": 97.5,
+     "straight_end_c": 38.5,
+     "straight_mean_speed_m_s": 32.5
+    },
+    {
+     "cycle": 5,
+     "corner_peak_c": 102.5,
+     "core_end_c": 48.4,
+     "straight_start_c": 102.9,
+     "straight_end_c": 40.4,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 6,
+     "corner_peak_c": 104.6,
+     "core_end_c": 54.0,
+     "straight_start_c": 107.0,
+     "straight_end_c": 42.2,
+     "straight_mean_speed_m_s": 31.4
+    },
+    {
+     "cycle": 7,
+     "corner_peak_c": 103.8,
+     "core_end_c": 58.2,
+     "straight_start_c": 102.1,
+     "straight_end_c": 42.6,
+     "straight_mean_speed_m_s": 32.4
+    },
+    {
+     "cycle": 8,
+     "corner_peak_c": 103.4,
+     "core_end_c": 61.7,
+     "straight_start_c": 103.7,
+     "straight_end_c": 41.2,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 9,
+     "corner_peak_c": 103.0,
+     "core_end_c": 64.6,
+     "straight_start_c": 105.3,
+     "straight_end_c": 42.2,
+     "straight_mean_speed_m_s": 31.4
+    },
+    {
+     "cycle": 10,
+     "corner_peak_c": 103.9,
+     "core_end_c": 67.0,
+     "straight_start_c": 102.7,
+     "straight_end_c": 40.8,
+     "straight_mean_speed_m_s": 32.5
+    },
+    {
+     "cycle": 11,
+     "corner_peak_c": 104.5,
+     "core_end_c": 69.2,
+     "straight_start_c": 105.3,
+     "straight_end_c": 42.0,
+     "straight_mean_speed_m_s": 31.9
+    },
+    {
+     "cycle": 12,
+     "corner_peak_c": 104.6,
+     "core_end_c": 71.3
+    }
+   ],
+   "peak_c": 107.0,
+   "last_two_cycles_mean_hot_c": 84.5,
+   "last_two_cycles_mean_all_c": 56.2,
+   "peak_climb_last_cycle_k": 0.1,
+   "straight_drop_mean_k": 60.3,
+   "core_end_c": 71.3,
+   "psi_rise_hot": 7.8,
+   "park_start_c": 104.6,
+   "park_end_c": 57.3,
+   "park_core_end_c": 73.2
+  }
+ ]
+}
