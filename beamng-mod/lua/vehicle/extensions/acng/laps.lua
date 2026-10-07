@@ -189,10 +189,14 @@ local function archive()
   obj:queueGameEngineLua(string.format("if extensions.isExtensionLoaded('acng_lapRecords') then extensions.acng_lapRecords.save(%d,%q,%q) end",obj:getID(),archiveToken,jsonEncode(record)))
   lastArchivedLap=state.laps
 end
+local function currentSnapshot()
+  local data=snapshot(state)
+  data.archive_status=archiveStatus
+  return data
+end
 local function send()
   sinceSend = 0
-  local data=snapshot(state);data.archive_status=archiveStatus
-  guihooks.trigger('ACNGLaps', data)
+  guihooks.trigger('ACNGLaps', currentSnapshot())
 end
 local function updateGFX(dt)
   local p = obj:getPosition()
@@ -262,7 +266,7 @@ M.updateGFX = updateGFX
 M.setLineHere = setLineHere
 M.onReset = onReset
 M.clear = clear
-M.getSnapshot = function() return snapshot(state) end
+M.getSnapshot = currentSnapshot
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = onExtensionUnloaded
 return M

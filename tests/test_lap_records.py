@@ -86,6 +86,35 @@ class SavedLapContracts(unittest.TestCase):
         self.record.best.time_s=float('nan');self.assertFalse(self.store.validate(self.record))
         self.record.best.time_s=10;self.record.line.ny=2;self.assertFalse(self.store.validate(self.record))
 
+    def test_corrupt_line_only_sectors_and_sparse_trace_are_rejected(self):
+        g=self.boot()
+        malformed=self.lua.eval('{line={x=0,y=0,nx=0,ny=1},best_sectors="bad"}')
+        self.assertFalse(self.store.validate(malformed))
+        malformed.best_sectors=self.lua.table_from({1:3,3:4})
+        self.assertFalse(self.store.validate(malformed))
+        malformed.best_sectors=self.lua.table();malformed.best=False
+        self.assertFalse(self.store.validate(malformed))
+        self.record.best_trace.d.extra=12
+        self.assertFalse(self.store.validate(self.record))
+
+    def test_native_harness_refuses_primary_profile_and_existing_archive(self):
+        g=self.boot()
+        self.lua.execute("""
+          started=false; core_modmanager={isReady=function() return true end}
+          freeroam_freeroam={startFreeroam=function() started=true end}
+          FS.getUserPath=function() return 'C:/BeamNG/normal/current/' end
+        """)
+        source=(ROOT/'tests/beamng-laprecords/lua/ge/extensions/acng/laparchive.lua').read_text(encoding='utf-8')
+        harness=self.lua.execute(source);harness.onUpdate(11,11)
+        self.assertFalse(g.started)
+        result=json.loads(self.files['/acng-lap-records-test.json'])
+        self.assertFalse(result['completed']);self.assertIn('Dedicated',result['failure'])
+        self.lua.execute("FS.getUserPath=function() return 'C:/ACNG-laprecords-test/current/' end")
+        self.files['/settings/acng/lap-records.json']='existing'
+        harness=self.lua.execute(source);harness.onUpdate(11,11)
+        self.assertFalse(g.started)
+        self.assertIn('Fresh',json.loads(self.files['/acng-lap-records-test.json'])['failure'])
+
     def test_completed_lap_is_saved_automatically(self):
         g=self.boot()
         self.lua.execute("""
@@ -123,6 +152,7 @@ class SavedLapContracts(unittest.TestCase):
         laps.onExtensionLoaded()
         self.assertEqual(laps.getSnapshot().mode,'out_lap')
         self.assertEqual(laps.getSnapshot().best.time_s,10)
+        self.assertEqual(laps.getSnapshot().archive_status,'loaded')
         self.assertEqual(laps.getSnapshot().laps,0)
         self.assertIsNone(laps.getSnapshot().last)
         self.assertFalse(laps.receiveArchive('stale','null','saved'))

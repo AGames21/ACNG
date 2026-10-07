@@ -34,3 +34,5 @@ Added `tire_wear`, the second physics feature, OFF by default and separate from 
 - Separate GE archive and lap-timer bridge retain the line and completed best reference per map/car configuration. No force/control writes.
 - Bounded history, previous-file recovery, failed-write/readback reporting and stale-request rejection. CLEAR/SET LINE update the saved reference.
 - 13 LuaJIT lap/archive tests and Node lap-app checks passed; in-game verification pending. Preserved Claude's unfinished assists changes; no game/UI interaction.
+
+2026-10-07, saved-lap follow-up: reject malformed sector/trace arrays; expose archive status in snapshots. Added LR001 automated native round-trip harness, primary/existing-profile refusal checks and a committed-only isolated-profile preparer. 15 offline LuaJIT tests plus Node lap-app checks pass. Runtime test remains unrun.

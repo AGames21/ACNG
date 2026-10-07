@@ -3,17 +3,27 @@ local M = {}
 local PATH = '/settings/acng/lap-records.json'
 local db, readOnly, bindings = nil, false, {}
 local function finite(x) return type(x)=='number' and x==x and math.abs(x)<math.huge end
+local function sequence(t,limit)
+  if type(t)~='table' or #t>limit then return false end
+  local count=0
+  for k in pairs(t) do
+    if type(k)~='number' or k%1~=0 or k<1 or k>#t then return false end
+    count=count+1
+  end
+  return count==#t
+end
 local function valid(r)
   if type(r)~='table' or type(r.line)~='table' then return false end
   local l=r.line
   for _,k in ipairs({'x','y','nx','ny'}) do if not finite(l[k]) then return false end end
   if math.abs(l.nx*l.nx+l.ny*l.ny-1)>0.001 then return false end
-  if not r.best then return r.best_trace==nil and r.ref_length_m==nil end
+  if not sequence(r.best_sectors,3) then return false end
+  if r.best==nil then return r.best_trace==nil and r.ref_length_m==nil and #r.best_sectors==0 end
   local b,t=r.best,r.best_trace
   if type(b)~='table' or not finite(b.time_s) or b.time_s<5 or b.time_s>86400
     or not finite(b.distance_m) or b.distance_m<50 or b.distance_m>20000
     or not finite(r.ref_length_m) or r.ref_length_m<50 or r.ref_length_m>20000 then return false end
-  if type(t)~='table' or type(t.d)~='table' or type(t.t)~='table'
+  if type(t)~='table' or not sequence(t.d,10000) or not sequence(t.t,10000)
     or #t.d<2 or #t.d>10000 or #t.d~=#t.t or t.d[1]~=0 or t.t[1]~=0 then return false end
   for i=1,#t.d do
     if not finite(t.d[i]) or not finite(t.t[i]) then return false end
