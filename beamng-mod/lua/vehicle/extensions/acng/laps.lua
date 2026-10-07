@@ -179,19 +179,35 @@ end
 -- Vehicle extension wiring.
 local state = newState()
 local sinceSend = 0
+local archiveToken = tostring({})
+local archiveStatus, archiveWaiting = 'unavailable', false
+local lastArchivedLap=0
+local function archive()
+  if archiveWaiting or not state.line or not obj.queueGameEngineLua then return end
+  local record={line=state.line,best=state.best,best_trace=state.best_trace,
+    ref_length_m=state.ref_length_m,best_sectors=state.best_sectors}
+  obj:queueGameEngineLua(string.format("if extensions.isExtensionLoaded('acng_lapRecords') then extensions.acng_lapRecords.save(%d,%q,%q) end",obj:getID(),archiveToken,jsonEncode(record)))
+  lastArchivedLap=state.laps
+end
 local function send()
   sinceSend = 0
-  guihooks.trigger('ACNGLaps', snapshot(state))
+  local data=snapshot(state);data.archive_status=archiveStatus
+  guihooks.trigger('ACNGLaps', data)
 end
 local function updateGFX(dt)
   local p = obj:getPosition()
-  if step(state, dt, p and p.x, p and p.y, p and p.z) then return send() end
+  if step(state, dt, p and p.x, p and p.y, p and p.z) then
+    if state.laps>lastArchivedLap then archive() end
+    return send()
+  end
   sinceSend = sinceSend + (number(dt) or 0)
   if sinceSend >= SEND_INTERVAL_S then send() end
 end
 local function setLineHere()
   local p, d = obj:getPosition(), obj:getDirectionVector()
   if not (p and d and setLine(state, p.x, p.y, d.x, d.y)) then return false end
+  archiveWaiting=false -- explicit SET LINE takes precedence over a late load reply
+  archive()
   -- The car is on the line now; its next forward crossing starts the first lap.
   state.pos = {x=p.x, y=p.y, z=p.z}
   send()
@@ -204,16 +220,39 @@ local function onReset()
   send()
 end
 local function clear()
+  archiveWaiting=false
   clearLaps(state)
+  archive()
   send()
 end
 local function onExtensionLoaded()
   log('I', 'ACNG', 'LAP_TIMER_LOADED physics_writes=0')
+  if obj.queueGameEngineLua then
+    archiveWaiting=true;archiveStatus='loading'
+    obj:queueGameEngineLua(string.format("extensions.load('acng_lapRecords'); extensions.acng_lapRecords.request(%d,%q)",obj:getID(),archiveToken))
+  end
 end
 local function onExtensionUnloaded()
   guihooks.trigger('ACNGLaps', {schema_version=1, mode='off'})
 end
 
+local function receiveArchive(token,text,status)
+  if token~=archiveToken then return false end
+  archiveStatus=status
+  if archiveWaiting then
+    archiveWaiting=false
+    local ok,r=pcall(jsonDecode,text)
+    if ok and type(r)=='table' and type(r.line)=='table' and setLine(state,r.line.x,r.line.y,r.line.nx,r.line.ny) then
+      state.best,state.best_trace,state.ref_length_m=r.best,r.best_trace,r.ref_length_m
+      state.best_sectors=r.best_sectors or {}
+      lastArchivedLap=state.laps
+      state.pos,state.lap=nil,nil
+    end
+  end
+  send()
+  return true
+end
+M.receiveArchive=receiveArchive
 M.newState = newState
 M.setLine = setLine
 M.step = step

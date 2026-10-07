@@ -29,3 +29,8 @@ Added `tire_temperature`, the first physics feature, OFF by default. While ON, t
 
 ## 2026-10-07 - Tire wear
 Added `tire_wear`, the second physics feature, OFF by default and separate from `tire_temperature`. `acng_tires` wears each tire's tread from BeamNG's own per-wheel slip power (`wheels.wheels[cid].slipEnergy`, read only): `tread -= slipEnergy*dt*rate*heatMult/7.5e6`, heatMult 1 up to 105 C rising to 2 at 145 C (heat on only), and wear grip `1 - 0.15*(1 - tread)`. Grip written is heat grip x wear grip. With wear only, the stock thermal values stay in place. `acng_core` loads the extension when either flag is on and calls `configure(heat, wear)` when only the flags change, so tread survives a part toggle; reset fits fresh tires. The ACNG Tires app gained HEAT/WEAR buttons, tread bars and the wear rate in its header line. T005a failed only its strict reset check (car settling made 0.4 J of slip work); threshold set to 100 J. T005b: 19/19 checks, wear-only lateral -5.1 % at rate x11.3, grip/lateral r=0.995, temperatures unchanged within 0.002 K, OFF again within 0.014 %. 59 Python tests and the Node suites pass. Primary profile untouched; lab closed.
+
+## 2026-10-07 - Saved lap references (offline verified)
+- Separate GE archive and lap-timer bridge retain the line and completed best reference per map/car configuration. No force/control writes.
+- Bounded history, previous-file recovery, failed-write/readback reporting and stale-request rejection. CLEAR/SET LINE update the saved reference.
+- 13 LuaJIT lap/archive tests and Node lap-app checks passed; in-game verification pending. Preserved Claude's unfinished assists changes; no game/UI interaction.

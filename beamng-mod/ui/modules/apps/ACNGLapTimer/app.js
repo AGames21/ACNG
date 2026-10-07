@@ -45,6 +45,9 @@
       delta: mode === 'lap' ? delta(s.delta_s) : {text: '', cls: ''},
       sectors: sectors, hasSectors: number(s.ref_length_m) !== null,
       last: lapTime(last.time_s), best: lapTime(best.time_s), optimal: lapTime(s.optimal_s),
+      archive: s.archive_status === 'loaded' ? 'Saved reference loaded' : s.archive_status === 'saved' ? 'Best reference saved locally'
+        : s.archive_status === 'read_only' ? 'Archive needs repair; session timing still works'
+        : s.archive_status === 'not_saved' ? 'Reference could not be saved' : '',
       laps: number(s.laps) || 0
     };
   }
@@ -67,7 +70,7 @@
         <div ng-if="laps.enabled"><div class="status" ng-class="{timing:laps.view.timing}">{{laps.view.status}}</div>
         <div class="main"><span class="time">{{laps.view.current}}</span><span class="delta" ng-class="laps.view.delta.cls">{{laps.view.delta.text}}</span></div>
         <div class="sectors"><div class="sector" ng-repeat="sec in laps.view.sectors track by sec.label" ng-class="sec.cls"><small>{{sec.label}}</small><span>{{sec.text}}</span></div></div>
-        <div class="totals"><div><b>LAST</b>{{laps.view.last}}</div><div class="best"><b>BEST</b>{{laps.view.best}}</div><div><b>OPTIMAL</b>{{laps.view.optimal}}</div><div><b>LAPS</b>{{laps.view.laps}}</div></div></div>
+        <div class="totals"><div><b>LAST</b>{{laps.view.last}}</div><div class="best" title="{{laps.view.archive}}"><b>BEST<span ng-if="laps.view.archive" aria-label="{{laps.view.archive}}"> *</span></b>{{laps.view.best}}</div><div><b>OPTIMAL</b>{{laps.view.optimal}}</div><div><b>LAPS</b>{{laps.view.laps}}</div></div></div>
       </section>`,
       link:function (scope) {
         var alive = true, latest = null, lastUpdate = 0;

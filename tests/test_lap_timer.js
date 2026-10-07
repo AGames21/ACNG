@@ -47,3 +47,7 @@ const t0=Date.now;events.ACNGLaps({},snap);Date.now=()=>t0()+5000;tick();assert.
 l.toggle();assert.equal(enabled,false);
 events.$destroy();assert.equal(cancelled,true);
 console.log('Lap bridge checks passed: master toggle, stream event, SET LINE/CLEAR commands, unload, stale clear and cleanup. Actual mouse click still needs runtime confirmation.');
+
+assert.equal(view({archive_status:"loaded"}).archive,"Saved reference loaded");
+assert.match(view({archive_status:"read_only"}).archive,/needs repair/);
+assert.match(view({archive_status:"not_saved"}).archive,/could not be saved/);

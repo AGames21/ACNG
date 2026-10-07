@@ -19,3 +19,5 @@ Repository owns source/scripts/config/tests/raw telemetry/build artifacts; Obsid
 Current milestone: M2 telemetry/oracle. Completed work and known blockers live in Obsidian Current Status and mirrored docs/STATUS.md. Next agent must refresh installation state and fresh logs; old logs are not current proof.
 
 User preference (2026-10-07): keep Astra Medium to conserve credits. Use Capsule/batched compact evidence when useful; avoid needless rereads, model escalation or agent fan-out. Current priority is one or two noticeable features before deeper research. Racing HUD/pedal preview exists; see docs/RACING-HUD.md and Obsidian status for verification limits.
+
+Background-use constraint (2026-10-07): the user is playing Roblox and watching Chrome. Until they explicitly release this constraint, do not launch game experiments, steal focus, send keyboard/mouse input, or interact with Roblox/Chrome. Quiet source edits and lightweight offline tests are allowed. Preserve Claude's assists work; saved-lap archive work is separate.
