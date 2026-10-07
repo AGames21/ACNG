@@ -3,7 +3,7 @@ local phase,time,stage,run,clock=0,0,0,1,os.time()
 local factors={0,0.0001,0.01}
 local result={test='T001 native heating capability',completed=false,events={},snapshots={},factors=factors,pressure_effect=false,grip_effect=false}
 local function save() jsonWriteFile('/acng-t001.json',result,true) end
-local function receive(text) local s=jsonDecode(text);s.run=run;result.snapshots[#result.snapshots+1]=s;save() end
+local function receive(text) local s=jsonDecode(text);s.run=run;if s.label=='configured' then result.configured_run=run elseif s.label=='restored' then result.restored_run=run end;result.snapshots[#result.snapshots+1]=s;save() end
 local function command(v,text) v:queueLuaCommand(text) end
 local function event(name,v)
  result.events[#result.events+1]={name=name,run=run,factor=factors[run],time=time,speed=v:getVelocity():length()};save()
@@ -26,6 +26,7 @@ local function onUpdate(dt,simdt)
   command(v,"extensions.load('acng_thermalProbe'); extensions.acng_thermalProbe.configure("..factors[run]..")")
   extensions.acng_core.setTelemetryEnabled(true);event('configured',v);phase=4;stage=0
  elseif phase==4 and stage>3 then
+  if result.configured_run~=run then result.failure='Native configure not acknowledged';extensions.acng_core.setTelemetryEnabled(false);save();phase=9;return end
   command(v,"controller.mainController.setGearboxMode('arcade'); input.event('parkingbrake',0,1); input.event('clutch',0,1); input.event('brake',0,1); input.event('throttle',1,1)")
   event('accelerate',v);phase=5;stage=0
  elseif phase==5 and (v:getVelocity():length()>46 or stage>25) then
@@ -36,6 +37,7 @@ local function onUpdate(dt,simdt)
   event('restored',v);phase=7;stage=0
  elseif phase==7 and stage>3 then
   extensions.acng_core.setTelemetryEnabled(false)
+  if result.restored_run~=run then result.failure='Restore not acknowledged';save();phase=9;return end
   if run<#factors then run=run+1;phase=1;stage=0 else result.completed=true;save();phase=9 end
  end
 end

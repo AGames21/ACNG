@@ -18,7 +18,9 @@ local function configure(factor)
   assert(not wd.isBroken and not wd.isTireDeflated,'Test requires intact tires')
   assert((raw.frictionCoefLow or 1)==1 and (raw.frictionCoefMiddle or 1)==1 and (raw.frictionCoefHigh or 1)==1,'Factory thermal grip must be neutral')
   local params={}
-  for i,key in ipairs(keys) do params[i]=raw[key]==nil and fallback[i] or raw[key] end
+  for i,key in ipairs(keys) do
+   if raw[key]==nil then params[i]=fallback[i] else params[i]=raw[key] end
+  end
   assert(params[12]==false,'Factory heat-to-pressure must be disabled')
   saved[wd.cid]={object=wd.obj,params=params}
   local changed={unpack(params)};changed[7]=factor
