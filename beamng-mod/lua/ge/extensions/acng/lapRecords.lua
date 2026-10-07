@@ -96,7 +96,7 @@ local function context(id)
   return key,veh
 end
 local function reply(veh,token,record,status)
-  veh:queueLuaCommand(string.format("if extensions.isExtensionLoaded('acng_laps') then extensions.acng_laps.receiveArchive(%q,%q,%q) end",token,jsonEncode(record),status))
+  veh:queueLuaCommand(string.format("if extensions.isExtensionLoaded('acng_laps') then extensions.acng_laps.receiveArchive(%q,%q,%q) end",token,jsonEncode(record or {}),status))
 end
 local function request(id,token)
   if type(token)~='string' or #token>128 then return false end

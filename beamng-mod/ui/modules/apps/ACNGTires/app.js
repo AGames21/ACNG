@@ -104,7 +104,7 @@
           if (!tires.available || (name !== 'tire_temperature' && name !== 'tire_wear')) return;
           var isOn = name === 'tire_wear' ? tires.wear : tires.heat;
           bngApi.engineLua(isOn ? "extensions.acng_core.setFeature('" + name + "', false)"
-            : "extensions.acng_core.setEnabled(true); extensions.acng_core.setFeature('" + name + "', true)", status);
+            : "(function() extensions.acng_core.setEnabled(true); return extensions.acng_core.setFeature('" + name + "', true) end)()", status);
         };
         scope.$on('ACNGTires',function (_,value) { latest=value && value.mode === 'on' ? value : null; lastUpdate=Date.now(); scope.$evalAsync(render); });
         var poll=$interval(function () { status(); if(latest && Date.now()-lastUpdate>2000){latest=null;render();} },1000);
