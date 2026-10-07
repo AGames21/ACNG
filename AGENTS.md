@@ -1,0 +1,17 @@
+# ACNG persistent engineering instructions
+
+Read `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TESTING.md` and latest test/research records before work. Continue autonomously through the next logical task; ask the user only for a real external dependency, credentials/license, admin approval, subjective wheel feedback or important irreversible decision.
+
+Goal: Assetto Corsa-like driving/racing in BeamNG.drive while preserving soft-body deformation, collision, damage and vehicle structure. BeamNG is the host; AC is a behavioral oracle. Never merge executables, replace the physics engine, permanently edit game installations, bypass DRM/anti-cheat or touch official multiplayer. Work offline in the isolated profile. User's primary profile has BeamMP and other mods; leave it intact.
+
+Use native Lua extensions and independent mod paths. Master OFF and all future features OFF by default. Telemetry is a separate passive observer for stock baselines. No physics module ships until measured baseline, rollback/reset contract, damage response and performance evidence exist. Never claim runtime success from compilation or mocks.
+
+Original readable Lua/Python, module tables, guarded optional APIs, SI fields where verified; suffix unresolved native units/signs honestly. JSON/JSONL/CSV evidence with schema/version and separate host/simulation times. Missing data is unavailable, never fabricated. Keep observations separate from inference, rate confidence and log alternative explanations. Avoid excessive per-step work/logging.
+
+Game/tool paths belong in ignored `.local/paths.json`. Public docs use `%LOCALAPPDATA%`, `<SteamLibrary>`, `<workspace>`; omit account IDs, secrets and personal configs. Proprietary code, extracted assets, decompiled dumps, binaries and game logs stay outside Git. Commit original tools and concise original findings only. External tools/checkouts are in workspace `work/`, not this repository.
+
+Back up before any save/config experiment. Deploy only `mods/unpacked/acng` with ownership marker and backups; never delete/overwrite unrelated files. Inspect absolute resolved paths before recursive operations, refuse links and use native PowerShell file operations. Check no active game process before launching another.
+
+Tests: unit contracts and real isolated game smoke; master OFF baseline/restoration, reset/switch lifecycle, bounded telemetry, loss reporting, damage and profiling. Meaningful commits per milestone and before major experiments. Update STATUS, MODLOG and research/test records immediately after discoveries. User authorized setup/configuration and autonomous repeatable testing; avoid needless permission prompts. Do not publish or message external people without explicit user instruction.
+
+Initial milestone: M1 foundation, then M2 telemetry/oracle. Completed work and known blockers live in STATUS (authoritative). Next agent must refresh installation state and fresh logs; old logs are not current proof.

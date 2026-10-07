@@ -1,0 +1,3 @@
+# ACNG engineering journal
+
+2026-10-06: user authorized independent BeamNG mod setup and autonomous evidence-driven work. Inspected Steam manifests, tool versions and local Lua APIs. AC still installing to second Steam library. BeamNG existing user profile has BeamMP, so test using isolated profile. Chosen route: Game Engine/Vehicle Lua extensions with no stock overrides. Universal Modder CLI installed locally and KB/scan executed; generic native hook suggestion rejected in favor of verified host extension APIs. Authored first control plane, passive telemetry reader, collector and analyzer. Runtime status is recorded separately in docs/test-results.

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "developer_mode": false,
+  "features": {
+    "tire_dynamics": false,
+    "tire_temperature": false,
+    "tire_pressure": false,
+    "tire_wear": false,
+    "track_temperature": false,
+    "track_grip": false,
+    "racing_surface": false,
+    "ffb": false,
+    "abs": false,
+    "tc": false,
+    "stability_assists": false,
+    "aero": false,
+    "drivetrain": false,
+    "racing_hud": false,
+    "timing": false,
+    "race_sessions": false,
+    "pits": false,
+    "penalties": false,
+    "weather_grip": false
+  },
+  "telemetry": {"enabled": false, "rate_hz": 50, "port": 44443}
+}
