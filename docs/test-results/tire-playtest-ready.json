@@ -1,0 +1,21 @@
+{
+  "instructions": "Drive a stock lap; HEAT ON; reset to start; compare the same corner cold vs 75-105 C. Leave WEAR OFF.",
+  "layout": "/settings/ui_apps/layouts/acng_tire_playtest.uilayout.json",
+  "model": "etkc",
+  "ready": true,
+  "status": {
+    "enabled": false,
+    "features": {
+      "tire_temperature": false,
+      "tire_wear": false
+    },
+    "implemented_physics_features": [
+      "tire_temperature",
+      "tire_wear"
+    ],
+    "physics_writes": 0,
+    "schema_version": 1,
+    "telemetry_enabled": false
+  },
+  "test": "Tire heat playtest"
+}
