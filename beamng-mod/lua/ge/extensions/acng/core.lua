@@ -12,10 +12,14 @@ local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 -- Physics features that are implemented and lab-validated. Each loads into the player
 -- vehicle while the master and its own flag are ON; unloading restores stock values.
-local IMPLEMENTED = {tire_temperature=true}
+local IMPLEMENTED = {tire_temperature=true, tire_wear=true}
+-- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
+-- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
+local TIRES_CONFIGURE = "if extensions.isExtensionLoaded('acng_tires') then extensions.acng_tires.configure(%s,%s) end"
 local TIRES_UNLOAD = "extensions.unload('acng_tires')"
 local tiresId
+local tiresParts
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
@@ -40,9 +44,16 @@ local function stopTires()
     if veh then veh:queueLuaCommand(TIRES_UNLOAD) end
   end
   tiresId = nil
+  tiresParts = nil
+end
+local function feature(name)
+  return config and config.features and config.features[name] == true or false
 end
 local function tiresWanted()
-  return config and config.enabled and config.features and config.features.tire_temperature == true
+  return config and config.enabled and (feature('tire_temperature') or feature('tire_wear'))
+end
+local function tiresConfigure()
+  return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')))
 end
 local function physicsWrites()
   return tiresId and 1 or 0
@@ -105,11 +116,17 @@ local function onUpdate(dtReal)
       perfId = id
     end
   end
-  if tiresWanted() and id ~= tiresId then
-    stopTires()
-    if veh then
-      veh:queueLuaCommand(TIRES_LOAD)
-      tiresId = id
+  if tiresWanted() then
+    local parts = tiresConfigure()
+    if id ~= tiresId then
+      stopTires()
+      if veh then
+        veh:queueLuaCommand(TIRES_LOAD .. '; ' .. parts)
+        tiresId, tiresParts = id, parts
+      end
+    elseif parts ~= tiresParts and veh then
+      veh:queueLuaCommand(parts)
+      tiresParts = parts
     end
   end
   if not config.telemetry.enabled then return end
@@ -137,7 +154,7 @@ local function onVehicleSpawned(id)
     pollTime = 0.25
   end
   if id == tiresId then
-    tiresId = nil
+    tiresId, tiresParts = nil, nil
     pollTime = 0.25
   end
 end
@@ -147,8 +164,8 @@ local function getStatus()
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
     tires_vehicle_id=tiresId,
-    features={tire_temperature=config and config.features and config.features.tire_temperature == true or false},
-    implemented_physics_features={'tire_temperature'}, physics_writes=physicsWrites()}
+    features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear')},
+    implemented_physics_features={'tire_temperature', 'tire_wear'}, physics_writes=physicsWrites()}
 end
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = stopAll

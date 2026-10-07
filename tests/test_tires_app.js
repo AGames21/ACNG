@@ -31,4 +31,22 @@ assert.equal(view({mode:'on',tires:[{name:'FL',surface_c:90}]}).tires[0].color,'
 // Lua tables that arrive as keyed objects instead of arrays; more than four wheels.
 v=view({mode:'on',window_low_c:75,window_high_c:105,tires:{1:{name:'RR1',surface_c:80},2:{name:'FR',surface_c:80},3:{name:'RL1',surface_c:80},4:{name:'FL',surface_c:80},5:{name:'XX',surface_c:80}}});
 assert.deepEqual(v.tires.map(t=>t.name),['FL','FR','RL1','RR1','XX']);
-console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, grip %, temperature colours, missing data, object tables, extra wheels.');
+// Wear: tread %, bar width and colour; the header line names wear and a non-default rate.
+v=view({mode:'on',heat:true,wear:true,wear_rate:1,window_low_c:75,window_high_c:105,tires:[
+ {name:'FL',surface_c:90,tread:0.873},{name:'FR',surface_c:90,tread:1.2},{name:'RL',surface_c:90,tread:-0.1},{name:'RR',surface_c:90}]});
+assert.equal(v.wear,true);
+assert.deepEqual(v.tires.map(t=>t.tread),['87%','100%','0%',D]);
+assert.deepEqual(v.tires.map(t=>t.treadWidth),['87.3%','100.0%','0.0%','0%']);
+assert.equal(v.window,'Grip window 75\u2013105'+DEG+'C \u00b7 Wear on');
+assert.equal(view.treadColor(1),'rgb(80,220,130)');
+assert.equal(view.treadColor(0.5),'rgb(250,200,80)');
+assert.equal(view.treadColor(0),'rgb(255,80,70)');
+assert.equal(view.treadColor(null),'#3a414c');
+// Wear without heat: no window, wear rate shown when not 1.
+v=view({mode:'on',heat:false,wear:true,wear_rate:10,tires:[{name:'FL',surface_c:15,tread:0.5}]});
+assert.equal(v.window,'Wear x10');
+assert.equal(view({mode:'on',wear:true,wear_rate:11.27,tires:[]}).window,'Wear x11.3');
+assert.equal(v.tires[0].color,'#3a414c');
+assert.equal(view({mode:'on',wear:false,window_low_c:75,window_high_c:105,tires:[]}).wear,false);
+assert.equal(view({mode:'off',wear:true}).wear,false);
+console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, grip %, temperature colours, missing data, object tables, extra wheels, tread and wear line.');

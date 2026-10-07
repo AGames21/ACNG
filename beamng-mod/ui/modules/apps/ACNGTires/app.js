@@ -1,4 +1,4 @@
-/* Original ACNG tire app; shows the native tire heat model that the acng_tires vehicle extension switches on. */
+/* Original ACNG tire app; shows the tire heat, grip window and wear that the acng_tires vehicle extension runs. */
 (function () {
   'use strict';
   var DASH = '\u2014';
@@ -22,23 +22,34 @@
     return row * 3 + side;
   }
   function fixed(value, digits, unit) { var v = number(value); return v === null ? DASH : v.toFixed(digits) + unit; }
+  function percent(value) { var v = number(value); return v === null ? DASH : Math.round(v * 100) + '%'; }
+  // Tread bar colour: green when fresh, amber at half worn, red at the end.
+  function treadColor(t) {
+    if (t === null) return '#3a414c';
+    return t > 0.5 ? mix(AMBER, GREEN, (t - 0.5) / 0.5) : mix(RED, AMBER, t / 0.5);
+  }
   function view(snapshot) {
-    var s = snapshot || {}, on = s.mode === 'on';
+    var s = snapshot || {}, on = s.mode === 'on', wear = on && s.wear === true;
     var low = number(s.window_low_c), high = number(s.window_high_c);
     var list = Array.isArray(s.tires) ? s.tires.slice() : s.tires ? Object.keys(s.tires).map(function (k) { return s.tires[k]; }) : [];
     list = list.map(function (t, i) { return {t: t || {}, i: i}; })
       .sort(function (a, b) { return rank(a.t.name) - rank(b.t.name) || a.i - b.i; })
       .map(function (e) {
-        var t = e.t, c = number(t.surface_c), grip = number(t.grip);
+        var t = e.t, c = number(t.surface_c), tread = number(t.tread);
+        if (tread !== null) tread = Math.max(0, Math.min(1, tread));
         return {name: String(t.name || '?'), surface: fixed(c, 0, '\u00b0'), core: fixed(t.core_c, 0, '\u00b0'),
           psi: fixed(t.psi, 1, ''), state: t.state === 'cold' || t.state === 'hot' || t.state === 'window' ? t.state : '',
           color: low === null || high === null ? '#3a414c' : tempColor(c, low, high),
-          grip: grip === null ? DASH : Math.round(grip * 100) + '%'};
+          grip: percent(t.grip), tread: percent(tread), treadWidth: tread === null ? '0%' : (tread * 100).toFixed(1) + '%',
+          treadColor: treadColor(tread)};
       });
-    return {on: on, tires: list,
-      window: low !== null && high !== null ? 'Grip window ' + low + '\u2013' + high + '\u00b0C' : ''};
+    var rate = number(s.wear_rate), parts = [];
+    if (low !== null && high !== null) parts.push('Grip window ' + low + '\u2013' + high + '\u00b0C');
+    if (wear) parts.push('Wear ' + (rate === null || rate === 1 ? 'on' : 'x' + +rate.toFixed(1)));
+    return {on: on, wear: wear, tires: list, window: parts.join(' \u00b7 ')};
   }
   view.tempColor = tempColor;
+  view.treadColor = treadColor;
   if (typeof module !== 'undefined' && module.exports) module.exports = view;
   if (typeof angular === 'undefined') return;
   angular.module('beamng.apps').directive('acngTires', ['$interval', function ($interval) {
@@ -57,36 +68,43 @@
           .acng-tires .state.cold{color:#6fb0ff}.acng-tires .state.window{color:#5fe39a}.acng-tires .state.hot{color:#ff8a6a}
           .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:22px;font-weight:700;line-height:1.1}.acng-tires .grip{font-size:13px;font-weight:700;color:#cad0da}
           .acng-tires .meta{display:flex;justify-content:space-between;font-size:11px;color:#aeb8c6}.acng-tires .meta b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px;margin-right:3px}
+          .acng-tires .tread{display:flex;align-items:center;gap:5px;font-size:11px;color:#aeb8c6;margin-top:2px}.acng-tires .tread b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px}
+          .acng-tires .bar{flex:1;height:5px;border-radius:3px;background:#2c343f;overflow:hidden}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
           .acng-tires .idle{color:#aeb8c6;text-align:center;padding:40px 12px;font-size:13px;line-height:1.5}
         </style>
-        <header><span class="brand">ACNG<small>TIRES</small></span><button ng-click="tires.toggle()" ng-class="{active:tires.on}" ng-disabled="!tires.available" aria-label="Toggle ACNG tire model">{{tires.on?'ON':'OFF'}}</button></header>
-        <div ng-if="!tires.on" class="idle"><span ng-if="tires.available">Tire model OFF \u2014 stock BeamNG tires.<br>Press ON for tire heat and a grip window.</span><span ng-if="!tires.available">Waiting for ACNG\u2026</span></div>
+        <header><span class="brand">ACNG<small>TIRES</small></span><button ng-click="tires.toggle('tire_temperature')" ng-class="{active:tires.heat}" ng-disabled="!tires.available" aria-label="Toggle tire heat and grip window">HEAT {{tires.heat?'ON':'OFF'}}</button><button ng-click="tires.toggle('tire_wear')" ng-class="{active:tires.wear}" ng-disabled="!tires.available" aria-label="Toggle tire wear">WEAR {{tires.wear?'ON':'OFF'}}</button></header>
+        <div ng-if="!tires.on" class="idle"><span ng-if="tires.available">Tire model OFF \u2014 stock BeamNG tires.<br>HEAT adds tire heat and a grip window.<br>WEAR wears the tread as you slide.</span><span ng-if="!tires.available">Waiting for ACNG\u2026</span></div>
         <div ng-if="tires.on"><div class="window">{{tires.view.window}}</div>
         <div class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index">
           <div class="swatch" ng-style="{background:t.color}"></div>
           <div class="info"><div class="top"><span class="name">{{t.name}}</span><span class="state" ng-class="t.state">{{t.state}}</span></div>
           <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" title="Grip">{{t.grip}}</span></div>
-          <div class="meta"><span><b>CORE</b>{{t.core}}</span><span><b>PSI</b>{{t.psi}}</span></div></div>
+          <div class="meta"><span><b>CORE</b>{{t.core}}</span><span><b>PSI</b>{{t.psi}}</span></div>
+          <div class="tread" ng-if="tires.view.wear"><b>TREAD</b><span class="bar"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></span><span>{{t.tread}}</span></div></div>
         </div></div></div>
       </section>`,
       link:function (scope) {
         var alive = true, latest = null, lastUpdate = 0;
-        var tires = scope.tires = {on:false, available:false, view:view(null)};
+        var tires = scope.tires = {on:false, heat:false, wear:false, available:false, view:view(null)};
         function render() { tires.view = view(latest); }
         function status() {
           bngApi.engineLua('extensions.acng_core and extensions.acng_core.getStatus() or nil', function (value) {
             if (!alive) return;
             scope.$evalAsync(function () {
               tires.available = !!value;
-              tires.on = !!(value && value.enabled && value.features && value.features.tire_temperature);
+              var f = value && value.enabled && value.features || {};
+              tires.heat = f.tire_temperature === true;
+              tires.wear = f.tire_wear === true;
+              tires.on = tires.heat || tires.wear;
             });
           });
         }
-        // Turning the tire model on also turns the ACNG master on; off leaves the master alone.
-        tires.toggle=function () {
-          if (!tires.available) return;
-          bngApi.engineLua(tires.on ? "extensions.acng_core.setFeature('tire_temperature', false)"
-            : "extensions.acng_core.setEnabled(true); extensions.acng_core.setFeature('tire_temperature', true)", status);
+        // Turning a part on also turns the ACNG master on; turning it off leaves the master alone.
+        tires.toggle=function (name) {
+          if (!tires.available || (name !== 'tire_temperature' && name !== 'tire_wear')) return;
+          var isOn = name === 'tire_wear' ? tires.wear : tires.heat;
+          bngApi.engineLua(isOn ? "extensions.acng_core.setFeature('" + name + "', false)"
+            : "extensions.acng_core.setEnabled(true); extensions.acng_core.setFeature('" + name + "', true)", status);
         };
         scope.$on('ACNGTires',function (_,value) { latest=value && value.mode === 'on' ? value : null; lastUpdate=Date.now(); scope.$evalAsync(render); });
         var poll=$interval(function () { status(); if(latest && Date.now()-lastUpdate>2000){latest=null;render();} },1000);

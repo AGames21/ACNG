@@ -1,7 +1,7 @@
 {
   "domElement": "<acng-tires></acng-tires>",
   "name": "ACNG Tires",
-  "description": "Original tire app: switches on BeamNG's own tire heat model with an Assetto Corsa-style grip window, then shows each tire's surface and core temperature, pressure and grip. Cold tires slide, overheated tires fade.",
+  "description": "Original tire app: switches on BeamNG's own tire heat model with an Assetto Corsa-style grip window, then shows each tire's surface and core temperature, pressure, grip and tread. Cold tires slide, overheated tires fade, and with wear on, sliding wears the tread and costs grip.",
   "types": [
     "ui.apps.categories.vehicle_info"
   ],
@@ -9,7 +9,7 @@
     "left": "24px",
     "top": "340px",
     "width": "330px",
-    "height": "210px"
+    "height": "240px"
   },
   "author": "ACNG",
   "version": "0.1",

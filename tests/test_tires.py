@@ -22,11 +22,13 @@ local function wheel(id)
     setFrictionThermalSensitivity=function(self,...) calls[#calls+1]={id=id,kind='curve',args={...}} end}
 end
 v={data={pressureGroups={pg1=11},
-  wheels={[0]={name='FL',wheelID=0,pressureGroup='pg1'},
-    [1]={name='FR',wheelID=1,heatCoefFriction=0.02,smokingTemp=500,meltingTemp=600,
+  wheels={[0]={name='FL',wheelID=0,cid=0,pressureGroup='pg1'},
+    [1]={name='FR',wheelID=1,cid=1,heatCoefFriction=0.02,smokingTemp=500,meltingTemp=600,
          heatAffectsPressure=true,frictionLowTemp=300,frictionCoefLow=0.9},
-    [2]={name='HUB',wheelID=2,hasTire=false},
-    [3]={name='GONE',wheelID=3}}}}
+    [2]={name='HUB',wheelID=2,cid=2,hasTire=false},
+    [3]={name='GONE',wheelID=3,cid=3}}}}
+-- The runtime wheel table (wheels.lua), keyed by cid, with this frame's slip energy.
+wheels={wheels={[0]={slipEnergy=0},[1]={slipEnergy=0},[2]={slipEnergy=5e6}}}
 temps={[0]=363.15,[1]=288.15,[2]=288.15}
 obj={getWheel=function(self,id) if id<=2 then return wheel(id) end end,
   getWheelAvgTemperature=function(self,id) return temps[id] end,
@@ -152,6 +154,151 @@ class TireContracts(unittest.TestCase):
         self.mod.onReset()
         self.assertEqual(len(self.calls()), 4)
 
+    def tread(self):
+        state = self.mod.wearState()
+        return {state[i].name: (state[i].tread, state[i].slip_work) for i in range(1, len(state) + 1)}
+
+    def drive(self, seconds, step=0.1):
+        for _ in range(round(seconds / step)):
+            self.mod.updateGFX(step)
+
+    def test_wear_off_by_default(self):
+        self.mod.onExtensionLoaded()
+        self.g.wheels.wheels[0].slipEnergy = 1e6
+        self.drive(1)
+        self.assertEqual(self.tread()["FL"], (1, 0))
+        snap = self.mod.snapshot()
+        self.assertFalse(snap.wear)
+        self.assertIsNone(snap.tires[1].tread)
+        self.assertEqual(snap.tires[1].grip, 1)
+
+    def test_slip_energy_wears_tread_and_costs_grip(self):
+        self.mod.onExtensionLoaded()
+        self.assertEqual(self.mod.configure(True, True), (True, True))
+        self.g.wheels.wheels[0].slipEnergy = 1e6           # FL sliding, FR rolling
+        self.g.calls = self.lua.eval("{}")
+        self.drive(1)
+        fl, fr = self.tread()["FL"], self.tread()["FR"]
+        self.assertAlmostEqual(fl[1], 1e6)                 # slip work integrated over 1 s
+        self.assertAlmostEqual(fl[0], 1 - 1e6 / self.mod.WEAR_ENERGY)
+        self.assertEqual(fr, (1, 0))
+        curve = [c for c in self.calls() if c[1] == "curve" and c[0] == 0]
+        self.assertTrue(curve)                             # grip followed the tread
+        self.assertAlmostEqual(curve[-1][2][5], self.mod.wearGrip(fl[0]), delta=self.mod.GRIP_STEP)
+        snap = self.mod.snapshot()
+        self.assertTrue(snap.wear)
+        self.assertEqual(snap.wear_rate, 1)
+        self.assertAlmostEqual(snap.tires[1].tread, round(fl[0], 3))
+        self.assertEqual(snap.tires[2].tread, 1)
+        self.assertEqual(len(snap.tires), 2)               # the hub never wears or reports
+
+    def test_wear_grip_and_heat_multiplier_shape(self):
+        m = self.mod
+        self.assertEqual(m.wearGrip(1), 1)
+        self.assertAlmostEqual(m.wearGrip(0), 1 - m.WEAR_GRIP_LOSS)
+        self.assertAlmostEqual(m.wearGrip(0.5), 1 - m.WEAR_GRIP_LOSS / 2)
+        self.assertAlmostEqual(m.wearGrip(-1), m.wearGrip(0))
+        self.assertEqual(m.wearGrip(None), 1)
+        self.assertEqual(m.wearGrip(float("nan")), 1)
+        self.assertEqual(m.wearHeatMult(90), 1)
+        self.assertEqual(m.wearHeatMult(105), 1)
+        self.assertAlmostEqual(m.wearHeatMult(125), 1.5)
+        self.assertEqual(m.wearHeatMult(145), m.WEAR_HOT_MULT)
+        self.assertEqual(m.wearHeatMult(400), m.WEAR_HOT_MULT)
+        self.assertEqual(m.wearHeatMult(None), 1)
+        m.configure(False, True)
+        self.assertEqual(m.wearHeatMult(140), 1)           # no heat model, no heat penalty
+
+    def test_hot_tires_wear_faster(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        self.g.temps[0] = 273.15 + 125
+        self.mod.updateGFX(0.1)                            # grip update reads 125 C
+        start = self.tread()["FL"][0]
+        self.g.wheels.wheels[0].slipEnergy = 1e6
+        self.drive(1)
+        self.assertAlmostEqual(start - self.tread()["FL"][0], 1.5 * 1e6 / self.mod.WEAR_ENERGY)
+
+    def test_bad_slip_energy_and_rate(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        for bad in (float("nan"), float("inf"), -5, None):
+            self.g.wheels.wheels[0].slipEnergy = bad
+            self.drive(0.2)
+        self.assertEqual(self.tread()["FL"], (1, 0))
+        self.g.wheels = None                               # runtime table missing
+        self.drive(0.2)
+        self.assertEqual(self.mod.setWearRate(1000), 100)
+        self.assertEqual(self.mod.setWearRate(-1), 0)
+        self.assertEqual(self.mod.setWearRate(float("nan")), 0)
+        self.assertEqual(self.mod.setWearRate(4), 4)
+
+    def test_wear_rate_multiplies_wear(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        self.mod.setWearRate(10)
+        self.g.wheels.wheels[0].slipEnergy = 1e5
+        self.drive(1)
+        self.assertAlmostEqual(self.tread()["FL"][0], 1 - 10 * 1e5 / self.mod.WEAR_ENERGY)
+        self.assertAlmostEqual(self.tread()["FL"][1], 1e5)   # slip work itself is unscaled
+        self.assertEqual(self.mod.snapshot().wear_rate, 10)
+
+    def test_tread_never_goes_below_zero(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        self.g.wheels.wheels[0].slipEnergy = 1e9
+        self.drive(1)
+        self.assertEqual(self.tread()["FL"][0], 0)
+        self.assertAlmostEqual(self.mod.snapshot().tires[1].grip, 1 - self.mod.WEAR_GRIP_LOSS, delta=0.002)
+
+    def test_reset_gives_fresh_tires(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        self.g.wheels.wheels[0].slipEnergy = 1e6
+        self.drive(1)
+        self.assertLess(self.tread()["FL"][0], 1)
+        self.g.wheels.wheels[0].slipEnergy = 0
+        self.g.calls = self.lua.eval("{}")
+        self.mod.onReset()
+        self.assertEqual(self.tread()["FL"], (1, 0))
+        curve = {c[0]: c[2] for c in self.calls() if c[1] == "curve"}
+        self.assertEqual(curve[0][5], 1)                   # FL back to full grip at 90 C
+
+    def test_toggling_wear_keeps_tread(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True)
+        self.g.wheels.wheels[0].slipEnergy = 1e6
+        self.drive(1)
+        worn = self.tread()["FL"][0]
+        self.g.calls = self.lua.eval("{}")
+        self.mod.configure(True, False)
+        curve = {c[0]: c[2] for c in self.calls() if c[1] == "curve"}
+        self.assertEqual(curve[0][5], 1)                   # wear off: heat grip only
+        self.drive(1)
+        self.assertEqual(self.tread()["FL"][0], worn)      # no wear while off
+        self.mod.configure(True, True)
+        self.assertEqual(self.tread()["FL"][0], worn)      # no free tires from a toggle
+
+    def test_wear_without_heat_keeps_stock_thermal(self):
+        self.mod.onExtensionLoaded()
+        self.g.calls = self.lua.eval("{}")
+        self.mod.configure(False, True)
+        loaded = self.calls()
+        thermal = {c[0]: c[2] for c in loaded if c[1] == "thermal"}
+        curve = {c[0]: c[2] for c in loaded if c[1] == "curve"}
+        self.assertEqual(thermal[0], [0, 0.4, 20, 0, 0, 0, 0, 0, 0, 1e18, 1e19, False])
+        self.assertEqual(thermal[1][6], 0.02)              # FR keeps its own jbeam heat
+        self.assertEqual(curve[1][5:], [1, 1, 1])          # cold FR, but no heat window
+        snap = self.mod.snapshot()
+        self.assertFalse(snap.heat)
+        self.assertIsNone(snap.window_low_c)
+        self.assertIsNone(snap.tires[2].state)
+        self.g.calls = self.lua.eval("{}")
+        self.mod.onExtensionUnloaded()
+        curve = {c[0]: c[2] for c in self.calls() if c[1] == "curve"}
+        self.assertEqual(curve[0], [-300, 1e7, 1e-10, 1e-10, 10, 1, 1, 1])
+        self.assertEqual(curve[1][0], 300)                 # stock curve back exactly
+
     def test_no_vehicle_input_or_force_writes(self):
         source = TIRES.read_text()
         for write in ("input.event", "applyForce", "queueLuaCommand", "setGroupPressure", "setGearboxMode"):
@@ -177,6 +324,16 @@ class CoreTireFeature(unittest.TestCase):
         ''')
         self.g = self.lua.globals()
 
+    @staticmethod
+    def load_cmd(vid, heat=True, wear=False):
+        return (f"{vid}:extensions.load('acng_tires'); if extensions.isExtensionLoaded('acng_tires') "
+                f"then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()}) end")
+
+    @staticmethod
+    def configure_cmd(vid, heat, wear):
+        return (f"{vid}:if extensions.isExtensionLoaded('acng_tires') "
+                f"then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()}) end")
+
     def load(self):
         mod = self.lua.execute(CORE.read_text())
         mod.onExtensionLoaded()
@@ -193,7 +350,7 @@ class CoreTireFeature(unittest.TestCase):
         self.assertEqual(self.cmds(), [])  # master still OFF
         mod.setEnabled(True)
         mod.onUpdate(1)
-        self.assertIn("5:extensions.load('acng_tires')", self.cmds())
+        self.assertIn(self.load_cmd(5), self.cmds())
         self.assertEqual(mod.getStatus()["physics_writes"], 1)
         self.assertEqual(mod.getStatus()["tires_vehicle_id"], 5)
         mod.setFeature("tire_temperature", False)
@@ -219,11 +376,11 @@ class CoreTireFeature(unittest.TestCase):
         self.g.current = 7
         mod.onUpdate(1)
         self.assertIn("5:extensions.unload('acng_tires')", self.cmds())
-        self.assertIn("7:extensions.load('acng_tires')", self.cmds())
+        self.assertIn(self.load_cmd(7), self.cmds())
         n = len(self.cmds())
         mod.onVehicleSpawned(7)
         mod.onUpdate(0.01)
-        self.assertIn("7:extensions.load('acng_tires')", self.cmds()[n:])
+        self.assertIn(self.load_cmd(7), self.cmds()[n:])
 
     def test_runtime_file_only_restores_implemented_features(self):
         self.lua.execute("saved={schema_version=1,enabled=true,features={tire_temperature=true,abs=true}}")
@@ -231,14 +388,55 @@ class CoreTireFeature(unittest.TestCase):
         status = mod.getStatus()
         self.assertTrue(status["enabled"])
         self.assertTrue(status["features"]["tire_temperature"])
+        self.assertFalse(status["features"]["tire_wear"])
         mod.onUpdate(1)
-        self.assertIn("5:extensions.load('acng_tires')", self.cmds())
+        self.assertIn(self.load_cmd(5), self.cmds())
+
+    def test_wear_alone_loads_tires_with_heat_off(self):
+        mod = self.load()
+        mod.setEnabled(True)
+        self.assertTrue(mod.setFeature("tire_wear", True))
+        mod.onUpdate(1)
+        self.assertIn(self.load_cmd(5, heat=False, wear=True), self.cmds())
+        status = mod.getStatus()
+        self.assertTrue(status["features"]["tire_wear"])
+        self.assertFalse(status["features"]["tire_temperature"])
+        self.assertEqual(list(status["implemented_physics_features"].values()), ["tire_temperature", "tire_wear"])
+        self.assertEqual(status["physics_writes"], 1)
+
+    def test_flag_change_reconfigures_without_reload(self):
+        mod = self.load()
+        mod.setEnabled(True)
+        mod.setFeature("tire_temperature", True)
+        mod.onUpdate(1)
+        n = len(self.cmds())
+        mod.setFeature("tire_wear", True)
+        mod.onUpdate(1)
+        self.assertEqual(self.cmds()[n:], [self.configure_cmd(5, True, True)])
+        mod.onUpdate(1)
+        self.assertEqual(len(self.cmds()), n + 1)          # sent once, not every poll
+        mod.setFeature("tire_temperature", False)
+        mod.onUpdate(1)
+        self.assertEqual(self.cmds()[-1], self.configure_cmd(5, False, True))
+        mod.setFeature("tire_wear", False)
+        self.assertEqual(self.cmds()[-1], "5:extensions.unload('acng_tires')")
+        self.assertEqual(mod.getStatus()["physics_writes"], 0)
+        mod.setFeature("tire_wear", True)
+        mod.onUpdate(1)
+        self.assertEqual(self.cmds()[-1], self.load_cmd(5, heat=False, wear=True))  # fresh load after unload
+
+    def test_runtime_file_restores_wear(self):
+        self.lua.execute("saved={schema_version=1,enabled=true,features={tire_wear=true}}")
+        mod = self.load()
+        mod.onUpdate(1)
+        self.assertIn(self.load_cmd(5, heat=False, wear=True), self.cmds())
 
     def test_defaults_keep_tires_off(self):
         import json
         defaults = json.loads((ROOT / "beamng-mod/settings/acng/defaults.json").read_text())
         self.assertFalse(defaults["enabled"])
         self.assertFalse(defaults["features"]["tire_temperature"])
+        self.assertFalse(defaults["features"]["tire_wear"])
 
 
 if __name__ == "__main__":
