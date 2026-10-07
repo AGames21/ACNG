@@ -1,0 +1,49 @@
+{
+  "test": "D001",
+  "passed": true,
+  "checks": {
+    "completed": true,
+    "native_collision_damage": true,
+    "baseline_clean": true,
+    "collision_repair_clean": true,
+    "native_puncture": true,
+    "acknowledged_broken_wheel": true,
+    "broken_wheel_telemetry_persists": true,
+    "puncture_pressure_drops_by_half": true,
+    "final_repair_clean": true,
+    "three_reset_generations": true,
+    "one_vehicle_capture": true,
+    "passive_observer": true,
+    "master_off_after_test": true,
+    "receiver_no_reported_loss": true
+  },
+  "packets": 2487,
+  "generations": [
+    1,
+    2,
+    3
+  ],
+  "peak_speed_m_s": 21.57238396099,
+  "collision_damage_native": 92571.5234375,
+  "collision_deform_groups": [
+    "foglightglass_R_break",
+    "frontflashers_break",
+    "headlightglass_L_break",
+    "headlightglass_R_break",
+    "mainEngine_intercooler",
+    "mainEngine_piping",
+    "radiator_damage"
+  ],
+  "broken_wheel_duration_sim_s": 7.978500444908002,
+  "punctured_fl_pressure_absolute_pa_range": [
+    108147.3671875,
+    125591.875
+  ],
+  "minimum_punctured_to_initial_fl_pressure_ratio": 0.3638530747637021,
+  "limits": "Tests native stock damage with a passive observer; does not validate future tire forces, bent alignment, AI or detached-wheel dynamics.",
+  "evidence_sha256": {
+    "acng-damage.json": "0ef24ccd0db8b468bccbf17f00e4beef011ad6b102598ebe0b4317c94e1f48a6",
+    "d001-native-damage-002.jsonl": "27ef2dea4d0a9e4717f4b101d80e6b9f01c766e41b5b314d2631377e13a16082",
+    "d001-native-damage-002.summary.json": "0d1f33f2fd311a850672084cdad409aa21311a9dcc5a871e09f6876a7ad2a33d"
+  }
+}

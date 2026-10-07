@@ -24,7 +24,15 @@ local function deleteObstacle()
   end
 end
 local function receive(text)
-  result.snapshots[#result.snapshots+1]=jsonDecode(text);save()
+  local snapshot=jsonDecode(text)
+  snapshot.ge_received_elapsed_s=elapsed
+  result.snapshots[#result.snapshots+1]=snapshot;save()
+end
+local function received(label)
+  for _,snapshot in ipairs(result.snapshots) do
+    if snapshot.label==label then return true end
+  end
+  return false
 end
 local function onUpdate(dtReal,dtSim)
   elapsed=elapsed+dtReal
@@ -88,11 +96,15 @@ local function onUpdate(dtReal,dtSim)
     phase,stageTime=10,0
   elseif phase==10 and stageTime>8 then
     probe(veh,'after_wheel_break')
+    phase=10.5
+  elseif phase==10.5 and received('after_wheel_break') then
     spawn.safeTeleport(veh,vec3(0,0,1),quat(0,0,0,1))
     event('final_repair_reset',veh)
     phase,stageTime=11,0
   elseif phase==11 and stageTime>5 then
     probe(veh,'final_repaired')
+    phase=11.5
+  elseif phase==11.5 and received('final_repaired') then
     extensions.acng_core.setTelemetryEnabled(false)
     extensions.acng_core.setEnabled(false)
     result.completed=true;event('complete',veh);phase=12
