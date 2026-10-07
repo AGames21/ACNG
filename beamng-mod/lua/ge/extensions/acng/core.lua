@@ -6,16 +6,28 @@ local attachedCaptureId
 local captureSerial = 0
 local captureSession = tostring(os.time())
 local pollTime = 0
+local perfId
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
 local function stopVehicle()
   if attachedId then
     local veh = be:getObjectByID(attachedId)
-    if veh then veh:queueLuaCommand("if extensions.acng_telemetry then extensions.acng_telemetry.stop() end") end
+    if veh then veh:queueLuaCommand("if extensions.isExtensionLoaded('acng_telemetry') then extensions.acng_telemetry.stop() end") end
   end
   attachedId = nil
   attachedCaptureId = nil
+end
+local function stopPerf()
+  if perfId then
+    local veh = be:getObjectByID(perfId)
+    if veh then veh:queueLuaCommand("extensions.unload('acng_perf')") end
+  end
+  perfId = nil
+end
+local function stopAll()
+  stopVehicle()
+  stopPerf()
 end
 local function onExtensionLoaded()
   config = defaults()
@@ -36,6 +48,7 @@ local function setEnabled(value)
   config.enabled = value == true
   -- No implemented dynamics modules yet. Pending features stay inactive.
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=0')
+  if not config.enabled then stopPerf() else pollTime = 0.25 end
   return config.enabled
 end
 local function setTelemetryEnabled(value)
@@ -43,12 +56,21 @@ local function setTelemetryEnabled(value)
   if not config.telemetry.enabled then stopVehicle() end
 end
 local function onUpdate(dtReal)
-  if not config or not config.telemetry.enabled then return end
+  if not config or not (config.enabled or config.telemetry.enabled) then return end
   pollTime = pollTime + dtReal
   if pollTime < 0.25 then return end
   pollTime = 0
   local veh = be:getPlayerVehicle(0)
   local id = veh and veh:getID()
+  -- The read-only performance timer follows the player vehicle while the master is ON.
+  if config.enabled and id ~= perfId then
+    stopPerf()
+    if veh then
+      veh:queueLuaCommand("extensions.load('acng_perf')")
+      perfId = id
+    end
+  end
+  if not config.telemetry.enabled then return end
   if id ~= attachedId then
     stopVehicle()
     if veh then
@@ -68,16 +90,21 @@ local function onVehicleSpawned(id)
     attachedId, attachedCaptureId = nil, nil
     pollTime = 0.25
   end
+  if id == perfId then
+    perfId = nil
+    pollTime = 0.25
+  end
 end
 local function getStatus()
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
+    performance_timer_vehicle_id=perfId,
     implemented_physics_features={}, physics_writes=0}
 end
 M.onExtensionLoaded = onExtensionLoaded
-M.onExtensionUnloaded = stopVehicle
-M.onClientEndMission = stopVehicle
+M.onExtensionUnloaded = stopAll
+M.onClientEndMission = stopAll
 M.onUpdate = onUpdate
 M.onVehicleSpawned = onVehicleSpawned
 M.setEnabled = setEnabled

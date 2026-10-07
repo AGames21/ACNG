@@ -1,0 +1,20 @@
+{
+  "domElement": "<acng-perf-timer></acng-perf-timer>",
+  "name": "ACNG Performance Timer",
+  "description": "Original launch and braking timer: 0-60 mph / 0-100 km/h, quarter mile with trap speed, and 60-0 / 100-0 stopping distance. Measured in simulation time; read-only.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "right": "24px",
+    "top": "120px",
+    "width": "330px",
+    "height": "205px"
+  },
+  "author": "ACNG",
+  "version": "0.1",
+  "directive": "acngPerfTimer",
+  "category": "Dashboard",
+  "preserveAspectRatio": true,
+  "interactive": "yes"
+}

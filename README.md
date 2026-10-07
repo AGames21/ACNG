@@ -2,7 +2,7 @@
 
 An original modular BeamNG.drive mod aiming for Assetto Corsa-like driving and motorsport systems while retaining BeamNG's deformation and damage physics.
 
-**Foundation prototype, not a new tire model.** Master and all physics features default OFF. Current code is a harmless control plane plus an explicitly enabled passive telemetry reader. Assetto Corsa is a local behavioral reference, never redistributed.
+**Foundation prototype, not a new tire model.** Master and all physics features default OFF. Current code is a harmless control plane, an explicitly enabled passive telemetry reader, and two read-only UI apps: the racing HUD (`docs/RACING-HUD.md`) and the performance timer (0-60, 1/4 mile, 60-0; `docs/PERF-TIMER.md`). Assetto Corsa is a local behavioral reference, never redistributed.
 
 Start with the existing Obsidian vault's `ACNG/ACNG Dashboard.md` and `ACNG/Current Status.md`, then Git status/history and mirrored `docs/STATUS.md`. The original Home dashboard was renamed during setup; preserve its current name. Read AGENTS.md for durable-memory and safety rules. Architecture, roadmap, testing and first benchmark are in `docs/`; verified setup is summarized in `docs/milestones/SETUP.md`. Game paths are local-only. External tools are pinned and installed in workspace `work/`; no administrator or global runtime changes are needed for the foundation.
 

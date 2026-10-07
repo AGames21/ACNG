@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const model=require('../beamng-mod/ui/modules/apps/ACNGRacingHUD/app.js');
 let m=model({electrics:{wheelspeed:26.8224,gear:'R',throttle:2,brake:-1},engineInfo:[0,7000,0,0,6800]},false);
 assert.equal(m.speed,60);assert.equal(m.gear,'R');assert.equal(m.shift,true);assert.equal(m.pedals[0].percent,100);assert.equal(m.pedals[1].percent,0);assert.equal(m.pedals[2].value,null);
-m=model({},true);assert.equal(m.speed,'?');assert.equal(m.ratio,null);assert.equal(m.gear,'?');assert.equal(m.shift,false);
+m=model({},true);assert.equal(m.speed,'\u2014');assert.equal(m.ratio,null);assert.equal(m.gear,'\u2014');assert.equal(m.shift,false);
 m=model({electrics:{wheelspeed:10,gear:'N',brake:NaN},engineInfo:[0,0,0,0,500]},true);assert.equal(m.speed,36);assert.equal(m.ratio,null);assert.equal(m.pedals[1].value,null);
 console.log('HUD data checks passed: unit conversion, reverse/neutral, missing data, invalid limits and pedal clamping.');
 

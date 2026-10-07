@@ -141,13 +141,20 @@ class LuaContracts(unittest.TestCase):
         self.assertEqual(len(self.lua.globals().commands), 0)
         mod.setEnabled(True)
         mod.onUpdate(1)
-        self.assertEqual(len(self.lua.globals().commands), 0)
+        # Master ON attaches only the read-only performance timer.
+        self.assertEqual(len(self.lua.globals().commands), 1)
+        self.assertIn("extensions.load('acng_perf')", self.lua.globals().commands[1])
         self.assertEqual(mod.getStatus()["physics_writes"], 0)
         mod.setTelemetryEnabled(True)
         mod.onUpdate(1)
-        self.assertEqual(len(self.lua.globals().commands), 1)
+        self.assertEqual(len(self.lua.globals().commands), 2)
+        self.assertIn("acng_telemetry.start", self.lua.globals().commands[2])
         mod.setTelemetryEnabled(False)
-        self.assertIn("stop()", self.lua.globals().commands[2])
+        self.assertIn("stop()", self.lua.globals().commands[3])
+        mod.setEnabled(False)
+        self.assertIn("extensions.unload('acng_perf')", self.lua.globals().commands[4])
+        mod.onUpdate(1)
+        self.assertEqual(len(self.lua.globals().commands), 4)
 
     def test_reader_no_catchup_and_reset_boundary(self):
         self.lua.execute('''
@@ -195,6 +202,115 @@ class LuaContracts(unittest.TestCase):
         self.assertNotEqual(first,mod.getStatus()['attached_capture_id'])
         self.assertEqual(mod.getStatus()['physics_writes'],0)
 
+
+    def load_perf(self):
+        self.lua.execute("guihooks={trigger=function() end}")
+        return self.lua.execute((ROOT / "beamng-mod/lua/vehicle/extensions/acng/perf.lua").read_text())
+
+    def drive(self, mod, state, speed0, accel, seconds, brake=0, throttle=0):
+        # Constant acceleration with deliberately uneven frame times.
+        dts, t, speed = (1 / 60, 1 / 45, 1 / 75), 0.0, speed0
+        i = 0
+        while t < seconds:
+            dt = dts[i % 3]; i += 1
+            speed = max(0.0, speed + accel * dt); t += dt
+            mod.step(state, dt, speed, brake, throttle)
+        return speed
+
+    def test_perf_timer_launch_targets_and_quarter_mile(self):
+        mod = self.load_perf()
+        state = mod.newState()
+        mod.step(state, 1 / 60, 0, 0, 0)
+        self.assertEqual(state.mode, "armed")
+        self.drive(mod, state, 0.0, 5.0, 20)
+        start, a = 0.15, 5.0
+        for key, target in (("mph_0_60", 60 * 0.44704), ("kmh_0_100", 100 / 3.6),
+                            ("mph_0_100", 100 * 0.44704), ("kmh_0_200", 200 / 3.6)):
+            self.assertAlmostEqual(state.last[key].time_s, (target - start) / a, places=6, msg=key)
+        t = (-start + (start ** 2 + 2 * a * 402.336) ** 0.5) / a
+        self.assertAlmostEqual(state.last.quarter_mile.time_s, t, places=6)
+        self.assertAlmostEqual(state.last.quarter_mile.trap_speed_m_s, start + a * t, places=6)
+        self.assertEqual(state.mode, "rolling")  # all targets done; no stale run left open
+
+    def test_perf_braking_distance_and_rejections(self):
+        mod = self.load_perf()
+        state = mod.newState()
+        mod.step(state, 1 / 60, 33.0, 0, 0)
+        self.drive(mod, state, 33.0, -8.0, 6, brake=1)
+        for key, target in (("mph_60_0", 60 * 0.44704), ("kmh_100_0", 100 / 3.6)):
+            self.assertAlmostEqual(state.last[key].distance_m, (target ** 2 - 0.3 ** 2) / 16, places=6, msg=key)
+            self.assertAlmostEqual(state.last[key].time_s, (target - 0.3) / 8, places=6, msg=key)
+        self.assertEqual(state.mode, "armed")
+        best = state.best.mph_60_0.distance_m
+        # Coasting through the threshold without braking is not a braking run.
+        fresh = mod.newState()
+        mod.step(fresh, 1 / 60, 33.0, 0, 0)
+        self.drive(mod, fresh, 33.0, -8.0, 6, brake=0)
+        self.assertIsNone(fresh.last.mph_60_0)
+        # A worse stop updates last but keeps the best.
+        mod.step(state, 1 / 60, 33.0, 0, 0)
+        self.drive(mod, state, 33.0, -6.0, 7, brake=1)
+        self.assertGreater(state.last.mph_60_0.distance_m, best)
+        self.assertAlmostEqual(state.best.mph_60_0.distance_m, best, places=9)
+
+    def test_perf_pause_reset_and_no_writes(self):
+        self.lua.execute('''
+        sent={}
+        speed=0
+        obj={getVelocity=function() return {length=function() return speed end} end}
+        electrics={values={brake=0,throttle=0}}
+        ''')
+        mod = self.load_perf()
+        self.lua.execute("guihooks={trigger=function(name,data) sent[#sent+1]=data end}")
+        g = self.lua.globals()
+        mod.updateGFX(1 / 60)
+        g.speed = 3.0
+        mod.updateGFX(0.5)
+        self.assertEqual(mod.getSnapshot().mode, "launch")
+        run_time = mod.getSnapshot().run_time_s
+        mod.updateGFX(0)  # paused simulation: time must not advance
+        self.assertEqual(mod.getSnapshot().run_time_s, run_time)
+        mod.onReset()
+        self.assertIsNone(mod.getSnapshot().run_time_s)
+        g.speed = 0
+        mod.updateGFX(1 / 60)
+        self.assertEqual(mod.getSnapshot().mode, "armed")
+        self.assertGreater(len(g.sent), 0)
+        source = (ROOT / "beamng-mod/lua/vehicle/extensions/acng/perf.lua").read_text()
+        for write in ("input.event", "applyForce", "setFriction", "queueLuaCommand", "setGearboxMode"):
+            self.assertNotIn(write, source)
+
+    def test_vehicle_guards_do_not_autoload_extensions(self):
+        # BeamNG's extensions table loads unknown names on access, so
+        # "if extensions.x then" would load x just to test for it.
+        import re
+        for path in list((ROOT / "beamng-mod").rglob("*.lua")) + list((ROOT / "beamng-mod").rglob("*.js")):
+            text = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"(?:if|and|not)\s+extensions\.(acng_\w+)", text):
+                self.assertEqual(match.group(1), "acng_core", f"{path.name}: guard on {match.group(1)}")
+
+    def test_perf_follows_vehicle_switch_and_respawn(self):
+        self.lua.execute('''
+        commands={}; current=5
+        local function vehicle(id) return {getID=function() return id end,
+          queueLuaCommand=function(self,cmd) commands[#commands+1]=id..':'..cmd end} end
+        be={getPlayerVehicle=function() return vehicle(current) end,getObjectByID=function(self,id) return vehicle(id) end}
+        jsonReadFile=function() return {schema_version=1,enabled=false,telemetry={enabled=false,rate_hz=50,port=44443}} end
+        ''')
+        mod = self.lua.execute((ROOT / "beamng-mod/lua/ge/extensions/acng/core.lua").read_text())
+        mod.onExtensionLoaded()
+        mod.setEnabled(True)
+        mod.onUpdate(0.01)
+        g = self.lua.globals()
+        self.assertEqual(g.commands[1], "5:extensions.load('acng_perf')")
+        g.current = 7
+        mod.onUpdate(0.3)
+        self.assertEqual(g.commands[2], "5:extensions.unload('acng_perf')")
+        self.assertEqual(g.commands[3], "7:extensions.load('acng_perf')")
+        mod.onVehicleSpawned(7)  # same object, new vehicle VM
+        mod.onUpdate(0.01)
+        self.assertEqual(g.commands[4], "7:extensions.load('acng_perf')")
+        self.assertEqual(mod.getStatus()["performance_timer_vehicle_id"], 7)
 
 if __name__ == "__main__":
     unittest.main()
