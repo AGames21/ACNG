@@ -1,21 +1,35 @@
 {
-  "instructions": "Drive a stock lap; HEAT ON; reset to start; compare the same corner cold vs 75-105 C. Leave WEAR OFF.",
-  "layout": "/settings/ui_apps/layouts/acng_tire_playtest.uilayout.json",
-  "model": "etkc",
-  "ready": true,
-  "status": {
-    "enabled": false,
-    "features": {
-      "tire_temperature": false,
-      "tire_wear": false
-    },
-    "implemented_physics_features": [
-      "tire_temperature",
-      "tire_wear"
-    ],
-    "physics_writes": 0,
-    "schema_version": 1,
-    "telemetry_enabled": false
+  "button_checks":{
+    "tire_temperature_false":true,
+    "tire_temperature_true":true,
+    "tire_wear_false":true,
+    "tire_wear_true":true
   },
-  "test": "Tire heat playtest"
+  "instructions":"Drive a stock lap; HEAT ON; reset to start; compare the same corner cold vs 75-105 C. Leave WEAR OFF.",
+  "layout":"/settings/ui_apps/layouts/acng_tire_playtest.uilayout.json",
+  "model":"etkc",
+  "ready":true,
+  "status":{
+    "assist_levels":{
+      "abs":2,
+      "tc":2
+    },
+    "enabled":false,
+    "features":{
+      "abs":false,
+      "tc":false,
+      "tire_temperature":false,
+      "tire_wear":false
+    },
+    "implemented_physics_features":[
+      "tire_temperature",
+      "tire_wear",
+      "abs",
+      "tc"
+    ],
+    "physics_writes":0,
+    "schema_version":1,
+    "telemetry_enabled":false
+  },
+  "test":"Tire heat playtest"
 }

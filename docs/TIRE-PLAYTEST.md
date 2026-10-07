@@ -14,3 +14,5 @@ Master OFF restores factory settings. For a fresh stock A/B run also reset the v
 Prior evidence: T004 16 checks and T005 19 checks, stock ETK on Small Grid. This is the first human road-course evaluation, not a verified handling match to AC. Known limitation: pressure rose about 11.5 psi on the sustained limit-circle test, and needs calibration. FFB, compounds, assists and complete race sessions are not being claimed here.
 
 Next: adjust this feature using the user's feedback and telemetry, then move to the native ABS/TC feature after reconciling Claude's unfinished work. No more lap-timer work unless a blocker appears.
+
+Relaunched 2026-10-07 by Claude after the button fix (`ae5bbee`): `scripts/launch-lab.ps1 -Experiment TirePlay -LabUser <fresh ACNG-tireplay-<id>\current>`. The scene clicked HEAT on/off and WEAR on/off through the real app buttons (all four reached the game), then set the master back OFF. Result: `docs/test-results/tire-playtest-ready.json`.

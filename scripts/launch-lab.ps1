@@ -1,4 +1,4 @@
-param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab')][string]$Experiment='Smoke',[string]$LabUser)
+param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay')][string]$Experiment='Smoke',[string]$LabUser)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path $PSScriptRoot -Parent
 $paths=Get-Content (Join-Path $repoRoot '.local\paths.json') -Raw | ConvertFrom-Json
