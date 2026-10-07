@@ -1,4 +1,4 @@
--- ACNG control plane. Foundation version never changes vehicle physics.
+-- ACNG control plane. Physics features stay off unless the master and the feature are ON.
 local M = {}
 local config
 local attachedId
@@ -10,6 +10,12 @@ local perfId
 -- Read-only driver apps that follow the player vehicle while the master is ON.
 local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
+-- Physics features that are implemented and lab-validated. Each loads into the player
+-- vehicle while the master and its own flag are ON; unloading restores stock values.
+local IMPLEMENTED = {tire_temperature=true}
+local TIRES_LOAD = "extensions.load('acng_tires')"
+local TIRES_UNLOAD = "extensions.unload('acng_tires')"
+local tiresId
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
@@ -28,9 +34,23 @@ local function stopPerf()
   end
   perfId = nil
 end
+local function stopTires()
+  if tiresId then
+    local veh = be:getObjectByID(tiresId)
+    if veh then veh:queueLuaCommand(TIRES_UNLOAD) end
+  end
+  tiresId = nil
+end
+local function tiresWanted()
+  return config and config.enabled and config.features and config.features.tire_temperature == true
+end
+local function physicsWrites()
+  return tiresId and 1 or 0
+end
 local function stopAll()
   stopVehicle()
   stopPerf()
+  stopTires()
 end
 local function onExtensionLoaded()
   config = defaults()
@@ -44,15 +64,27 @@ local function onExtensionLoaded()
     config.enabled = saved.enabled == true
     config.developer_mode = saved.developer_mode == true
     if saved.telemetry then config.telemetry.enabled = saved.telemetry.enabled == true end
+    if type(saved.features) == 'table' then
+      config.features = config.features or {}
+      for name in pairs(IMPLEMENTED) do config.features[name] = saved.features[name] == true end
+    end
   end
   log('I', 'ACNG', 'FOUNDATION_LOADED schema=1 master=' .. tostring(config.enabled) .. ' physics_writes=0')
 end
 local function setEnabled(value)
   config.enabled = value == true
-  -- No implemented dynamics modules yet. Pending features stay inactive.
-  log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=0')
-  if not config.enabled then stopPerf() else pollTime = 0.25 end
+  if not config.enabled then stopPerf(); stopTires() else pollTime = 0.25 end
+  log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
   return config.enabled
+end
+-- Only implemented features can be switched; reserved flags stay off.
+local function setFeature(name, value)
+  if not config or not IMPLEMENTED[name] then return false end
+  config.features = config.features or {}
+  config.features[name] = value == true
+  if not tiresWanted() then stopTires() else pollTime = 0.25 end
+  log('I', 'ACNG', 'FEATURE ' .. name .. '=' .. tostring(config.features[name]))
+  return config.features[name]
 end
 local function setTelemetryEnabled(value)
   config.telemetry.enabled = value == true
@@ -71,6 +103,13 @@ local function onUpdate(dtReal)
     if veh then
       veh:queueLuaCommand(APPS_LOAD)
       perfId = id
+    end
+  end
+  if tiresWanted() and id ~= tiresId then
+    stopTires()
+    if veh then
+      veh:queueLuaCommand(TIRES_LOAD)
+      tiresId = id
     end
   end
   if not config.telemetry.enabled then return end
@@ -97,13 +136,19 @@ local function onVehicleSpawned(id)
     perfId = nil
     pollTime = 0.25
   end
+  if id == tiresId then
+    tiresId = nil
+    pollTime = 0.25
+  end
 end
 local function getStatus()
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
-    implemented_physics_features={}, physics_writes=0}
+    tires_vehicle_id=tiresId,
+    features={tire_temperature=config and config.features and config.features.tire_temperature == true or false},
+    implemented_physics_features={'tire_temperature'}, physics_writes=physicsWrites()}
 end
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = stopAll
@@ -112,5 +157,6 @@ M.onUpdate = onUpdate
 M.onVehicleSpawned = onVehicleSpawned
 M.setEnabled = setEnabled
 M.setTelemetryEnabled = setTelemetryEnabled
+M.setFeature = setFeature
 M.getStatus = getStatus
 return M
