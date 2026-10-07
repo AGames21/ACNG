@@ -1,0 +1,82 @@
+{
+  "test": "L001",
+  "variants": {
+    "before-fix": {
+      "raw_sha256": "7afc386f096e627324286f80309f4742a5bb064940ab978d9817f4be762c2c8a",
+      "raw_repository_path": "telemetry\\runs\\l001-before-fix.jsonl",
+      "receiver": {
+        "accepted": 354,
+        "malformed": 0,
+        "sequence_gaps": 0,
+        "out_of_order": 0,
+        "duration_requested_s": 180.0,
+        "port": 44443,
+        "output": "telemetry\\runs\\l001-before-fix.jsonl"
+      },
+      "segments": [
+        {
+          "capture_id": null,
+          "vehicle_model": null,
+          "vehicle_id": 18051,
+          "generation": 1,
+          "samples": 174
+        },
+        {
+          "capture_id": null,
+          "vehicle_model": null,
+          "vehicle_id": 18051,
+          "generation": 2,
+          "samples": 180
+        }
+      ]
+    },
+    "after-fix": {
+      "raw_sha256": "df9615f7db4ad60db772650ffe9884f5934cd5040c8b7eab78ec05b1729ff442",
+      "raw_repository_path": "telemetry\\runs\\l001-after-fix.jsonl",
+      "receiver": {
+        "accepted": 830,
+        "malformed": 0,
+        "sequence_gaps": 0,
+        "out_of_order": 0,
+        "duration_requested_s": 150.0,
+        "port": 44443,
+        "output": "telemetry\\runs\\l001-after-fix.jsonl"
+      },
+      "segments": [
+        {
+          "capture_id": "1791349323:1",
+          "vehicle_model": "etkc",
+          "vehicle_id": 18051,
+          "generation": 1,
+          "samples": 174
+        },
+        {
+          "capture_id": "1791349323:1",
+          "vehicle_model": "etkc",
+          "vehicle_id": 18051,
+          "generation": 2,
+          "samples": 180
+        },
+        {
+          "capture_id": "1791349323:2",
+          "vehicle_model": "etkc",
+          "vehicle_id": 18051,
+          "generation": 1,
+          "samples": 238
+        },
+        {
+          "capture_id": "1791349323:3",
+          "vehicle_model": "pickup",
+          "vehicle_id": 18051,
+          "generation": 1,
+          "samples": 238
+        }
+      ]
+    }
+  },
+  "after_has_three_captures": true,
+  "after_models": [
+    "etkc",
+    "pickup"
+  ]
+}

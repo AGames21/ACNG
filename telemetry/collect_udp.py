@@ -27,7 +27,7 @@ def collect(output, duration=30.0, port=44443):
                 seq = row["sequence"]
                 if not isinstance(seq, int) or seq < 1:
                     raise ValueError("invalid sequence")
-                key = (row["vehicle_id"], row["generation"])
+                key = (row.get("capture_id"), row["vehicle_id"], row["generation"])
                 prior = last.get(key)
                 if prior is not None:
                     counts["sequence_gaps"] += max(0, seq - prior - 1)

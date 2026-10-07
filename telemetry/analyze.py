@@ -21,9 +21,9 @@ def crossing(rows, speed, descending=False):
 def analyze(rows, mode, target_mph):
     if len(rows) < 2:
         raise ValueError("At least two samples required")
-    identity = {(r.get("vehicle_id"), r.get("generation")) for r in rows}
+    identity = {(r.get("capture_id"), r.get("vehicle_id"), r.get("generation")) for r in rows}
     if len(identity) != 1:
-        raise ValueError("Split runs at vehicle changes or resets")
+        raise ValueError("Split runs at capture restarts, vehicle changes or resets")
     for a, b in zip(rows, rows[1:]):
         if not b["sim_time_s"] > a["sim_time_s"]:
             raise ValueError("Non-monotonic simulation time")

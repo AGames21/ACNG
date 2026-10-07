@@ -6,6 +6,7 @@ local elapsed = 0
 local simTime = 0
 local seq = 0
 local generation = 0
+local captureId, vehicleModel
 local function number(value)
   if type(value) == 'number' and value == value and math.abs(value) < math.huge then return value end
 end
@@ -14,11 +15,16 @@ local function read(method, ...)
   local ok, value = pcall(obj[method], obj, ...)
   if ok then return number(value) end
 end
+local function readVector(method)
+  if not obj[method] then return nil end
+  local ok, value = pcall(obj[method], obj)
+  if ok and value then return {number(value.x),number(value.y),number(value.z)} end
+end
 local function stop()
   if udp then udp:close() end
   udp = nil
 end
-local function start(rate, port)
+local function start(rate, port, identity, model)
   stop()
   rate = math.max(1, math.min(100, tonumber(rate) or 50))
   port = tonumber(port) or 44443
@@ -30,6 +36,8 @@ local function start(rate, port)
   if not ok then stop(); return false end
   interval, elapsed, simTime, seq = 1 / rate, 0, 0, 0
   generation = generation + 1
+  captureId = type(identity) == 'string' and identity or nil
+  vehicleModel = type(model) == 'string' and model ~= '' and model or nil
   log('I', 'ACNG', 'TELEMETRY_STARTED passive=true rate=' .. rate)
   return true
 end
@@ -58,9 +66,12 @@ local function updateGFX(dt)
     }
   end
   local row = {schema_version=1, source='beamng', sequence=seq, generation=generation,
+    capture_id=captureId, vehicle_model=vehicleModel,
     vehicle_id=obj:getId(), sim_time_s=simTime, sample_dt_s=dt,
     speed_m_s=number(vel:length()), position_m={pos.x,pos.y,pos.z},
     velocity_world_m_s={vel.x,vel.y,vel.z},
+    forward_world_native=readVector('getDirectionVector'),
+    up_world_native=readVector('getDirectionVectorUp'),
     acceleration_sensor_native={number(sensors.gx),number(sensors.gy),number(sensors.gz)},
     yaw_rate_native_rad_s=read('getYawAngularVelocity'),
     throttle=number(e.throttle), brake=number(e.brake), steering_input=number(e.steering_input),

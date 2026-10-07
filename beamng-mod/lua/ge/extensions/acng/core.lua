@@ -2,6 +2,9 @@
 local M = {}
 local config
 local attachedId
+local attachedCaptureId
+local captureSerial = 0
+local captureSession = tostring(os.time())
 local pollTime = 0
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
@@ -12,6 +15,7 @@ local function stopVehicle()
     if veh then veh:queueLuaCommand("if extensions.acng_telemetry then extensions.acng_telemetry.stop() end") end
   end
   attachedId = nil
+  attachedCaptureId = nil
 end
 local function onExtensionLoaded()
   config = defaults()
@@ -48,21 +52,34 @@ local function onUpdate(dtReal)
   if id ~= attachedId then
     stopVehicle()
     if veh then
-      local cmd = string.format("extensions.load('acng_telemetry'); extensions.acng_telemetry.start(%d,%d)", config.telemetry.rate_hz, config.telemetry.port)
+      captureSerial = captureSerial + 1
+      attachedCaptureId = captureSession .. ':' .. captureSerial
+      local model = veh.getJBeamFilename and veh:getJBeamFilename() or ''
+      local cmd = string.format("extensions.load('acng_telemetry'); extensions.acng_telemetry.start(%d,%d,%q,%q)", config.telemetry.rate_hz, config.telemetry.port, attachedCaptureId, model)
       veh:queueLuaCommand(cmd)
       attachedId = id
     end
   end
 end
+local function onVehicleSpawned(id)
+  -- BeamNG can reuse a GE object ID while replacing its entire vehicle Lua VM.
+  -- The old reader no longer exists; polling only the object ID misses this.
+  if id == attachedId then
+    attachedId, attachedCaptureId = nil, nil
+    pollTime = 0.25
+  end
+end
 local function getStatus()
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
-    attached_vehicle_id=attachedId, implemented_physics_features={}, physics_writes=0}
+    attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
+    implemented_physics_features={}, physics_writes=0}
 end
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = stopVehicle
 M.onClientEndMission = stopVehicle
 M.onUpdate = onUpdate
+M.onVehicleSpawned = onVehicleSpawned
 M.setEnabled = setEnabled
 M.setTelemetryEnabled = setTelemetryEnabled
 M.getStatus = getStatus

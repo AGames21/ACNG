@@ -41,8 +41,33 @@ class AnalysisTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             analyze(rows, "acceleration", 60)
 
+    def test_rejects_new_vm_even_when_object_id_and_generation_repeat(self):
+        rows = self.rows([0,10,30])
+        rows[0]['capture_id']=rows[1]['capture_id']='first'
+        rows[2]['capture_id']='replacement'
+        with self.assertRaises(ValueError):analyze(rows,'acceleration',60)
+
 
 class ReceiverTests(unittest.TestCase):
+    def test_reused_object_id_has_independent_sequence_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as probe:
+                probe.bind(('127.0.0.1',0))
+                port=probe.getsockname()[1]
+            result={}
+            worker=threading.Thread(target=lambda:result.update(collect(Path(folder)/'test.jsonl',0.6,port)))
+            worker.start()
+            time.sleep(0.1)
+            with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sender:
+                for capture,seq in [('first',10),('replacement',1),('replacement',3)]:
+                    sender.sendto(json.dumps({'schema_version':1,'source':'beamng','sequence':seq,
+                        'capture_id':capture,'vehicle_id':5,'generation':1}).encode(),('127.0.0.1',port))
+            worker.join(3)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(result['accepted'],3)
+            self.assertEqual(result['out_of_order'],0)
+            self.assertEqual(result['sequence_gaps'],1)
+
     def test_real_loopback_loss_and_bad_payload(self):
         with tempfile.TemporaryDirectory() as folder:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
@@ -132,6 +157,26 @@ class LuaContracts(unittest.TestCase):
         mod.stop()
         mod.updateGFX(1)
         self.assertEqual(self.lua.globals().sent, 2)
+
+    def test_same_id_spawn_reattaches_with_new_capture_identity(self):
+        self.lua.execute('''
+        commands={}
+        vehicle={getID=function() return 5 end,getJBeamFilename=function() return 'etkc' end,
+          queueLuaCommand=function(self,cmd) commands[#commands+1]=cmd end}
+        be={getPlayerVehicle=function() return vehicle end,getObjectByID=function() return vehicle end}
+        jsonReadFile=function() return {schema_version=1,enabled=false,
+          telemetry={enabled=false,rate_hz=50,port=44443}} end
+        ''')
+        mod=self.lua.execute((ROOT/'beamng-mod/lua/ge/extensions/acng/core.lua').read_text())
+        mod.onExtensionLoaded()
+        mod.setTelemetryEnabled(True)
+        mod.onUpdate(0.3)
+        first=mod.getStatus()['attached_capture_id']
+        mod.onVehicleSpawned(5)
+        mod.onUpdate(0.01)
+        self.assertEqual(len(self.lua.globals().commands),2)
+        self.assertNotEqual(first,mod.getStatus()['attached_capture_id'])
+        self.assertEqual(mod.getStatus()['physics_writes'],0)
 
 
 if __name__ == "__main__":
