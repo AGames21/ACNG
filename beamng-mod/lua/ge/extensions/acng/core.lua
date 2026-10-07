@@ -7,6 +7,9 @@ local captureSerial = 0
 local captureSession = tostring(os.time())
 local pollTime = 0
 local perfId
+-- Read-only driver apps that follow the player vehicle while the master is ON.
+local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
+local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
@@ -21,7 +24,7 @@ end
 local function stopPerf()
   if perfId then
     local veh = be:getObjectByID(perfId)
-    if veh then veh:queueLuaCommand("extensions.unload('acng_perf')") end
+    if veh then veh:queueLuaCommand(APPS_UNLOAD) end
   end
   perfId = nil
 end
@@ -62,11 +65,11 @@ local function onUpdate(dtReal)
   pollTime = 0
   local veh = be:getPlayerVehicle(0)
   local id = veh and veh:getID()
-  -- The read-only performance timer follows the player vehicle while the master is ON.
+  -- The read-only performance and lap timers follow the player vehicle while the master is ON.
   if config.enabled and id ~= perfId then
     stopPerf()
     if veh then
-      veh:queueLuaCommand("extensions.load('acng_perf')")
+      veh:queueLuaCommand(APPS_LOAD)
       perfId = id
     end
   end
@@ -99,7 +102,7 @@ local function getStatus()
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
-    performance_timer_vehicle_id=perfId,
+    performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
     implemented_physics_features={}, physics_writes=0}
 end
 M.onExtensionLoaded = onExtensionLoaded

@@ -1,0 +1,20 @@
+{
+  "domElement": "<acng-lap-timer></acng-lap-timer>",
+  "name": "ACNG Lap Timer",
+  "description": "Original lap timer for any map: set a start/finish line, then see live delta to your best lap, three sectors, last, best and optimal laps. Measured in simulation time; read-only.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "right": "24px",
+    "top": "340px",
+    "width": "350px",
+    "height": "190px"
+  },
+  "author": "ACNG",
+  "version": "0.1",
+  "directive": "acngLapTimer",
+  "category": "Dashboard",
+  "preserveAspectRatio": true,
+  "interactive": "yes"
+}

@@ -144,6 +144,7 @@ class LuaContracts(unittest.TestCase):
         # Master ON attaches only the read-only performance timer.
         self.assertEqual(len(self.lua.globals().commands), 1)
         self.assertIn("extensions.load('acng_perf')", self.lua.globals().commands[1])
+        self.assertIn("extensions.load('acng_laps')", self.lua.globals().commands[1])
         self.assertEqual(mod.getStatus()["physics_writes"], 0)
         mod.setTelemetryEnabled(True)
         mod.onUpdate(1)
@@ -153,6 +154,7 @@ class LuaContracts(unittest.TestCase):
         self.assertIn("stop()", self.lua.globals().commands[3])
         mod.setEnabled(False)
         self.assertIn("extensions.unload('acng_perf')", self.lua.globals().commands[4])
+        self.assertIn("extensions.unload('acng_laps')", self.lua.globals().commands[4])
         mod.onUpdate(1)
         self.assertEqual(len(self.lua.globals().commands), 4)
 
@@ -289,6 +291,12 @@ class LuaContracts(unittest.TestCase):
             for match in re.finditer(r"(?:if|and|not)\s+extensions\.(acng_\w+)", text):
                 self.assertEqual(match.group(1), "acng_core", f"{path.name}: guard on {match.group(1)}")
 
+    def test_extension_file_names_resolve(self):
+        # BeamNG maps "acng_a_b" to acng/a/b.lua, so an underscore in a file
+        # name makes the extension unloadable by its natural name.
+        for path in list((ROOT / "beamng-mod").rglob("extensions/**/*.lua")) + list((ROOT / "tests").rglob("extensions/**/*.lua")):
+            self.assertNotIn("_", path.stem, str(path))
+
     def test_perf_follows_vehicle_switch_and_respawn(self):
         self.lua.execute('''
         commands={}; current=5
@@ -302,15 +310,16 @@ class LuaContracts(unittest.TestCase):
         mod.setEnabled(True)
         mod.onUpdate(0.01)
         g = self.lua.globals()
-        self.assertEqual(g.commands[1], "5:extensions.load('acng_perf')")
+        self.assertEqual(g.commands[1], "5:extensions.load('acng_perf'); extensions.load('acng_laps')")
         g.current = 7
         mod.onUpdate(0.3)
-        self.assertEqual(g.commands[2], "5:extensions.unload('acng_perf')")
-        self.assertEqual(g.commands[3], "7:extensions.load('acng_perf')")
+        self.assertEqual(g.commands[2], "5:extensions.unload('acng_perf'); extensions.unload('acng_laps')")
+        self.assertEqual(g.commands[3], "7:extensions.load('acng_perf'); extensions.load('acng_laps')")
         mod.onVehicleSpawned(7)  # same object, new vehicle VM
         mod.onUpdate(0.01)
-        self.assertEqual(g.commands[4], "7:extensions.load('acng_perf')")
+        self.assertEqual(g.commands[4], "7:extensions.load('acng_perf'); extensions.load('acng_laps')")
         self.assertEqual(mod.getStatus()["performance_timer_vehicle_id"], 7)
+        self.assertEqual(mod.getStatus()["lap_timer_vehicle_id"], 7)
 
 if __name__ == "__main__":
     unittest.main()
