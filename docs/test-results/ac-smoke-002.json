@@ -1,0 +1,58 @@
+{
+  "offline": true,
+  "car": "bmw_1m",
+  "track": "magione",
+  "inputs_sent": false,
+  "identity": {
+    "ac_version": "1.16.4",
+    "sm_version": "1.7",
+    "car_model": "bmw_1m",
+    "track": "magione",
+    "status": 2
+  },
+  "capture": {
+    "accepted": 733,
+    "duplicate_poll": 0,
+    "incoherent_poll": 0,
+    "inactive_poll": 0,
+    "shared_memory_version": "1.7",
+    "ac_version": "1.16.4",
+    "car_model": "bmw_1m",
+    "track": "magione",
+    "requested_poll_hz": 50,
+    "limitations": [
+      "stationary prefix smoke does not validate every channel's semantics",
+      "packet equality is not a writer lock",
+      "graphics/physics pages not atomic together",
+      "host observation time is not physics simulation time"
+    ]
+  },
+  "exit_before_cleanup": null,
+  "live_capture": true,
+  "changed_config_files": [
+    "acos.ini",
+    "assists.ini",
+    "python.ini",
+    "race.ini",
+    "user_ff.ini",
+    "video.ini"
+  ],
+  "new_config_files_preserved": [],
+  "config_restored": true,
+  "raw_sha256": "57e9794a6b274f654fe019a07b818d7c2abcba67c1ad86dcc77a0db694118d7b",
+  "raw_repository_path": "telemetry/runs/ac-idle-002.jsonl",
+  "observed_speed_range_m_s": [
+    2.6738218568627617e-05,
+    0.0010572054371651676
+  ],
+  "observed_rpm_range": [
+    900,
+    901
+  ],
+  "host_observation_span_s": 14.984999999999673,
+  "full_cfg_backup_diff_after_restoration": {
+    "added": [],
+    "removed": [],
+    "changed": []
+  }
+}
