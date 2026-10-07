@@ -14,3 +14,6 @@
 
 ## 2026-10-07 — Native damage and clear AC drag oracle
 D001 native damage14 checks passed (2,487 packets); fix cross-VM acknowledgement before repair, retain native pressure variation. Original report/scene only; production physics writes0. AC stock drag2000 offline START captured5,881 samples/110.09mph, exact cfg restore; native brake0.81–0.88 rejects full-brake comparison. Original analysis stores clock/control limits.23 automated tests pass. Commits68173c4,3ceb4d3,0f476d0. Obsidian updated/backed; both games/jobs closed. Next native-brake channel experiment and matched repeated references.
+
+## 2026-10-07 ? Visible racing HUD and pedal monitor
+Commit344a8ff adds the original native UI app, unit/pedal/master controls and isolated HUD scene. Actual game rendering verified;23 Python and Node display/bridge checks pass. Mouse click check blocked by foreground remote desktop. Packaged ZIP and screenshot under dist; primary profile unchanged. Astra Medium/Capsule preference and handoff backed up in Obsidian.

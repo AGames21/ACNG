@@ -17,3 +17,5 @@ Tests: unit contracts and real isolated game smoke; master OFF baseline/restorat
 Repository owns source/scripts/config/tests/raw telemetry/build artifacts; Obsidian owns engineering reasoning, status, decisions, discoveries, hypotheses, interpretations and plans. Mirror important guidance in repository docs. Update ACNG Current Status and related research/problems/decisions/session after meaningful work or before milestone transitions; record the actual commit and exact next action. Never rely on chat history as durable project memory.
 
 Current milestone: M2 telemetry/oracle. Completed work and known blockers live in Obsidian Current Status and mirrored docs/STATUS.md. Next agent must refresh installation state and fresh logs; old logs are not current proof.
+
+User preference (2026-10-07): keep Astra Medium to conserve credits. Use Capsule/batched compact evidence when useful; avoid needless rereads, model escalation or agent fan-out. Current priority is one or two noticeable features before deeper research. Racing HUD/pedal preview exists; see docs/RACING-HUD.md and Obsidian status for verification limits.
