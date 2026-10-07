@@ -108,6 +108,25 @@ ACTIVE=0
 [GMETER]
 ACTIVE=0
 '''
+KEYBOARD='''[HEADER]
+INPUT_METHOD=KEYBOARD
+[KEYBOARD]
+MINIMUM_STEERING=0
+STEERING_SPEED=1.75
+STEERING_OPPOSITE_DIRECTION_SPEED=2.5
+STEER_GAIN=0.18
+STEER_RESET_SPEED=1.8
+GAS=0x26
+BRAKE=0x28
+RIGHT=0x27
+LEFT=0x25
+MOUSE_STEER=0
+MOUSE_ACCELERATOR_BRAKE=0
+[STEER]
+FF_GAIN=0
+FILTER_FF=0
+MIN_FF=0
+'''
 
 
 def close_owned(process):
@@ -130,7 +149,7 @@ def close_owned(process):
         process.wait(timeout=8)
 
 
-def run(game,user,evidence,wait_seconds=60):
+def run(game,user,evidence,wait_seconds=60,mode='idle',capture_duration=15):
     game,user,evidence=map(lambda p:Path(p).resolve(),(game,user,evidence))
     if os.name!='nt':raise OSError('Windows required')
     if subprocess.check_output(['powershell','-NoProfile','-Command',
@@ -142,6 +161,12 @@ def run(game,user,evidence,wait_seconds=60):
     evidence.mkdir(parents=True)
     cfg=user/'cfg'
     overlays={'race.ini':RACE,'video.ini':VIDEO,'assists.ini':ASSISTS,'python.ini':PYTHON}
+    if mode=='benchmark':
+        # Stock launcher uses this exact configuration switch. Native benchmark
+        # may select its own stock car/track; record the observed identity.
+        overlays['race.ini']=RACE.replace('[BENCHMARK]\nACTIVE=0','[BENCHMARK]\nACTIVE=1')
+    elif mode=='keyboard':
+        overlays['controls.ini']=KEYBOARD
     originals={}
     # AC itself rewrites additional cfg files (observed acos.ini/user_ff.ini).
     # Snapshot all existing cfg files, not just our explicit overlays.
@@ -158,7 +183,8 @@ def run(game,user,evidence,wait_seconds=60):
               for name,data in originals.items()}
     (evidence/'restore-manifest.json').write_text(json.dumps(manifest,indent=2))
     process=None
-    result={'offline':True,'car':'bmw_1m','track':'magione','inputs_sent':False}
+    result={'offline':True,'requested_car':'bmw_1m','requested_track':'magione',
+            'mode':mode,'launcher_inputs_sent':False}
     try:
         for name,body in overlays.items():(cfg/name).write_text(body,encoding='utf-8')
         env=os.environ.copy()
@@ -180,9 +206,15 @@ def run(game,user,evidence,wait_seconds=60):
                     print(json.dumps(identity),flush=True)
                     result['identity']=identity
                 if g.status==2 and identity['ac_version']:
-                    if identity['car_model']!='bmw_1m' or identity['track']!='magione':
+                    if mode!='benchmark' and (identity['car_model']!='bmw_1m' or identity['track']!='magione'):
                         raise RuntimeError('Unexpected running vehicle/track')
-                    result['capture']=capture(evidence/'ac-idle.jsonl',15,50,'1.16.4')
+                    for item,folder in [('car_model','cars'),('track','tracks')]:
+                        name=identity[item]
+                        if not name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in name):
+                            raise RuntimeError('Invalid native benchmark identity')
+                        if not (game/'content'/folder/name).is_dir():
+                            raise RuntimeError('Benchmark selected unavailable content')
+                    result['capture']=capture(evidence/('ac-'+mode+'.jsonl'),capture_duration,50,'1.16.4')
                     break
             except FileNotFoundError:pass
             time.sleep(1)
@@ -214,5 +246,8 @@ if __name__=='__main__':
     p.add_argument('--user',type=Path,required=True)
     p.add_argument('--evidence',type=Path,required=True,help='Private directory outside Git (original config backups)')
     p.add_argument('--wait-seconds',type=int,default=60)
+    p.add_argument('--mode',choices=['idle','benchmark','keyboard'],default='idle')
+    p.add_argument('--capture-duration',type=float,default=15)
     a=p.parse_args()
-    run(a.game,a.user,a.evidence,a.wait_seconds)
+    if a.capture_duration<=0:p.error('Capture duration must be positive')
+    run(a.game,a.user,a.evidence,a.wait_seconds,a.mode,a.capture_duration)

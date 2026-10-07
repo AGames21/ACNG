@@ -1,0 +1,87 @@
+{
+  "offline": true,
+  "requested_car": "bmw_1m",
+  "requested_track": "magione",
+  "mode": "keyboard",
+  "identity": {
+    "ac_version": "1.16.4",
+    "sm_version": "1.7",
+    "car_model": "bmw_1m",
+    "track": "magione",
+    "status": 2
+  },
+  "capture": {
+    "accepted": 4396,
+    "duplicate_poll": 0,
+    "incoherent_poll": 0,
+    "inactive_poll": 0,
+    "shared_memory_version": "1.7",
+    "ac_version": "1.16.4",
+    "car_model": "bmw_1m",
+    "track": "magione",
+    "requested_poll_hz": 50,
+    "limitations": [
+      "stationary prefix smoke does not validate every channel's semantics",
+      "packet equality is not a writer lock",
+      "graphics/physics pages not atomic together",
+      "host observation time is not physics simulation time"
+    ]
+  },
+  "exit_before_cleanup": null,
+  "live_capture": true,
+  "changed_config_files": [
+    "acos.ini",
+    "assists.ini",
+    "controls.ini",
+    "python.ini",
+    "race.ini",
+    "user_ff.ini",
+    "video.ini"
+  ],
+  "new_config_files_preserved": [],
+  "config_restored": true,
+  "launcher_inputs_sent": false,
+  "external_inputs_sent": true,
+  "input_protocol": [
+    "idle checked >=60 seconds",
+    "focus owned offline game",
+    "click Drive at client48,174",
+    "DirectInput scan mode",
+    "Up4seconds",
+    "Down2.5seconds",
+    "keys released"
+  ],
+  "raw_repository_path": "telemetry/runs/ac-keyboard-001.jsonl",
+  "raw_sha256": "5c0405f17bf4b250089a905cc3b05b973f4fc17f7606cb353602f28f0480aea9",
+  "max_speed_m_s": 17.688859303792317,
+  "gears_observed": [
+    0,
+    1,
+    2
+  ],
+  "maximum_acceleration_vector_magnitude_native_g": 10.213815314473,
+  "wheel_temperature_ranges_native": {
+    "FL": [
+      20.0,
+      20.272075653076172
+    ],
+    "FR": [
+      20.0,
+      20.27665901184082
+    ],
+    "RL": [
+      20.0,
+      21.018070220947266
+    ],
+    "RR": [
+      20.0,
+      21.026447296142578
+    ]
+  },
+  "interpretation": "Live motion captured; car hit a pit-exit barrier. Collision-contaminated, not a valid reference driving baseline.",
+  "full_cfg_backup_diff_after_restoration": {
+    "added": [],
+    "removed": [],
+    "changed": []
+  }
+}

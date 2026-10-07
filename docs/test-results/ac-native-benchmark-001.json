@@ -1,0 +1,32 @@
+{
+  "offline": true,
+  "requested_car": "bmw_1m",
+  "requested_track": "magione",
+  "mode": "benchmark",
+  "inputs_sent": false,
+  "identity": {
+    "ac_version": "1.16.4",
+    "sm_version": "1.7",
+    "car_model": "mercedes_sls_gt3",
+    "track": "spa",
+    "status": 1
+  },
+  "exit_before_cleanup": null,
+  "live_capture": false,
+  "changed_config_files": [
+    "acos.ini",
+    "assists.ini",
+    "camera_manager.ini",
+    "python.ini",
+    "race.ini",
+    "video.ini"
+  ],
+  "new_config_files_preserved": [],
+  "config_restored": true,
+  "interpretation": "Native performance benchmark is replay playback, not a live physics oracle; no replay samples accepted.",
+  "full_cfg_backup_diff_after_restoration": {
+    "added": [],
+    "removed": [],
+    "changed": []
+  }
+}

@@ -1,4 +1,4 @@
-"""Read-only AC shared-memory prefix adapter; stationary smoke on AC 1.16.4.
+"""Read-only AC prefix adapter; stationary and short-motion smoke on AC1.16.4.
 
 Uses OpenFileMappingW, never CreateFileMapping/mmap(tagname), so an absent game
 cannot produce an empty fabricated mapping. No process attach or memory writes.
@@ -150,7 +150,7 @@ def capture(output,duration,rate,expected_version):
                         counts['accepted']+=1
             time.sleep(1/rate)
     summary={**counts,**identity,"requested_poll_hz":rate,
-        "limitations":["stationary prefix smoke does not validate every channel's semantics",
+        "limitations":["prefix reads do not validate every channel's physical semantics",
           "packet equality is not a writer lock","graphics/physics pages not atomic together",
           "host observation time is not physics simulation time"]}
     output.with_suffix('.summary.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
