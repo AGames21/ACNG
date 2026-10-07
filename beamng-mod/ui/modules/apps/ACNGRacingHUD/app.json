@@ -1,0 +1,20 @@
+{
+  "domElement": "<acng-racing-hud></acng-racing-hud>",
+  "name": "ACNG Racing HUD",
+  "description": "Original racing dashboard with gear, speed, RPM, shift lights and live pedal bars. Enable ACNG using its power button.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "left": "32%",
+    "bottom": "24px",
+    "width": "460px",
+    "height": "190px"
+  },
+  "author": "ACNG",
+  "version": "0.1",
+  "directive": "acngRacingHud",
+  "category": "Dashboard",
+  "preserveAspectRatio": true,
+  "interactive": "yes"
+}
