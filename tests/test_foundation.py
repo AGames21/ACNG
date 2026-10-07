@@ -49,6 +49,23 @@ class AnalysisTests(unittest.TestCase):
 
 
 class ReceiverTests(unittest.TestCase):
+    def test_idle_timeout_starts_only_after_accepted_sample(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as probe:
+                probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
+            started=time.monotonic()
+            result={}
+            worker=threading.Thread(target=lambda:result.update(collect(Path(folder)/'idle.jsonl',3,port,0.1)))
+            worker.start();time.sleep(0.2)
+            with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sender:
+                sender.sendto(json.dumps({'schema_version':1,'source':'beamng','sequence':1,
+                    'vehicle_id':1,'generation':1}).encode(),('127.0.0.1',port))
+            worker.join(2)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(result['accepted'],1)
+            self.assertEqual(result['finish_reason'],'idle_after_samples')
+            self.assertGreater(time.monotonic()-started,0.2)
+
     def test_reused_object_id_has_independent_sequence_history(self):
         with tempfile.TemporaryDirectory() as folder:
             with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as probe:

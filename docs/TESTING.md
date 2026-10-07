@@ -14,4 +14,10 @@ AC stationary smoke: `python scripts/ac-offline-smoke.py --game <AC-install> --u
 
 Memory check: `python tools/vault_check.py` reads ignored local path configuration, requires an existing `.obsidian`, and validates required ACNG notes/qualified wikilinks without writing notes.
 
+L001: `scripts/launch-lab.ps1 -Experiment Lifecycle -LabUser <fresh-no-space-profile/current>` runs actual reset, same-ID reload and stock model switch. Capture identity + vehicle ID + reset generation delimit streams; reattachment occurs on native onVehicleSpawned. See L001-lifecycle.md for before/after proof.
+
+B002: launch `-Experiment Repeats` in a fresh profile while collecting with `--duration 600 --idle-timeout 45`. Idle timeout begins only after the first accepted sample. Run `python -m telemetry.baseline_report <raw> <events> --output <unique-report.json>` after receiver completion; it enforces clean receiver counters and identical actual starts, not just requested transforms. Native replaceVehicle retained old position; safeTeleport after initialization is required. First set001 is provisional;002 passed. Recorded control edges delimit maneuvers so warm-up motion cannot supply a false stopping crossing.
+
+AC native benchmark mode was replay, not live physics, and was rejected. Keyboard mode supplies original temporary controls with wheel FFB gain0; OS input must be separately authorized/unattended and checked by Universal Modder idle/foreground protection. Record external input provenance separately from the launcher's no-input behavior. First short motion hit a pit barrier; retain as motion/collision sanity only. Choose a clear grid/start area before clean reference benchmarks.
+
 For every dynamics change: baseline, original implementation, same maneuver, comparison, performance check, damage regression, documented conclusion. Cover AI, controls, powertrain, soft-body deformation, bent suspension, deflated/missing wheel and unrelated stock vehicles. Require reset if restore cannot be proven.

@@ -1,14 +1,14 @@
 # ACNG status
 
-Updated: 2026-10-06 (America/Chicago).
+Updated: 2026-10-07 (America/Chicago).
 
 Current milestone: M1 foundation smoke validated; M2 telemetry/oracle active. No physics tuning.
 
 Current working features: real BeamNG independent-mod load, default-OFF master lifecycle, passive wheel/vehicle telemetry, UDP collection, crossing/distance analysis, chart generation, isolated deployment/launch, offline AC read-only shared-memory capture, full cfg backup/restoration. Durable Obsidian ACNG memory includes linked status, decisions, research, vehicles, test interpretations and session handoff; updates are backed up.
 
-Last successful tests: seven real BeamNG smoke checks; stock ETK pilot with 792 packets and no reported UDP loss; two AC BMW 1M/Magione stationary captures with 733 samples each; second run automatically restored all six changed cfg files and full backup diff was clean. Thirteen automated contracts passed. Original native fixture compiled/executed and analyzed by REA/Ghidra; both MCP handshakes/list-tools passed.
+Last successful tests: real same-ID reset/reload/switch lifecycle now captures all segments (830 packets, no reported loss); corrected five-repeat ETK stock protocol4019 packets, starts within0.11mm, no loss;21 automated contracts pass. Median0–60 is4.6639s,0–1009.9346s,60–0 distance29.9170m,100–0 distance85.3955m. AC keyboard motion4396 samples reached39.57mph and exposed changing core temperatures, but hit a pit barrier; excluded from clean comparison. Both games closed; primary BeamNG settings and AC cfg backup diffs clean.
 
-Known issues: native channel calibration, actual matched vehicle/setup specification, repeated driving baselines, damaged-wheel/reset/switch/AI coverage and performance profiling remain incomplete. ETK pilot stalled the engine at stop; choose stable shift/clutch method. All dynamics/FFB/racing/UI feature toggles are reserved and unimplemented. MCP registration works but tools require reconnect before appearing in this chat. No subjective wheel feedback yet.
+Known issues: matched setup/running mass, native units/filtering, clean AC benchmark route, handling/damage/AI/performance coverage remain incomplete. Braking time spread is sensitive at the0.1m/s stop threshold; investigate before grip attribution. Earlier B002001 retained old spawn transforms and is provisional;002 verifies native safe teleport. Same-ID observer reload and braking stall are solved by tested reattachment/capture IDs and clutch-depressed test protocol. All dynamics/FFB/racing/UI models remain unimplemented. MCP tools require reconnect; no subjective wheel feedback yet.
 
 Important discoveries: BeamNG 0.39.4.0.20972/build24617469 native extension route needs no DLL hooks. Primary profile has BeamMP/many mods and was left intact. ETK wheel temperatures stayed constant through the pilot; dynamic thermal support is not proved. Avoid the failing `-windowed` launch flag and quoted user-path pattern; unquoted no-space lab paths worked. AC 1.16.4/build14923034 exposes shared memory1.7. AC's prior race preset was online/modded; temporary offline stock overlays are mandatory. AC itself rewrites additional cfg files; back up the full cfg tree. Current Obsidian vault was verified from its open registration and `.obsidian`; no existing unrelated notes were changed.
 

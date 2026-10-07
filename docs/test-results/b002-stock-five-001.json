@@ -1,0 +1,506 @@
+{
+  "test": "B002 stock ETK straight-line repeats",
+  "runs": [
+    {
+      "run": 1,
+      "capture_id": "1791349713:1",
+      "samples": 1227,
+      "metrics": {
+        "0-60": {
+          "mode": "acceleration",
+          "target_mph": 60,
+          "start_time_s": 11.839331534933182,
+          "end_time_s": 16.508228697277858,
+          "elapsed_s": 4.668897162344676,
+          "distance_m": 66.27494157694304,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 516,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "0-100": {
+          "mode": "acceleration",
+          "target_mph": 100,
+          "start_time_s": 11.839331534933182,
+          "end_time_s": 21.765225055516954,
+          "elapsed_s": 9.925893520583772,
+          "distance_m": 256.89303231691156,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 516,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "60-0": {
+          "mode": "braking",
+          "target_mph": 60,
+          "start_time_s": 24.013724613877947,
+          "end_time_s": 26.257615756174076,
+          "elapsed_s": 2.2438911422961283,
+          "distance_m": 29.99009322594069,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 190,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "100-0": {
+          "mode": "braking",
+          "target_mph": 100,
+          "start_time_s": 22.47547089588378,
+          "end_time_s": 26.257615756174076,
+          "elapsed_s": 3.7821448602902947,
+          "distance_m": 85.29161605212101,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 190,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        }
+      },
+      "maneuver_windows": {
+        "launch_first_full_throttle_s": 11.323500564788,
+        "brake_first_pedal_s": 22.294501004275,
+        "method": "B002 recorded full-throttle launch and brake after exceeding100mph; include preceding samples for crossing interpolation"
+      },
+      "initial_position_m": [
+        -7.2874184592564e-05,
+        0.00063171511828841,
+        0.15474570506194
+      ],
+      "final_position_m": [
+        2.2078058748634,
+        373.2484009128,
+        0.15078136296815
+      ],
+      "final_rpm": 638.917784042,
+      "final_gear": 3,
+      "moving_velocity_forward_median_cosine": 0.9999104789375574,
+      "position_axis_spans_m": [
+        2.211690541146674,
+        373.2699130356191,
+        0.021369714458159994
+      ],
+      "maximum_abs_steering_input": 0.0015060030838617
+    },
+    {
+      "run": 2,
+      "capture_id": "1791349713:2",
+      "samples": 848,
+      "metrics": {
+        "0-60": {
+          "mode": "acceleration",
+          "target_mph": 60,
+          "start_time_s": 12.105523175347654,
+          "end_time_s": 16.775908818348693,
+          "elapsed_s": 4.670385643001039,
+          "distance_m": 66.24752185769023,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 349,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "0-100": {
+          "mode": "acceleration",
+          "target_mph": 100,
+          "start_time_s": 12.105523175347654,
+          "end_time_s": 22.0592145297389,
+          "elapsed_s": 9.953691354391244,
+          "distance_m": 257.4055386062505,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 349,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "60-0": {
+          "mode": "braking",
+          "target_mph": 60,
+          "start_time_s": 24.323917659974512,
+          "end_time_s": 26.5698820814041,
+          "elapsed_s": 2.245964421429587,
+          "distance_m": 29.932753010592396,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 186,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "100-0": {
+          "mode": "braking",
+          "target_mph": 100,
+          "start_time_s": 22.78373364102396,
+          "end_time_s": 26.5698820814041,
+          "elapsed_s": 3.7861484403801384,
+          "distance_m": 85.31177476121067,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 186,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        }
+      },
+      "maneuver_windows": {
+        "launch_first_full_throttle_s": 11.027500357479,
+        "brake_first_pedal_s": 22.60050054267,
+        "method": "B002 recorded full-throttle launch and brake after exceeding100mph; include preceding samples for crossing interpolation"
+      },
+      "initial_position_m": [
+        2.2078052882944,
+        373.2483672804,
+        0.16716770623316
+      ],
+      "final_position_m": [
+        4.477290728576,
+        748.89100287161,
+        0.15072034100022
+      ],
+      "final_rpm": 629.73590391122,
+      "final_gear": 3,
+      "moving_velocity_forward_median_cosine": 0.9999050976086936,
+      "position_axis_spans_m": [
+        2.2735366422077,
+        375.66709396543007,
+        0.03370064058890998
+      ],
+      "maximum_abs_steering_input": 0.0017350402441041
+    },
+    {
+      "run": 3,
+      "capture_id": "1791349713:3",
+      "samples": 1109,
+      "metrics": {
+        "0-60": {
+          "mode": "acceleration",
+          "target_mph": 60,
+          "start_time_s": 12.207919166941775,
+          "end_time_s": 16.83834838762075,
+          "elapsed_s": 4.630429220678977,
+          "distance_m": 65.62426286194123,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 493,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "0-100": {
+          "mode": "acceleration",
+          "target_mph": 100,
+          "start_time_s": 12.207919166941775,
+          "end_time_s": 22.076712637170967,
+          "elapsed_s": 9.868793470229193,
+          "distance_m": 255.36114795975263,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 493,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "60-0": {
+          "mode": "braking",
+          "target_mph": 60,
+          "start_time_s": 24.265946746289274,
+          "end_time_s": 26.518297654319024,
+          "elapsed_s": 2.252350908029751,
+          "distance_m": 29.991137286707296,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 299,
+          "max_sample_gap_s": 0.024000001606001575,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "100-0": {
+          "mode": "braking",
+          "target_mph": 100,
+          "start_time_s": 22.726907671418562,
+          "end_time_s": 26.518297654319024,
+          "elapsed_s": 3.791389982900462,
+          "distance_m": 85.31803425412622,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 299,
+          "max_sample_gap_s": 0.024000001606001575,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        }
+      },
+      "maneuver_windows": {
+        "launch_first_full_throttle_s": 11.064500246197,
+        "brake_first_pedal_s": 22.581000662409,
+        "method": "B002 recorded full-throttle launch and brake after exceeding100mph; include preceding samples for crossing interpolation"
+      },
+      "initial_position_m": [
+        4.4772989076341,
+        748.89093187484,
+        0.16707547137048
+      ],
+      "final_position_m": [
+        6.4960334735997,
+        1119.6126212925,
+        0.15048129154374
+      ],
+      "final_rpm": 635.96680854997,
+      "final_gear": 3,
+      "moving_velocity_forward_median_cosine": 0.999908181879043,
+      "position_axis_spans_m": [
+        2.0222162823493006,
+        370.74462528359993,
+        0.03366995388387001
+      ],
+      "maximum_abs_steering_input": 0.0025102072380326
+    },
+    {
+      "run": 4,
+      "capture_id": "1791349713:4",
+      "samples": 964,
+      "metrics": {
+        "0-60": {
+          "mode": "acceleration",
+          "target_mph": 60,
+          "start_time_s": 12.142576016191786,
+          "end_time_s": 16.794547056767097,
+          "elapsed_s": 4.651971040575312,
+          "distance_m": 66.14812899192752,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 348,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "0-100": {
+          "mode": "acceleration",
+          "target_mph": 100,
+          "start_time_s": 12.142576016191786,
+          "end_time_s": 22.074133885759615,
+          "elapsed_s": 9.931557869567829,
+          "distance_m": 257.3027701602732,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 348,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "60-0": {
+          "mode": "braking",
+          "target_mph": 60,
+          "start_time_s": 24.33145423275851,
+          "end_time_s": 26.836516537719273,
+          "elapsed_s": 2.505062304960763,
+          "distance_m": 29.917463180527385,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 182,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "100-0": {
+          "mode": "braking",
+          "target_mph": 100,
+          "start_time_s": 22.78637721184746,
+          "end_time_s": 26.836516537719273,
+          "elapsed_s": 4.050139325871815,
+          "distance_m": 85.459722192511,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 182,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        }
+      },
+      "maneuver_windows": {
+        "launch_first_full_throttle_s": 11.065000405535,
+        "brake_first_pedal_s": 22.603500587866,
+        "method": "B002 recorded full-throttle launch and brake after exceeding100mph; include preceding samples for crossing interpolation"
+      },
+      "initial_position_m": [
+        6.4960386595292,
+        1119.6126168411,
+        0.16910345202632
+      ],
+      "final_position_m": [
+        8.6862313432953,
+        1494.6720274347,
+        0.15211279405975
+      ],
+      "final_rpm": 631.24843286066,
+      "final_gear": 3,
+      "moving_velocity_forward_median_cosine": 0.9999045312392699,
+      "position_axis_spans_m": [
+        2.1947026137782,
+        375.0818804797,
+        0.03598607503954998
+      ],
+      "maximum_abs_steering_input": 0.0014670661060468
+    },
+    {
+      "run": 5,
+      "capture_id": "1791349713:5",
+      "samples": 847,
+      "metrics": {
+        "0-60": {
+          "mode": "acceleration",
+          "target_mph": 60,
+          "start_time_s": 12.190541841124384,
+          "end_time_s": 16.845440840230236,
+          "elapsed_s": 4.654898999105852,
+          "distance_m": 66.19283256596603,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 350,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "0-100": {
+          "mode": "acceleration",
+          "target_mph": 100,
+          "start_time_s": 12.190541841124384,
+          "end_time_s": 22.121233334587707,
+          "elapsed_s": 9.930691493463323,
+          "distance_m": 257.23830411858563,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 350,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "60-0": {
+          "mode": "braking",
+          "target_mph": 60,
+          "start_time_s": 24.35286591346139,
+          "end_time_s": 26.891174623003668,
+          "elapsed_s": 2.538308709542278,
+          "distance_m": 30.255214650580754,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 183,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        },
+        "100-0": {
+          "mode": "braking",
+          "target_mph": 100,
+          "start_time_s": 22.819685190202062,
+          "end_time_s": 26.891174623003668,
+          "elapsed_s": 4.071489432801606,
+          "distance_m": 85.3619380224631,
+          "rollout_or_stop_threshold_m_s": 0.1,
+          "samples": 183,
+          "max_sample_gap_s": 0.03350000083500149,
+          "distance_method": "trapezoidal speed integral; actual road path not verified"
+        }
+      },
+      "maneuver_windows": {
+        "launch_first_full_throttle_s": 11.048500288278,
+        "brake_first_pedal_s": 22.643000449985,
+        "method": "B002 recorded full-throttle launch and brake after exceeding100mph; include preceding samples for crossing interpolation"
+      },
+      "initial_position_m": [
+        8.6862371329587,
+        1494.6719510179,
+        0.16728220734512
+      ],
+      "final_position_m": [
+        10.80557565696,
+        1868.9332066246,
+        0.15056273228774
+      ],
+      "final_rpm": 634.88808639848,
+      "final_gear": 3,
+      "moving_velocity_forward_median_cosine": 0.9999054511832697,
+      "position_axis_spans_m": [
+        2.1229078748075008,
+        374.2835717404,
+        0.034216253239719996
+      ],
+      "maximum_abs_steering_input": 0.0021208345872235
+    }
+  ],
+  "aggregate": {
+    "0-60": {
+      "elapsed_s": {
+        "median": 4.654898999105852,
+        "min": 4.630429220678977,
+        "max": 4.670385643001039,
+        "range": 0.03995642232206187,
+        "sample_stddev": 0.016141999088012653
+      },
+      "distance_m": {
+        "median": 66.19283256596603,
+        "min": 65.62426286194123,
+        "max": 66.27494157694304,
+        "range": 0.6506787150018027,
+        "sample_stddev": 0.2690711085151635
+      }
+    },
+    "0-100": {
+      "elapsed_s": {
+        "median": 9.930691493463323,
+        "min": 9.868793470229193,
+        "max": 9.953691354391244,
+        "range": 0.0848978841620518,
+        "sample_stddev": 0.031690899252436754
+      },
+      "distance_m": {
+        "median": 257.23830411858563,
+        "min": 255.36114795975263,
+        "max": 257.4055386062505,
+        "range": 2.044390646497874,
+        "sample_stddev": 0.8488892691395377
+      }
+    },
+    "60-0": {
+      "elapsed_s": {
+        "median": 2.252350908029751,
+        "min": 2.2438911422961283,
+        "max": 2.538308709542278,
+        "range": 0.29441756724614976,
+        "sample_stddev": 0.15072257085274512
+      },
+      "distance_m": {
+        "median": 29.99009322594069,
+        "min": 29.917463180527385,
+        "max": 30.255214650580754,
+        "range": 0.3377514700533695,
+        "sample_stddev": 0.13706171585800755
+      }
+    },
+    "100-0": {
+      "elapsed_s": {
+        "median": 3.791389982900462,
+        "min": 3.7821448602902947,
+        "max": 4.071489432801606,
+        "range": 0.28934457251131107,
+        "sample_stddev": 0.15043997322942024
+      },
+      "distance_m": {
+        "median": 85.31803425412622,
+        "min": 85.29161605212101,
+        "max": 85.459722192511,
+        "range": 0.1681061403899804,
+        "sample_stddev": 0.0672004025390559
+      }
+    }
+  },
+  "controls": "arcade acceleration; realistic braking with clutch depressed",
+  "assists": "factory unchanged",
+  "spawn": {
+    "position": [
+      0,
+      0,
+      1
+    ],
+    "rotation": [
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "limitations": [
+    "factory assists and automatic acceleration shifts are part of this control protocol",
+    "speed-integral distance; physical road-path equivalence not proved",
+    "native yaw/acceleration/pressure/slip semantics still need calibration",
+    "published UI mass is not verified running mass",
+    "not an Assetto Corsa comparison",
+    "Start positions differed by about1495m; do not describe this as an identical-start reference"
+  ],
+  "raw_sha256": "b3acc32d8a7a687cf195da58307dcdcccb3dea96875ff74ead3c3659a7f71610",
+  "receiver": {
+    "accepted": 4995,
+    "malformed": 0,
+    "sequence_gaps": 0,
+    "out_of_order": 0,
+    "duration_requested_s": 600.0,
+    "port": 44443,
+    "output": "telemetry\\runs\\b002-stock-five-001.jsonl"
+  },
+  "initial_position_spread_m": [
+    8.686310007143293,
+    1494.6713193027817,
+    0.014357746964379997
+  ],
+  "identical_start_gate_passed": false,
+  "baseline_status": "provisional: native replacement ignored requested fixed spawn; retained current transform"
+}
