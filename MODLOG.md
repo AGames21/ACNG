@@ -36,3 +36,5 @@ Added `tire_wear`, the second physics feature, OFF by default and separate from 
 - 13 LuaJIT lap/archive tests and Node lap-app checks passed; in-game verification pending. Preserved Claude's unfinished assists changes; no game/UI interaction.
 
 2026-10-07, saved-lap follow-up: reject malformed sector/trace arrays; expose archive status in snapshots. Added LR001 automated native round-trip harness, primary/existing-profile refusal checks and a committed-only isolated-profile preparer. 15 offline LuaJIT tests plus Node lap-app checks pass. Runtime test remains unrun.
+
+2026-10-07, saved-lap runtime validation: LR001 5/5 native save/reload/CLEAR checks; LR002 4/4 full process restart checks, actual 10.64619860656 s reference restored. Owned instances closed, stock profile untouched. Original JSON evidence retained; committed-only player ZIP prepared separately from unfinished assists.

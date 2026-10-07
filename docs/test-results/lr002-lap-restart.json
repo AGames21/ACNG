@@ -1,0 +1,48 @@
+{
+  "checks": {
+    "best_time_restored": true,
+    "master_off_after_restart": true,
+    "new_session_with_line": true,
+    "reference_length_restored": true
+  },
+  "completed": true,
+  "expected": {
+    "best_time_s": 10.64619860656,
+    "original_process_id": 9752,
+    "ref_length_m": 125.10803357199,
+    "source": "LR001 previous-file backup of actual driven lap; restored after CLEAR check",
+    "source_archive_sha256": "d0974769306fcf8bf7651cb020cbf3eb418f6ce8ae86b72e2e59b9584821428f"
+  },
+  "host_s": 18.927766730742,
+  "passed": true,
+  "snapshot": {
+    "archive_status": "loaded",
+    "best": {
+      "distance_m": 125.10803357199,
+      "lap": 1,
+      "sectors": [
+        3.548901191367,
+        3.5487486180125,
+        3.5485487971805
+      ],
+      "time_s": 10.64619860656
+    },
+    "best_sectors": [
+      3.548901191367,
+      3.5487486180125,
+      3.5485487971805
+    ],
+    "history": {},
+    "laps": 0,
+    "mode": "out_lap",
+    "optimal_s": 10.64619860656,
+    "ref_length_m": 125.10803357199,
+    "schema_version": 1
+  },
+  "test": "LR002 full process restart",
+  "process_evidence": {
+    "initial_pid": 9752,
+    "restart_pid": 22412,
+    "initial_instance_closed_before_restart": true
+  }
+}

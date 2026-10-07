@@ -1,0 +1,151 @@
+{
+  "checks": {
+    "clear_acknowledged": true,
+    "clear_persisted": true,
+    "default_master_off": true,
+    "disk_and_vehicle_vm_reload": true,
+    "native_file_saved": true
+  },
+  "completed": true,
+  "events": [
+    {
+      "host_s": 10.002336359675,
+      "phase": 1
+    },
+    {
+      "host_s": 11.462823870981,
+      "phase": 2
+    },
+    {
+      "host_s": 20.034448277379,
+      "phase": 3
+    },
+    {
+      "host_s": 45.097392695882,
+      "phase": 4
+    },
+    {
+      "host_s": 66.835384966092,
+      "phase": 5
+    },
+    {
+      "host_s": 70.836202743487,
+      "phase": 6
+    },
+    {
+      "host_s": 72.836499274141,
+      "phase": 7
+    },
+    {
+      "host_s": 73.403256424082,
+      "phase": 8
+    },
+    {
+      "host_s": 73.970784822144,
+      "phase": 9
+    },
+    {
+      "host_s": 75.972073869595,
+      "phase": 10
+    }
+  ],
+  "limitations": [
+    "GE/VE VM reload is not a full game-process restart",
+    "map/config separation tested offline only",
+    "no physical UI click verification"
+  ],
+  "passed": true,
+  "snapshots": {
+    "after_clear_reload": {
+      "archive_status": "loaded",
+      "best_sectors": {},
+      "history": {},
+      "laps": 0,
+      "mode": "out_lap",
+      "schema_version": 1
+    },
+    "cleared": {
+      "archive_status": "saved",
+      "best_sectors": {},
+      "history": {},
+      "laps": 0,
+      "mode": "out_lap",
+      "schema_version": 1
+    },
+    "recorded": {
+      "archive_status": "saved",
+      "best": {
+        "distance_m": 125.10803357199,
+        "lap": 1,
+        "sectors": [
+          3.548901191367,
+          3.5487486180125,
+          3.5485487971805
+        ],
+        "time_s": 10.64619860656
+      },
+      "best_sectors": [
+        3.548901191367,
+        3.5487486180125,
+        3.5485487971805
+      ],
+      "current_s": 0.34577363125777,
+      "delta_s": 0.00040905877818942,
+      "distance_m": 4.0596555678073,
+      "history": [
+        {
+          "distance_m": 125.10803357199,
+          "lap": 1,
+          "sectors": [
+            3.548901191367,
+            3.5487486180125,
+            3.5485487971805
+          ],
+          "time_s": 10.64619860656
+        }
+      ],
+      "lap_number": 2,
+      "laps": 1,
+      "last": {
+        "distance_m": 125.10803357199,
+        "lap": 1,
+        "sectors": [
+          3.548901191367,
+          3.5487486180125,
+          3.5485487971805
+        ],
+        "time_s": 10.64619860656
+      },
+      "mode": "lap",
+      "optimal_s": 10.64619860656,
+      "ref_length_m": 125.10803357199,
+      "schema_version": 1,
+      "sectors_live": {}
+    },
+    "reloaded": {
+      "archive_status": "loaded",
+      "best": {
+        "distance_m": 125.10803357199,
+        "lap": 1,
+        "sectors": [
+          3.548901191367,
+          3.5487486180125,
+          3.5485487971805
+        ],
+        "time_s": 10.64619860656
+      },
+      "best_sectors": [
+        3.548901191367,
+        3.5487486180125,
+        3.5485487971805
+      ],
+      "history": {},
+      "laps": 0,
+      "mode": "out_lap",
+      "optimal_s": 10.64619860656,
+      "ref_length_m": 125.10803357199,
+      "schema_version": 1
+    }
+  },
+  "test": "LR001 saved lap archive"
+}
