@@ -1,0 +1,20 @@
+{
+  "domElement": "<acng-assists></acng-assists>",
+  "name": "ACNG Assists",
+  "description": "Original Assetto Corsa-style assist app: pick ABS and traction control levels (factory, off, 1 to 3) separately. Levels drive the car's own BeamNG ABS and traction control; cars with no traction control get a simple ACNG one. Factory leaves the car exactly as built.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "left": "24px",
+    "top": "600px",
+    "width": "330px",
+    "height": "150px"
+  },
+  "author": "ACNG",
+  "version": "0.1",
+  "directive": "acngAssists",
+  "category": "Dashboard",
+  "preserveAspectRatio": true,
+  "interactive": "yes"
+}

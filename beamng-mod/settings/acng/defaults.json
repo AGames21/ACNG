@@ -23,5 +23,6 @@
     "penalties": false,
     "weather_grip": false
   },
+  "assist_levels": {"abs": 2, "tc": 2},
   "telemetry": {"enabled": false, "rate_hz": 50, "port": 44443}
 }

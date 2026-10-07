@@ -1,4 +1,4 @@
-param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear')][string]$Experiment='Smoke',[string]$LabUser)
+param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab')][string]$Experiment='Smoke',[string]$LabUser)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path $PSScriptRoot -Parent
 $paths=Get-Content (Join-Path $repoRoot '.local\paths.json') -Raw | ConvertFrom-Json
@@ -21,7 +21,7 @@ Get-ChildItem -LiteralPath $source -Recurse -File | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
 }
 # Reject conflicting test mods rather than deleting user content.
-foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear')){
+foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear','acng_assistprobe','acng_assistlab')){
   if($other -ne $modName -and (Test-Path (Join-Path $labCurrent ('mods\unpacked\'+$other)))){throw 'Use a fresh lab profile per experiment; conflicting test harness present.'}
 }
 $exe=Join-Path $paths.beamng 'Bin64\BeamNG.drive.x64.exe'

@@ -12,7 +12,7 @@ local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 -- Physics features that are implemented and lab-validated. Each loads into the player
 -- vehicle while the master and its own flag are ON; unloading restores stock values.
-local IMPLEMENTED = {tire_temperature=true, tire_wear=true}
+local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true}
 -- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
 -- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
@@ -20,6 +20,14 @@ local TIRES_CONFIGURE = "if extensions.isExtensionLoaded('acng_tires') then exte
 local TIRES_UNLOAD = "extensions.unload('acng_tires')"
 local tiresId
 local tiresParts
+-- abs and tc share the acng_assists vehicle extension. Each flag ON hands that assist
+-- to ACNG at its level (0 = off, 1-3); a flag OFF leaves the car's factory assist.
+local ASSISTS_LOAD = "extensions.load('acng_assists')"
+local ASSISTS_CONFIGURE = "if extensions.isExtensionLoaded('acng_assists') then extensions.acng_assists.configure(%s,%s) end"
+local ASSISTS_UNLOAD = "extensions.unload('acng_assists')"
+local ASSIST_LEVEL_DEFAULT = 2
+local assistsId
+local assistsParts
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
@@ -46,6 +54,14 @@ local function stopTires()
   tiresId = nil
   tiresParts = nil
 end
+local function stopAssists()
+  if assistsId then
+    local veh = be:getObjectByID(assistsId)
+    if veh then veh:queueLuaCommand(ASSISTS_UNLOAD) end
+  end
+  assistsId = nil
+  assistsParts = nil
+end
 local function feature(name)
   return config and config.features and config.features[name] == true or false
 end
@@ -55,13 +71,27 @@ end
 local function tiresConfigure()
   return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')))
 end
+local function assistsWanted()
+  return config and config.enabled and (feature('abs') or feature('tc'))
+end
+local function assistLevel(name)
+  local levels = config and config.assist_levels
+  local value = levels and levels[name]
+  if type(value) ~= 'number' or value ~= math.floor(value) or value < 0 or value > 3 then return ASSIST_LEVEL_DEFAULT end
+  return value
+end
+local function assistsConfigure()
+  return string.format(ASSISTS_CONFIGURE, feature('abs') and tostring(assistLevel('abs')) or 'nil',
+    feature('tc') and tostring(assistLevel('tc')) or 'nil')
+end
 local function physicsWrites()
-  return tiresId and 1 or 0
+  return (tiresId and 1 or 0) + (assistsId and 1 or 0)
 end
 local function stopAll()
   stopVehicle()
   stopPerf()
   stopTires()
+  stopAssists()
 end
 local function onExtensionLoaded()
   config = defaults()
@@ -79,12 +109,18 @@ local function onExtensionLoaded()
       config.features = config.features or {}
       for name in pairs(IMPLEMENTED) do config.features[name] = saved.features[name] == true end
     end
+    if type(saved.assist_levels) == 'table' then
+      config.assist_levels = config.assist_levels or {}
+      for _, name in ipairs({'abs', 'tc'}) do
+        if saved.assist_levels[name] ~= nil then config.assist_levels[name] = saved.assist_levels[name] end
+      end
+    end
   end
   log('I', 'ACNG', 'FOUNDATION_LOADED schema=1 master=' .. tostring(config.enabled) .. ' physics_writes=0')
 end
 local function setEnabled(value)
   config.enabled = value == true
-  if not config.enabled then stopPerf(); stopTires() else pollTime = 0.25 end
+  if not config.enabled then stopPerf(); stopTires(); stopAssists() else pollTime = 0.25 end
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
   return config.enabled
 end
@@ -94,8 +130,19 @@ local function setFeature(name, value)
   config.features = config.features or {}
   config.features[name] = value == true
   if not tiresWanted() then stopTires() else pollTime = 0.25 end
+  if not assistsWanted() then stopAssists() else pollTime = 0.25 end
   log('I', 'ACNG', 'FEATURE ' .. name .. '=' .. tostring(config.features[name]))
   return config.features[name]
+end
+-- ABS or TC level: 0 = off, 1-3 = light to strong. It applies while that flag is ON.
+local function setAssistLevel(name, value)
+  if not config or (name ~= 'abs' and name ~= 'tc') then return false end
+  if type(value) ~= 'number' or value ~= math.floor(value) or value < 0 or value > 3 then return false end
+  config.assist_levels = config.assist_levels or {}
+  config.assist_levels[name] = value
+  pollTime = 0.25
+  log('I', 'ACNG', 'ASSIST ' .. name .. '_level=' .. value)
+  return value
 end
 local function setTelemetryEnabled(value)
   config.telemetry.enabled = value == true
@@ -129,6 +176,19 @@ local function onUpdate(dtReal)
       tiresParts = parts
     end
   end
+  if assistsWanted() then
+    local parts = assistsConfigure()
+    if id ~= assistsId then
+      stopAssists()
+      if veh then
+        veh:queueLuaCommand(ASSISTS_LOAD .. '; ' .. parts)
+        assistsId, assistsParts = id, parts
+      end
+    elseif parts ~= assistsParts and veh then
+      veh:queueLuaCommand(parts)
+      assistsParts = parts
+    end
+  end
   if not config.telemetry.enabled then return end
   if id ~= attachedId then
     stopVehicle()
@@ -157,15 +217,21 @@ local function onVehicleSpawned(id)
     tiresId, tiresParts = nil, nil
     pollTime = 0.25
   end
+  if id == assistsId then
+    assistsId, assistsParts = nil, nil
+    pollTime = 0.25
+  end
 end
 local function getStatus()
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
-    tires_vehicle_id=tiresId,
-    features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear')},
-    implemented_physics_features={'tire_temperature', 'tire_wear'}, physics_writes=physicsWrites()}
+    tires_vehicle_id=tiresId, assists_vehicle_id=assistsId,
+    features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear'),
+      abs=feature('abs'), tc=feature('tc')},
+    assist_levels={abs=assistLevel('abs'), tc=assistLevel('tc')},
+    implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc'}, physics_writes=physicsWrites()}
 end
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = stopAll
@@ -175,5 +241,6 @@ M.onVehicleSpawned = onVehicleSpawned
 M.setEnabled = setEnabled
 M.setTelemetryEnabled = setTelemetryEnabled
 M.setFeature = setFeature
+M.setAssistLevel = setAssistLevel
 M.getStatus = getStatus
 return M
