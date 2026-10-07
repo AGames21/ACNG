@@ -1,0 +1,16 @@
+{
+  "capture_duration_real_s":15.012003731958,
+  "checks":{
+    "default_master_off":true,
+    "loaded":true,
+    "master_off":true,
+    "master_on":true,
+    "telemetry_detached":true,
+    "telemetry_disabled":true,
+    "vehicle_present":true
+  },
+  "game_version":"0.39.4.0",
+  "physics_writes":0,
+  "test":"ACNG isolated foundation smoke",
+  "vehicle_jbeam":"pickup"
+}

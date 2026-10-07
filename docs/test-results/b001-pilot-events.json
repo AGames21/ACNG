@@ -1,0 +1,32 @@
+{
+  "assists":"factory",
+  "completed":true,
+  "config":"kc6_360_M",
+  "events":[
+    {
+      "name":"settle",
+      "speed_m_s":0.00010841844655695,
+      "stage_sim_time_s":8.0090001411736
+    },
+    {
+      "name":"accelerate",
+      "speed_m_s":0.00022405496015765,
+      "stage_sim_time_s":5.0290000662208
+    },
+    {
+      "name":"brake",
+      "speed_m_s":46.028065965873,
+      "stage_sim_time_s":11.558500155807
+    },
+    {
+      "name":"stopped",
+      "speed_m_s":9.1985802182407e-06,
+      "stage_sim_time_s":10.024500131607
+    }
+  ],
+  "gearbox_behavior":"arcade acceleration; realistic braking",
+  "master":false,
+  "model":"etkc",
+  "pilot":true,
+  "test":"B001 stock straight-line pilot"
+}

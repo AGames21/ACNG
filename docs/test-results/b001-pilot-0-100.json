@@ -1,0 +1,12 @@
+{
+  "mode": "acceleration",
+  "target_mph": 100.0,
+  "start_time_s": 5.90585164616516,
+  "end_time_s": 15.855424538929476,
+  "elapsed_s": 9.949572892764316,
+  "distance_m": 257.4300578103927,
+  "rollout_or_stop_threshold_m_s": 0.1,
+  "samples": 792,
+  "max_sample_gap_s": 0.03350000083500149,
+  "distance_method": "trapezoidal speed integral; actual road path not verified"
+}
