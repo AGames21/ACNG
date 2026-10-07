@@ -8,9 +8,11 @@ def check(vault):
     vault=Path(vault)
     root=vault/'ACNG'
     if not (vault/'.obsidian').is_dir():raise ValueError('Existing Obsidian configuration required')
-    required=['Home.md','Current Status.md','Roadmap.md','Architecture.md','Decisions.md',
+    required=['Current Status.md','Roadmap.md','Architecture.md','Decisions.md',
               'Problems.md','Ideas.md','Testing/Benchmarks.md']
     missing=[name for name in required if not (root/name).is_file()]
+    if not any((root/name).is_file() for name in ('ACNG Dashboard.md','Home.md')):
+        missing.append('ACNG Dashboard.md or Home.md')
     broken=[]
     notes=list(root.rglob('*.md'))
     for note in notes:
