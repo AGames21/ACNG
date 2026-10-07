@@ -26,4 +26,10 @@ Schema version 1 retains native values when signs/units remain uncertain. Absenc
 
 ## Isolation
 
-Use workspace `work/beamng-user/current` as the experiment profile. Launch with its parent as `-userpath`; verify the resolved VFS user path in the fresh log each run. Do not install ACNG into stock game content, disable existing user mods, or copy their binaries into ACNG. The standard profile can be deployed later after the isolated smoke passes and a backup.
+Use dedicated `<Documents>/Codex/work/ACNG-lab/current` and `ACNG-b001/current` experiment profiles, with actual paths in ignored `.local/paths.json`. The launcher uses the profile root as an unquoted no-space `-userpath`; verify resolved VFS path in each fresh log. Avoid the failing `-windowed` flag. Do not install ACNG into stock game content, disable existing user mods, or copy their binaries into ACNG. The standard profile can be deployed later after isolated validation and a backup.
+
+AC capture opens existing shared-memory pages read-only. `scripts/ac-offline-smoke.py` creates exact per-file backups/manifest, temporarily uses an explicitly offline stock BMW 1M/Magione session, closes only its owned process, and restores prior configuration. Backup artifacts contain personal configuration and must remain outside Git. Host observation time is not AC simulation time; packet equality is not a writer lock.
+
+## Persistent knowledge
+
+Obsidian's existing registered/open vault contains `ACNG/Home.md`, Current Status, Roadmap, Architecture, Decisions, Problems, focused research, vehicle notes, benchmark interpretations and dated sessions. It is authoritative for engineering reasoning/status/knowledge. Repository docs mirror critical guidance; source/config/tests/raw data/build artifacts remain in the repository/local ignored storage. Read both memory and actual Git/runtime state before resuming. Preserve and back up existing notes before changes; never auto-overwrite user additions or unrelated vault content.

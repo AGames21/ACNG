@@ -2,14 +2,14 @@
 
 Updated: 2026-10-06 (America/Chicago).
 
-Current milestone: M1 foundation in progress; M2 passive telemetry starts immediately after smoke validation.
+Current milestone: M1 foundation smoke validated; M2 telemetry/oracle active. No physics tuning.
 
-Current working features: repository scaffold; master/feature configuration concept; passive telemetry implementation and collector/analyzer authored. Runtime verification pending.
+Current working features: real BeamNG independent-mod load, default-OFF master lifecycle, passive wheel/vehicle telemetry, UDP collection, crossing/distance analysis, chart generation, isolated deployment/launch, offline AC read-only shared-memory capture, full cfg backup/restoration. Durable Obsidian ACNG memory includes linked status, decisions, research, vehicles, test interpretations and session handoff; updates are backed up.
 
-Current experiment: isolated BeamNG skeleton load and stock telemetry sanity. No tire-force changes.
+Last successful tests: seven real BeamNG smoke checks; stock ETK pilot with 792 packets and no reported UDP loss; two AC BMW 1M/Magione stationary captures with 733 samples each; second run automatically restored all six changed cfg files and full backup diff was clean. Thirteen automated contracts passed. Original native fixture compiled/executed and analyzed by REA/Ghidra; both MCP handshakes/list-tools passed.
 
-Known issues: AC installing; exact comparable vehicle specification pending. REA/Ghidra tooling undergoing configuration. Native slip/temperature/acceleration units/signs require runtime calibration. Lua syntax and game smoke still pending.
+Known issues: native channel calibration, actual matched vehicle/setup specification, repeated driving baselines, damaged-wheel/reset/switch/AI coverage and performance profiling remain incomplete. ETK pilot stalled the engine at stop; choose stable shift/clutch method. All dynamics/FFB/racing/UI feature toggles are reserved and unimplemented. MCP registration works but tools require reconnect before appearing in this chat. No subjective wheel feedback yet.
 
-Important discoveries: installed BeamNG 0.39.4.0.20972 (Steam build 24617469); active profile is `%LOCALAPPDATA%/BeamNG/BeamNG.drive/current`. Existing profile contains BeamMP and many mods. Native Lua extension/modScript loader is present; no DLL loader needed. Wheel thermal/pressure/load/slip readers exist. Universal Modder scan misses BeamNG's extension route; KB has no BeamNG/AC field notes.
+Important discoveries: BeamNG 0.39.4.0.20972/build24617469 native extension route needs no DLL hooks. Primary profile has BeamMP/many mods and was left intact. ETK wheel temperatures stayed constant through the pilot; dynamic thermal support is not proved. Avoid the failing `-windowed` launch flag and quoted user-path pattern; unquoted no-space lab paths worked. AC 1.16.4/build14923034 exposes shared memory1.7. AC's prior race preset was online/modded; temporary offline stock overlays are mandatory. AC itself rewrites additional cfg files; back up the full cfg tree. Current Obsidian vault was verified from its open registration and `.obsidian`; no existing unrelated notes were changed.
 
-Next actions: validate source contracts, launch isolated profile and check VFS/user path, validate telemetry and lifecycle, finish toolchain checks, inspect AC SDK after install, freeze vehicle pair/config and run B001. See updated test records before assuming any task complete.
+Next actions: calibrate channels/coordinates/time and reset boundaries, freeze ETK `kc6_360_M` vs AC `bmw_1m` setup/controls, run five valid straight-line repeats then skidpad/thermal/damage tests. Investigate native temperature path before adding a model. Read Obsidian Home/Current Status/recent session and check Git/runtime state on resume. See SETUP, R001/R002 and test summaries for proof/limits. No current user-dependent blocker; subjective FFB comes later.

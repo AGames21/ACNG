@@ -1,6 +1,8 @@
 # B001: first stock baseline plan
 
-Candidate pair: BeamNG ETK K-Series 4-cylinder RWD manual (`etkc`, exact factory configuration to be inspected) and AC Toyota GT86. Selection is provisional until both configuration records are verified. Both offer a modest-power front-engine RWD route without extreme aero; mass/power/tire/geometry differences must be measured, not assumed equivalent. Native BeamNG content is preferred over uncertain third-party ports.
+Selected candidate pair: BeamNG ETK K-Series `kc6_360_M` and AC stock BMW 1M `bmw_1m`. RWD turbo inline-six manuals offer a closer published mass/power match than the initial ETK-four/GT86 idea. UI/spec masses are 1520/1495 kg; power is 366 in ETK native metadata and 340 bhp in AC UI, torque 465/500 Nm. Actual running mass, output conventions, gearing, geometry, tires and assists still need verification. Native content avoids uncertain third-party ports. No assumption of equivalence.
+
+ETK factory config selects six-speed sport manual, rear active LSD, `_323` final-drive part (numeric ratio still to verify), sport 245/35R19 front on 19×9 wheels and 265/35R19 rear on 19×10. Factory DSE/ABS/TC/ESC/Comfort behavior is a confounder to control. Config SHA256: `7e8bbd8567bfabae4dc62b4bb5fdadab480b09c7d22d34d896abb564582bd0b3`. AC tire/setup/gearing data is pending. The first BeamNG scripted pilot succeeded; see `docs/test-results/B001-pilot.md` for results and limitations. It is not a completed comparison baseline.
 
 1. Idle sanity: 10 seconds stationary, coast straight, gentle left/right circles. Establish speed/acceleration/yaw signs and units, wheel identity, temperature scale, absolute vs gauge pressure, time and reset boundaries.
 2. Five 0–60 and 0–100 mph acceleration runs from identical spawn; same launch and shift method. Five 60–0 and 100–0 mph braking runs. Read speed crossing times and integrate distance, reject steering/slope/collision anomalies.

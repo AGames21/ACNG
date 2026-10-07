@@ -1,6 +1,6 @@
 # ACNG persistent engineering instructions
 
-Read `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TESTING.md` and latest test/research records before work. Continue autonomously through the next logical task; ask the user only for a real external dependency, credentials/license, admin approval, subjective wheel feedback or important irreversible decision.
+Before work, read the existing Obsidian vault's `ACNG/Home.md`, `ACNG/Current Status.md` and relevant recent session, then check Git status/history and repository status/architecture/testing records. Current registered vault is `H:/Obsidian Vault/AI VAULT`; confirm against `%APPDATA%/obsidian/obsidian.json` and `.obsidian` if it moves. Private `.local/paths.json` also stores memory paths. Follow vault AGENTS.md, back up existing notes before updating, preserve human additions, and never alter unrelated notes or `.obsidian`. Continue autonomously through the next logical task; ask the user only for a real external dependency, credentials/license, admin approval, subjective wheel feedback or important irreversible decision.
 
 Goal: Assetto Corsa-like driving/racing in BeamNG.drive while preserving soft-body deformation, collision, damage and vehicle structure. BeamNG is the host; AC is a behavioral oracle. Never merge executables, replace the physics engine, permanently edit game installations, bypass DRM/anti-cheat or touch official multiplayer. Work offline in the isolated profile. User's primary profile has BeamMP and other mods; leave it intact.
 
@@ -14,4 +14,6 @@ Back up before any save/config experiment. Deploy only `mods/unpacked/acng` with
 
 Tests: unit contracts and real isolated game smoke; master OFF baseline/restoration, reset/switch lifecycle, bounded telemetry, loss reporting, damage and profiling. Meaningful commits per milestone and before major experiments. Update STATUS, MODLOG and research/test records immediately after discoveries. User authorized setup/configuration and autonomous repeatable testing; avoid needless permission prompts. Do not publish or message external people without explicit user instruction.
 
-Initial milestone: M1 foundation, then M2 telemetry/oracle. Completed work and known blockers live in STATUS (authoritative). Next agent must refresh installation state and fresh logs; old logs are not current proof.
+Repository owns source/scripts/config/tests/raw telemetry/build artifacts; Obsidian owns engineering reasoning, status, decisions, discoveries, hypotheses, interpretations and plans. Mirror important guidance in repository docs. Update ACNG Current Status and related research/problems/decisions/session after meaningful work or before milestone transitions; record the actual commit and exact next action. Never rely on chat history as durable project memory.
+
+Current milestone: M2 telemetry/oracle. Completed work and known blockers live in Obsidian Current Status and mirrored docs/STATUS.md. Next agent must refresh installation state and fresh logs; old logs are not current proof.
