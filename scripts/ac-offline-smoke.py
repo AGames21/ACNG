@@ -149,24 +149,42 @@ def close_owned(process):
         process.wait(timeout=8)
 
 
-def run(game,user,evidence,wait_seconds=60,mode='idle',capture_duration=15):
+def build_overlays(mode='idle',start='pit',track='magione'):
+    if mode not in {'idle','benchmark','keyboard'} or start not in {'pit','grid'}:
+        raise ValueError('Unsupported session mode/start')
+    if track not in {'magione','drag2000'}:
+        raise ValueError('Unsupported stock track')
+    native_track,layout=('ks_drag','drag2000') if track=='drag2000' else ('magione','')
+    overlays={'race.ini':RACE,'video.ini':VIDEO,'assists.ini':ASSISTS,'python.ini':PYTHON}
+    if start=='grid':
+        # Verified stock launcher constants: TYPE_RACE=3, SPAWN_START='START'.
+        overlays['race.ini']=overlays['race.ini'].replace('TYPE=1','TYPE=3').replace(
+            'DURATION_MINUTES=10','LAPS=1\nSTARTING_POSITION=1').replace('SPAWN_SET=PIT','SPAWN_SET=START')
+    if track=='drag2000':
+        overlays['race.ini']=overlays['race.ini'].replace('TRACK=magione','TRACK=ks_drag').replace(
+            'CONFIG_TRACK=\n','CONFIG_TRACK=drag2000\n')
+    if mode=='benchmark':
+        if start!='pit' or track!='magione':
+            raise ValueError('Native benchmark selects its own car/track; custom starts are unsupported')
+        overlays['race.ini']=RACE.replace('[BENCHMARK]\nACTIVE=0','[BENCHMARK]\nACTIVE=1')
+    elif mode=='keyboard':
+        overlays['controls.ini']=KEYBOARD
+    return overlays,native_track,layout
+
+
+def run(game,user,evidence,wait_seconds=60,mode='idle',capture_duration=15,start='pit',track='magione'):
     game,user,evidence=map(lambda p:Path(p).resolve(),(game,user,evidence))
     if os.name!='nt':raise OSError('Windows required')
     if subprocess.check_output(['powershell','-NoProfile','-Command',
         "@(Get-Process acs,assettocorsa -ErrorAction SilentlyContinue).Count"],text=True).strip()!='0':
         raise RuntimeError('An AC process already exists; refusing config changes')
-    for p in [game/'acs.exe',game/'content/cars/bmw_1m',game/'content/tracks/magione',user/'cfg']:
+    overlays,native_track,layout=build_overlays(mode,start,track)
+    for p in [game/'acs.exe',game/'content/cars/bmw_1m',game/'content/tracks'/native_track,
+              game/'content/tracks'/native_track/layout/'data',user/'cfg']:
         if not p.exists():raise FileNotFoundError(p)
     if evidence.exists():raise FileExistsError('Choose a fresh evidence directory')
     evidence.mkdir(parents=True)
     cfg=user/'cfg'
-    overlays={'race.ini':RACE,'video.ini':VIDEO,'assists.ini':ASSISTS,'python.ini':PYTHON}
-    if mode=='benchmark':
-        # Stock launcher uses this exact configuration switch. Native benchmark
-        # may select its own stock car/track; record the observed identity.
-        overlays['race.ini']=RACE.replace('[BENCHMARK]\nACTIVE=0','[BENCHMARK]\nACTIVE=1')
-    elif mode=='keyboard':
-        overlays['controls.ini']=KEYBOARD
     originals={}
     # AC itself rewrites additional cfg files (observed acos.ini/user_ff.ini).
     # Snapshot all existing cfg files, not just our explicit overlays.
@@ -183,8 +201,8 @@ def run(game,user,evidence,wait_seconds=60,mode='idle',capture_duration=15):
               for name,data in originals.items()}
     (evidence/'restore-manifest.json').write_text(json.dumps(manifest,indent=2))
     process=None
-    result={'offline':True,'requested_car':'bmw_1m','requested_track':'magione',
-            'mode':mode,'launcher_inputs_sent':False}
+    result={'offline':True,'requested_car':'bmw_1m','requested_track':native_track,'requested_layout':layout,
+            'mode':mode,'requested_start':start,'launcher_inputs_sent':False}
     try:
         for name,body in overlays.items():(cfg/name).write_text(body,encoding='utf-8')
         env=os.environ.copy()
@@ -206,7 +224,7 @@ def run(game,user,evidence,wait_seconds=60,mode='idle',capture_duration=15):
                     print(json.dumps(identity),flush=True)
                     result['identity']=identity
                 if g.status==2 and identity['ac_version']:
-                    if mode!='benchmark' and (identity['car_model']!='bmw_1m' or identity['track']!='magione'):
+                    if mode!='benchmark' and (identity['car_model']!='bmw_1m' or identity['track']!=native_track):
                         raise RuntimeError('Unexpected running vehicle/track')
                     for item,folder in [('car_model','cars'),('track','tracks')]:
                         name=identity[item]
@@ -248,6 +266,8 @@ if __name__=='__main__':
     p.add_argument('--wait-seconds',type=int,default=60)
     p.add_argument('--mode',choices=['idle','benchmark','keyboard'],default='idle')
     p.add_argument('--capture-duration',type=float,default=15)
+    p.add_argument('--start',choices=['pit','grid'],default='pit')
+    p.add_argument('--track',choices=['magione','drag2000'],default='magione')
     a=p.parse_args()
     if a.capture_duration<=0:p.error('Capture duration must be positive')
-    run(a.game,a.user,a.evidence,a.wait_seconds,a.mode,a.capture_duration)
+    run(a.game,a.user,a.evidence,a.wait_seconds,a.mode,a.capture_duration,a.start,a.track)

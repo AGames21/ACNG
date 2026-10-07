@@ -1,0 +1,163 @@
+{
+  "test": "AC grid straight-line pilot",
+  "quality_checks": {
+    "recorded_crossings": true,
+    "exact_cfg_restoration": true,
+    "expected_sample_count": true,
+    "no_reported_incoherent_polls": true,
+    "lap_clock_ratio_near_real_time": true,
+    "full_brake_at_both_targets": false
+  },
+  "passes_recorded_quality_checks": false,
+  "repeats": 1,
+  "matched_cross_game_reference": false,
+  "identity": {
+    "ac_version": "1.16.4",
+    "sm_version": "1.7",
+    "car_model": "bmw_1m",
+    "track": "ks_drag",
+    "status": 2
+  },
+  "requested_layout": "drag2000",
+  "packets": 5881,
+  "max_speed_mph": 110.09362359647297,
+  "max_native_acceleration_vector_g": 1.4044879186283952,
+  "sample_gap_median_s": 0.01599999999962165,
+  "sample_gap_max_s": 0.0319999999992433,
+  "lap_to_host_elapsed_ratio": 1.0001575051188913,
+  "lap_host_max_residual_s": 0.01700000000143831,
+  "metrics": [
+    {
+      "mode": "acceleration",
+      "target_mph": 60,
+      "start_time_s": 9175.189661551798,
+      "end_time_s": 9180.045815143227,
+      "elapsed_s": 4.856153591428665,
+      "distance_m": 69.82663058596448,
+      "rollout_or_stop_threshold_m_s": 0.1,
+      "samples": 688,
+      "max_sample_gap_s": 0.0319999999992433,
+      "distance_method": "trapezoidal speed integral; actual road path not verified",
+      "clock_source": "host_monotonic_s; native lap clock checked separately",
+      "native_throttle_at_start": 0.0,
+      "native_brake_at_start": 0.0,
+      "full_brake_at_target": true
+    },
+    {
+      "mode": "acceleration",
+      "target_mph": 100,
+      "start_time_s": 9175.189661551798,
+      "end_time_s": 9186.22975249525,
+      "elapsed_s": 11.040090943452014,
+      "distance_m": 295.5287227619687,
+      "rollout_or_stop_threshold_m_s": 0.1,
+      "samples": 688,
+      "max_sample_gap_s": 0.0319999999992433,
+      "distance_method": "trapezoidal speed integral; actual road path not verified",
+      "clock_source": "host_monotonic_s; native lap clock checked separately",
+      "native_throttle_at_start": 0.0,
+      "native_brake_at_start": 0.0,
+      "full_brake_at_target": true
+    },
+    {
+      "mode": "braking",
+      "target_mph": 60,
+      "start_time_s": 9190.614696539038,
+      "end_time_s": 9193.555006077378,
+      "elapsed_s": 2.9403095383404434,
+      "distance_m": 37.46129498393824,
+      "rollout_or_stop_threshold_m_s": 0.1,
+      "samples": 250,
+      "max_sample_gap_s": 0.0319999999992433,
+      "distance_method": "trapezoidal speed integral; actual road path not verified",
+      "clock_source": "host_monotonic_s; native lap clock checked separately",
+      "native_throttle_at_start": 0.0,
+      "native_brake_at_start": 0.8052835543159833,
+      "full_brake_at_target": false
+    },
+    {
+      "mode": "braking",
+      "target_mph": 100,
+      "start_time_s": 9188.941252625424,
+      "end_time_s": 9193.555006077378,
+      "elapsed_s": 4.613753451954835,
+      "distance_m": 97.20497054973656,
+      "rollout_or_stop_threshold_m_s": 0.1,
+      "samples": 250,
+      "max_sample_gap_s": 0.0319999999992433,
+      "distance_method": "trapezoidal speed integral; actual road path not verified",
+      "clock_source": "host_monotonic_s; native lap clock checked separately",
+      "native_throttle_at_start": 0.0,
+      "native_brake_at_start": 0.8797532255891047,
+      "full_brake_at_target": false
+    }
+  ],
+  "wheel_native_ranges": {
+    "FL": {
+      "core_temperature_native": [
+        20.0,
+        23.094329833984375
+      ],
+      "pressure_native": [
+        34.040000915527344,
+        34.535091400146484
+      ],
+      "wear_native": [
+        100.0,
+        100.0
+      ]
+    },
+    "FR": {
+      "core_temperature_native": [
+        20.0,
+        23.083511352539062
+      ],
+      "pressure_native": [
+        34.040000915527344,
+        34.533363342285156
+      ],
+      "wear_native": [
+        100.0,
+        100.0
+      ]
+    },
+    "RL": {
+      "core_temperature_native": [
+        20.0,
+        24.021310806274414
+      ],
+      "pressure_native": [
+        34.040000915527344,
+        34.68341064453125
+      ],
+      "wear_native": [
+        100.0,
+        100.0
+      ]
+    },
+    "RR": {
+      "core_temperature_native": [
+        20.0,
+        24.01571273803711
+      ],
+      "pressure_native": [
+        34.040000915527344,
+        34.68251419067383
+      ],
+      "wear_native": [
+        100.0,
+        100.0
+      ]
+    }
+  },
+  "limits": [
+    "One repeat; no running setup/mass/fuel/tire/assist match to BeamNG.",
+    "Keyboard native pedal ramps are measured; braking comparisons require full brake at each target.",
+    "Current prefix lacks car damage and layout identity; straight screenshots do not establish every damage channel.",
+    "Distance is a speed integral; graphics/physics pages are not atomic."
+  ],
+  "evidence_sha256": {
+    "ac-keyboard.jsonl": "72e4091522b3d0066d2a191d7234a75588e5f83202291d5020ed709f2b6e18e8",
+    "session-result.json": "022ad252a5354696368007a2dabfce98f5e27e64c4deb9bf7696fdde0bad74f4"
+  }
+}
