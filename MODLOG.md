@@ -48,3 +48,6 @@ User reported hot tires staying hot. T007a swept five heat sets over 6 lap-like 
 
 ## 2026-10-07 - Force feedback (T008)
 Added `acng_ffb` (vehicle), FFB settings in `acng_core` (gain, min_force, filter, kerb, road, slip, per-model car_gain; saved in runtime.json), and the ACNG FFB app. Min force and effects use hydros' testHook so the exact stock force is known each physics step; the hook is only taken when free and only while an effect is above 0. T008a 19/21: harness compared math.huge with abs(a-b) (NaN); fixed, T008b 21/21 on a fresh profile with BeamNG's virtual wheel. Harness tests/beamng-ffblab. Primary profile untouched; lab closed.
+
+## Native race prototype / solo default
+User reported AI collisions; automatic test stopped. Native BeamNG AI only; zero opponents by default. RW001 partial: seven native checks, completion/damage checks pending. 118 Python tests pass.

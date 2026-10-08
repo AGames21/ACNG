@@ -12,7 +12,7 @@ local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 -- Physics features that are implemented and lab-validated. Each loads into the player
 -- vehicle while the master and its own flag are ON; unloading restores stock values.
-local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, ffb=true}
+local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, ffb=true, race_sessions=true}
 -- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
 -- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
@@ -137,7 +137,11 @@ end
 local function physicsWrites()
   return (tiresId and 1 or 0) + (assistsId and 1 or 0) + (ffbId and 1 or 0)
 end
+local function stopWeekend()
+  if extensions and extensions.isExtensionLoaded('acng_weekend') then extensions.acng_weekend.cancel() end
+end
 local function stopAll()
+  stopWeekend()
   stopVehicle()
   stopPerf()
   stopTires()
@@ -178,6 +182,7 @@ local function onExtensionLoaded()
 end
 local function setEnabled(value)
   config.enabled = value == true
+  if not config.enabled then stopWeekend() end
   if not config.enabled then stopPerf(); stopTires(); stopAssists(); stopFFB() else pollTime = 0.25 end
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
   return config.enabled
@@ -187,6 +192,7 @@ local function setFeature(name, value)
   if not config or not IMPLEMENTED[name] then return false end
   config.features = config.features or {}
   config.features[name] = value == true
+  if name == 'race_sessions' and not config.features[name] then stopWeekend() end
   if not tiresWanted() then stopTires() else pollTime = 0.25 end
   if not assistsWanted() then stopAssists() else pollTime = 0.25 end
   if not ffbWanted() then stopFFB() else pollTime = 0.25 end
@@ -333,7 +339,7 @@ local function getStatus()
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
     tires_vehicle_id=tiresId, assists_vehicle_id=assistsId, ffb_vehicle_id=ffbId,
     features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear'),
-      abs=feature('abs'), tc=feature('tc'), ffb=feature('ffb')},
+      abs=feature('abs'), tc=feature('tc'), ffb=feature('ffb'), race_sessions=feature('race_sessions')},
     assist_levels={abs=assistLevel('abs'), tc=assistLevel('tc')}, ffb_settings=ffb,
     implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc', 'ffb'}, physics_writes=physicsWrites()}
 end

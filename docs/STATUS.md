@@ -1,3 +1,8 @@
+## Current checkpoint ? 2026-10-07
+Working with native evidence: tire heat/grip, heat-driven pressure, wear, ABS/TC, FFB controls (virtual wheel only), HUD/performance/lap/sector timing and saved best laps. Suspension, structure and damage remain native BeamNG.
+Race Weekend is a prototype: seven early native checks passed, stopped by user request/report of AI collisions before completion and damage checks. Native BeamNG AI only, zero opponents now default. No AC AI replacement wanted.
+Remaining: pits, blankets/start temperature, reliable track grip research; deeper tire/AC handling calibration, aero/drivetrain/environment/racing rules where practical, broader regressions and physical FFB feedback.
+
 # ACNG status
 
 Updated:2026-10-07 (America/Chicago). M1 independent/default-OFF mod foundation validated; M2 telemetry/oracle active. No physics tuning.

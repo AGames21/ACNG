@@ -1,0 +1,155 @@
+{
+  "checks": {
+    "default_off": true,
+    "native_ai_moves": true,
+    "native_completed_qualifying_lap": true,
+    "real_lap_selector_one_lap": true,
+    "simulation_clock_advances": true,
+    "ui_end_practice": true,
+    "ui_prepare_three_entrants": true
+  },
+  "completed": false,
+  "events": [
+    {
+      "name": "ready",
+      "sim_s": 27.1072189603
+    }
+  ],
+  "initial": {
+    "clock_s": 0,
+    "countdown_s": 0,
+    "message": "Ready: practice, qualify, or race.",
+    "options": {
+      "aggression": 0.75,
+      "laps": 3,
+      "minutes": 3,
+      "opponents": 2
+    },
+    "phase": "ready",
+    "remaining_s": 180,
+    "schema_version": 1,
+    "standings": [
+      {
+        "finished": false,
+        "id": 23507,
+        "lap": 0,
+        "name": "YOU",
+        "player": true,
+        "position": 1
+      },
+      {
+        "finished": false,
+        "id": 25022,
+        "lap": 0,
+        "name": "AI 1",
+        "player": false,
+        "position": 2
+      },
+      {
+        "finished": false,
+        "id": 25095,
+        "lap": 0,
+        "name": "AI 2",
+        "player": false,
+        "position": 3
+      }
+    ],
+    "track": "Hirochi Raceway Short"
+  },
+  "live": {
+    "clock_s": 52.46700078249,
+    "countdown_s": 0,
+    "message": "GREEN FLAG",
+    "options": {
+      "aggression": 0.75,
+      "laps": 1,
+      "minutes": 3,
+      "opponents": 2
+    },
+    "phase": "race",
+    "remaining_s": 127.53299921751,
+    "schema_version": 1,
+    "session": "race",
+    "standings": [
+      {
+        "best_s": 106.36077660924,
+        "finished": false,
+        "gap_s": 0.82688739442126,
+        "id": 23507,
+        "lap": 0,
+        "name": "YOU",
+        "player": true,
+        "position": 1,
+        "qualifying_s": 106.36077660924
+      },
+      {
+        "finished": false,
+        "gap_s": 0,
+        "id": 25095,
+        "lap": 0,
+        "name": "AI 2",
+        "player": false,
+        "position": 2
+      },
+      {
+        "finished": false,
+        "id": 25022,
+        "lap": 0,
+        "name": "AI 1",
+        "player": false,
+        "position": 3
+      }
+    ],
+    "track": "Hirochi Raceway Short"
+  },
+  "qualifying": {
+    "clock_s": 106.36400217749,
+    "countdown_s": 0,
+    "message": "GREEN FLAG",
+    "options": {
+      "aggression": 0.75,
+      "laps": 3,
+      "minutes": 3,
+      "opponents": 2
+    },
+    "phase": "qualifying",
+    "remaining_s": 73.635997822508,
+    "schema_version": 1,
+    "session": "qualifying",
+    "standings": [
+      {
+        "best_s": 106.36077660924,
+        "finished": false,
+        "gap_s": 0,
+        "id": 23507,
+        "lap": 1,
+        "name": "YOU",
+        "player": true,
+        "position": 1,
+        "qualifying_s": 106.36077660924
+      },
+      {
+        "finished": false,
+        "gap_s": 0,
+        "id": 25022,
+        "lap": 0,
+        "name": "AI 1",
+        "player": false,
+        "position": 3
+      },
+      {
+        "finished": false,
+        "gap_s": 9.012485408314,
+        "id": 25095,
+        "lap": 0,
+        "name": "AI 2",
+        "player": false,
+        "position": 2
+      }
+    ],
+    "track": "Hirochi Raceway Short"
+  },
+  "schema_version": 1,
+  "test": "RW001 native race weekend",
+  "stopped_reason": "User reported unwanted AI collisions. Owned automated test stopped before race completion/damage checks. Native BeamNG AI only; no AC AI replacement. Default opponents changed to zero."
+}
