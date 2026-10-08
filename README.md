@@ -32,8 +32,8 @@ starts OFF. Master OFF stops active ACNG modules and its telemetry stream.
 
 | System | What it adds | Verification |
 |---|---|---|
-| **Road / Sport tires** | Native heat/pressure, temperature-driven grip, selectable presets | Short native thermal comparisons; experimental compound settings |
-| **Tire wear** | Slip-driven tread loss and grip changes; fresh tread on reset | Controlled-circle tests; wider road validation pending |
+| **Tire compounds** | Auto (from fitted tires), Road, Sport or Race: own heat window, grip and wear rate; heat capped near 250 °C | Native auto-detection and race-window checks; heat cap unit-tested |
+| **Tire wear** | Slip- and heat-driven tread loss; a fully worn tire punctures; fresh tread on reset | Controlled-circle tests and native zero-tread puncture; wider road validation pending |
 | **ABS / traction control** | Factory, Off or three intervention levels | Native tests; throttle-cut TC for cars without factory TC |
 | **Force feedback** | Strength, per-car gain, minimum force, filtering and optional effects | Virtual-wheel tests; real wheel and road/kerb feel pending |
 | **Driving instruments** | Gear/speed/RPM HUD, pedals, acceleration and braking timers | Native HUD/timing evidence |
@@ -42,11 +42,11 @@ starts OFF. Master OFF stops active ACNG modules and its telemetry stream.
 | **Telemetry** | Passive BeamNG capture and local AC shared-memory research | Machine-readable capture/comparison tooling |
 
 FFB requires a force-feedback wheel; it does not change keyboard/gamepad steering.
-Pressure currently follows heat. Presets do not detect every car's real tire compound.
+Pressure currently follows heat. Auto reads the fitted tire part; unknown tires use Road.
 
 ## Measured progress
 
-**164 Python checks + 6 Node app suites passed locally.**
+**187 Python checks + 7 Node app suites passed locally.**
 **Native in-game checks in BeamNG 0.39.4, all in isolated profiles:**
 
 - Six stock models (FWD, RWD, 3-wheel, van, 10-tire semi) driven, crashed,
@@ -92,7 +92,7 @@ python tools/build_freeroam.py
    "Open user folder" button finds it on any PC.
    Keep only one enabled ACNG package; disable older copies.
 2. In **UI Apps**, add **ACNG**, spawn a stock vehicle and turn the master ON.
-3. Under **Advanced → Tires**, select **Road** or **Sport**. Reset for fresh tires
+3. Under **Advanced → Tires**, keep **Auto** or pick **Road**, **Sport** or **Race**. Reset for fresh tires
    when comparing presets; switching alone retains current heat/tread.
 
 First ON selects heat/wear, keeps factory assists and leaves optional FFB OFF.

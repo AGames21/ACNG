@@ -55,9 +55,10 @@ PCs over USB or your home network works too.
 
 ## Evidence
 
-The next detail build adds native RPM/speed/fuel/oil needles, three detailed
-mirrors and BMW rim visuals. It is **not yet installed or runtime verified**.
-See [C003](test-results/C003-1m-details.md) for the checks and current limits.
+The current build has native RPM/speed/fuel/oil needles, three reflective
+mirrors, BMW rim visuals, working lamps and clear glass. C004 passed 45/45 in an
+isolated lab and is the installed version. See
+[C004](test-results/C004-1m-lamps-glass-mirrors.md) for causes, checks and open items.
 
 C001 (`docs/test-results/C001-ac-car.md`) ran in an isolated lab. It covered
 spawn, AC meshes bound, driving, a crash into a parked pickup, a puncture, a

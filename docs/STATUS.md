@@ -1,4 +1,24 @@
-# Latest checkpoint - 2026-10-08: local 1M upgrades
+# Latest checkpoint - 2026-10-08: 1M fixes, tire limits, compact app
+
+## 2026-10-08 (evening) - C004 1M fixes and tire changes installed
+
+User-reported 1M faults fixed with causes found: upside-down wheel (rotation sign),
+green glass, fuel-door square (normal-map alpha cutout), lit-looking tail lights,
+dead lamps (no glowMap), grey mirrors and ringing seat mounts. C004 native lab
+45/45 in fresh profile ACNG-car-016; interior movement 0.7 mm idle / 1.4 mm driving;
+mass 2.7% over reference. See [C004](test-results/C004-1m-lamps-glass-mirrors.md).
+
+Tires: Auto picks road/sport/race from fitted tires (GUI003 native: detected sport);
+compounds differ in window, grip and wear (road 0.6x, sport 1x, race 1.7x); zero
+tread punctures natively (GUI003). Friction heat fades from 200 C to none at 250 C
+and hot or burning rubber wears faster - unit-tested; a native burnout run is
+still pending. ACNG app collapses to a 42 px strip (GUI003).
+
+187 Python tests and 7 Node suites pass. Normal profile updated 55c6fa8 -> 155761f
+and the C004 car installed; both hashes match the tested files, backups in
+`<workspace>/work/ACNG-normal-update-20261008-172716`.
+Open: dark lip at the front wheel arch (probably ETK tubs), the reported lower-body
+jiggle not reproduced, night headlight check.
 
 ## 2026-10-08 - 1M details pending native test
 

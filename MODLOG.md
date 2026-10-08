@@ -2,7 +2,14 @@
 New single ACNG control app: master ON/OFF, Advanced tabs for tires/assists/FFB/diagnostics. First ON selects heat/wear, keeps factory assists and FFB optional; custom selections survive OFF/ON. Atomic backed-up preferences; new game starts OFF; panel OFF stops streaming too. GUI001 12/12 native checks; 124 Python tests and Node suites pass. Game left at West Coast USA, master OFF, no AI or automatic driving.
 Next: road-driving heat/pressure calibration, more vehicle/reset/damage coverage and physical-wheel FFB feedback. Track work deferred in Obsidian Freeroam Plan / Track Later. No car mod started.
 
-## 2026-10-08 - Local 1M detail adapters (validation pending)
+## 2026-10-08 - 1M lamps/glass/mirrors/wheel fixes; tire heat cap and compounds
+
+Fix prop rest-rotation sign (upright wheel and logo), add native lamp glowMap and
+on/off emissive materials, dim unlit lenses, grey glass, stock mirror material,
+honour normal-map alpha cutouts and damp seat/prop mounts. Tires: Auto/Road/Sport/
+Race compounds with distinct windows and wear, 200-250 C friction-heat fade, faster
+hot wear, zero-tread native puncture. Compact ACNG app. C004 45/45 native; installed.
+
 
 Add native RPM/speed/fuel/oil gauge props, mirror faces/cameras with corrected UVs,
 and BMW rim visuals on native wheel physics. Add synthetic contracts and C003
