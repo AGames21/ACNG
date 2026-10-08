@@ -9,6 +9,12 @@ Remaining: pits, blankets/start temperature, reliable track grip research; deepe
 
 # ACNG status
 
+Normal-profile install (2026-10-08): user authorized the verified freeroam ZIP in
+their usual BeamNG profile. N001 passed 8/8 native checks on their default Barstow.
+Existing eight UI apps, mod active flags and input maps preserved; settings/saves/
+vehicle configs backed up. One-shot setup helper retired; game left parked, OFF.
+See docs/NORMAL-INSTALL.md and docs/test-results/N001-normal-install.md.
+
 Current checkpoint (2026-10-08): freeroam-first Road/Sport presets implemented;
 GUI002/FR002 passed 27 native app, vehicle/reset and puncture/broken-wheel checks.
 FR001 measured gentler thermal settings; FR001b final Road driving repeat completed:

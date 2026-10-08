@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "test": "N001 normal profile setup",
+  "completed": true,
+  "checks": {
+    "normal_freeroam_layout_has_acng": true,
+    "normal_master_click_applies_road_heat_wear": true,
+    "normal_master_off_unloads_effects": true,
+    "preferences_saved": true,
+    "production_mod_loaded": true,
+    "registered_normal_profile": true,
+    "startup_master_off": true,
+    "telemetry_off": true
+  },
+  "vehicle": "barstow",
+  "app_count": 9,
+  "build": "BeamNG 0.39.4",
+  "package_source": "133798e3cbdf7c528740a3bb138bcdf232466983",
+  "helper_retired": true,
+  "prior_ui_apps_preserved": true,
+  "prior_mod_active_flags_preserved": true
+}

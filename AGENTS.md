@@ -32,3 +32,10 @@ now exists and origin/main is connected. CLI login is verified.
 See docs/PUBLISHING.md and tools/publication_audit.py. No force-push or public
 visibility change authorized. Respect the parked road playtest handoff; do not
 take controls while the user drives. Physical FFB still requires a real wheel.
+
+2026-10-08 normal install: user explicitly requested ACNG in the normal BeamNG
+profile, superseding isolation-only rules for this authorized installation/smoke.
+Preserve existing mods, controls, saves and UI apps; use recorded backups and
+verified ZIP. See docs/NORMAL-INSTALL.md and ignored .local/normal-install.json.
+Retire the one-shot normalsetup harness after success. Future experiments remain
+isolated unless specifically authorized; do not automate the user's ongoing drive.
