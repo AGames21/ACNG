@@ -40,7 +40,7 @@ MESH_LIFT = 0.016  # AC ground plane vs ETK node frame, from the wheel-centre fi
 # Visible ETK meshes are removed; these mechanical ones stay (seen through wheel wells and in crashes).
 KEEP_PREFIXES = ('etkc_lowerarm', 'etkc_tierod', 'etkc_hub', 'etkc_upperarm', 'etkc_subframe', 'etkc_diff',
                  'etkc_halfshaft', 'etkc_spring', 'etkc_shock', 'etkc_swaybar', 'etkc_strut', 'etkc_steeringbox',
-                 'etkc_underbody', 'etkc_radsupport', 'etkc_heatshield', 'etkc_bumperbar', 'etkc_tubs',
+                 'etkc_underbody', 'etkc_radsupport', 'etkc_heatshield', 'etkc_tubs',
                  'etkc_fueltank', 'etkc_radiator', 'etkc_driveshaft', 'etkc_transfercase', 'etkc_exhaust_',
                  'etkc_muffler', 'etkc_catalytic', 'etkc_intercooler')
 
