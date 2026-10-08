@@ -20,11 +20,13 @@ The first healthy run passed all 34 checks, but screenshot review exposed mispla
 control meshes: local-origin Collada props need explicit baseTranslation at the
 reference node. Added that setting using [BeamNG's props documentation](https://documentation.beamng.com/modding/vehicle/sections/props/).
 The steering screenshot input was changed from nearly one full revolution to
-153 degrees so visual movement is distinguishable. Placement build passed all 34 native checks: healthy spawn/drive, native damage,
+153 degrees so visual movement is distinguishable. Placement and final build each passed all 34 native checks: healthy spawn/drive, native damage,
 control inputs and shifter motion, master OFF preservation, reset repair.
 Driver-view neutral/153-degree wheel screenshots show distinct poses; footwell
-view confirms three separate pedals. A metadata-only Custom config label is
-receiving its final exact-ZIP validation before installation.
+view confirms three separate pedals. The final exact ZIP passed in a fresh profile, including its Custom config label,
+and was installed in the normal profile with matching SHA-256. Crash damage
+rose from zero to 75,938 in the placement run; master OFF retained damage,
+and reset returned it to zero. The final run also passed the complete lifecycle.
 
 ## Latest healthy numerical measurement
 
@@ -43,8 +45,14 @@ measured mass within 3% of the published reference; drive without self-damage;
 crash damage; puncture/lost wheel; drive wreck; master OFF preserves damage;
 ON reattaches; reset repairs structure and resets tread.
 
-Offline: 162 Python tests and six Node UI suites passed. Those do not prove
+Offline: 164 Python tests and six Node UI suites passed. Those do not prove
 rendering or driving feel. Screenshots/native lab evidence are checked separately.
 
-Pending: exact final ZIP check and normal-profile installation; user road
+Installed: final local car plus ACNG wear-display update, with backups. Normal
+updater also accepts the separately recorded car without misidentifying it as a
+duplicate core mod. An unrelated ZIP with malformed UTF-8 names exposed an
+installer error; fixed to preserve unrelated archives and reject unreadable ACNG
+archives. Unit contracts cover these boundaries.
+
+Pending: normal-profile coexistence/user road
 playtest; BMW/AC handling comparison; rim/glass/mirror/instrument completion.

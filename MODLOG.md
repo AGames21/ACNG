@@ -90,3 +90,11 @@ C002 placement run 34/34, wheel-pose screenshots reviewed, 162 Python/six UI sui
 passed. Final package validation/install pending. New installer requires the exact
 natively tested local ZIP; normal updater recognizes only the recorded car hash.
 No game assets enter this repository or public package.
+
+Finalization: corrected both native prop placement and rest orientation; wheel
+neutral/153-degree driver screenshots and footwell view reviewed. Final C002
+34/34 in a new profile. Source 55c6fa8; installer compatibility fix 6790ca5.
+164 Python tests, six UI suites passed. Installed verified local car and wear
+package in the authorized normal profile; hashes match, backups recorded in
+ignored local records. Preserved an unrelated malformed-encoding mod ZIP.
+Normal-profile coexistence and road-driving feel remain user playtests.

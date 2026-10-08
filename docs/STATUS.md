@@ -6,10 +6,14 @@ control props, hides protruding front bar/support meshes and supplies separate
 BMW-target and donor configs. Native chassis weights remain unchanged.
 C002 placement run: 34/34; zero spawn/drive damage; crash/puncture/wheel loss,
 OFF preservation and reset passed. Measured ~1,533 kg, 249 kW, 507 Nm; healthy
-weight is 2.5% above the BMW reference. 162 Python tests/six UI suites passed.
-Exact final ZIP validation and normal installation are being completed.
+weight is 2.5% above the BMW reference. 164 Python tests/six UI suites passed.
+Final exact ZIP validation passed 34/34 in another fresh profile. Local car and
+wear-display package are installed in the normal profile with backups and
+matching hashes. Normal-profile gameplay with the existing mods remains untested.
 See [conversion limits](AC-CAR-CONVERSION.md) and [C002](test-results/C002-1m-upgrades.md).
-Claude's committed wear-readout fix will be included in the normal package update.
+Claude's wear-readout fix is installed: TREAD requires wear ON; GRIP is separately
+labelled and requires heat ON. New car defaults to the experimental specification
+config; donor config remains available. Full BMW/AC handling matching is not complete.
 Next: targeted user road playtest, then matched handling/braking benchmarks.
 
 ---

@@ -46,7 +46,7 @@ Pressure currently follows heat. Presets do not detect every car's real tire com
 
 ## Measured progress
 
-**150 Python checks + 6 Node app suites passed locally.**
+**164 Python checks + 6 Node app suites passed locally.**
 **Native in-game checks in BeamNG 0.39.4, all in isolated profiles:**
 
 - Six stock models (FWD, RWD, 3-wheel, van, 10-tire semi) driven, crashed,
@@ -140,4 +140,4 @@ Corsa. Code is MIT licensed ([LICENSE](LICENSE)); BeamNG, Assetto Corsa and any 
 
 An opt-in pit service adds timed refueling and intact-tire ACNG tread refresh to Advanced > Pits. It passed in game (P001b/P001c) and on the user's own Spa download (P002). Spa stays a separate author-distributed map; download it from its author on each PC. See [Spa and pit development](docs/SPA-AND-PITS.md).
 
-A personal converter turns your own Assetto Corsa BMW 1M into a drivable BeamNG car on stock ETK physics with full damage (C001). The car contains AC and BeamNG assets, so it is never in this repository or its Releases. On another PC with both games installed, rebuild it there with one command. See [AC car conversion](docs/AC-CAR-CONVERSION.md).
+A personal converter turns your own Assetto Corsa BMW 1M into a drivable BeamNG car on fitted ETK physics with native damage (C001/C002). It adds separate interior pieces, moving steering/pedals/shifter and an experimental specification config; C002 passed 34 native checks. This is an approximation, not a complete BMW chassis or AC handling port. The car contains AC and BeamNG assets, so it is never in this repository or its Releases. On another PC with both games installed, rebuild it there with one command. See [AC car conversion](docs/AC-CAR-CONVERSION.md).
