@@ -4,6 +4,11 @@ import math
 
 GEAR_RATIOS = [-3.727, 0, 4.110, 2.315, 1.542, 1.179, 1.000, 0.846]
 FINAL_DRIVE = 3.154
+# Light cosmetic mounts: about 15% of critical damping, well inside the 2 kHz step limit.
+# Keep node weights light; heavier mounts pushed the car past the 3% mass target.
+SEAT_NODE_KG, SEAT_SPRING, SEAT_DAMP = 0.3, 60000, 40
+PROP_NODE_KG, PROP_SPRING, PROP_DAMP = 0.15, 40000, 24
+STEER_REST_X = 70  # column frame below is the X rotation of 70 degrees (20 degrees above horizontal)
 PROP_HEADER = ['func', 'mesh', 'idRef:', 'idX:', 'idY:', 'baseRotation', 'rotation',
                'translation', 'min', 'max', 'offset', 'multiplier']
 
@@ -106,7 +111,7 @@ def add_seat_cages(part, model, lift, prefix):
             continue
         low, high = bounds(points)
         nodes = part.setdefault('nodes', [['id', 'posX', 'posY', 'posZ']])
-        nodes.append({'group': prefix+group, 'nodeWeight': 0.3, 'collision': False, 'selfCollision': False})
+        nodes.append({'group': prefix+group, 'nodeWeight': SEAT_NODE_KG, 'collision': False, 'selfCollision': False})
         ids = []
         for x in (low[0], high[0]):
             for y in (low[1], high[1]):
@@ -116,8 +121,9 @@ def add_seat_cages(part, model, lift, prefix):
         nodes.append({'group': '', 'collision': True, 'selfCollision': True})
         beams = part.setdefault('beams', [['id1:', 'id2:']])
         # Cosmetic nodes are light. Avoid chassis-rate stiffness on their many connections:
-        # an over-stiff cage is numerically unstable at BeamNG's physics timestep.
-        beams.append({'beamType':'|NORMAL','beamPrecompression':1,'breakGroup':'','deformGroup':'','beamLongBound':1,'beamShortBound':1,'beamSpring': 50000, 'beamDamp': 5, 'beamDeform': 2000, 'beamStrength': 50000})
+        # an over-stiff cage is numerically unstable at BeamNG's physics timestep. The old
+        # 0.3 kg / damp 5 cage rang at ~2% of critical damping, so seats visibly wobbled.
+        beams.append({'beamType':'|NORMAL','beamPrecompression':1,'breakGroup':'','deformGroup':'','beamLongBound':1,'beamShortBound':1,'beamSpring': SEAT_SPRING, 'beamDamp': SEAT_DAMP, 'beamDeform': 2000, 'beamStrength': 50000})
         for i, a in enumerate(ids):
             for b in ids[i+1:]:
                 beams.append([a, b])
@@ -131,14 +137,14 @@ def add_prop(part, name, frame, prefix):
     pivot, axes = frame['pivot'], frame['axes']
     ids = [prefix+name+'_ref', prefix+name+'_x', prefix+name+'_y']
     nodes = part.setdefault('nodes', [['id', 'posX', 'posY', 'posZ']])
-    nodes.append({'nodeWeight': 0.15, 'collision': False, 'selfCollision': False,
+    nodes.append({'nodeWeight': PROP_NODE_KG, 'collision': False, 'selfCollision': False,
                   'group': prefix+name+'_mount'})
     positions = [pivot, [pivot[k]+0.08*axes[0][k] for k in range(3)],
                  [pivot[k]+0.08*axes[1][k] for k in range(3)]]
     nodes.extend([[i]+[round(v, 6) for v in p] for i, p in zip(ids, positions)])
     nodes.append({'group': '', 'collision': True, 'selfCollision': True})
     beams = part.setdefault('beams', [['id1:', 'id2:']])
-    beams.append({'beamType':'|NORMAL','beamPrecompression':1,'breakGroup':'','deformGroup':'','beamLongBound':1,'beamShortBound':1,'beamSpring': 25000, 'beamDamp': 2, 'beamDeform': 2000, 'beamStrength': 50000})
+    beams.append({'beamType':'|NORMAL','beamPrecompression':1,'breakGroup':'','deformGroup':'','beamLongBound':1,'beamShortBound':1,'beamSpring': PROP_SPRING, 'beamDamp': PROP_DAMP, 'beamDeform': 2000, 'beamStrength': 50000})
     for i in ids:
         for anchor in ('dsh1l', 'dsh1r', 'dsh3'):
             beams.append([i, anchor])
@@ -151,7 +157,16 @@ def add_prop(part, name, frame, prefix):
                   {'x': 0, 'y': 0, 'z': 0}, frame.get('min', -1000 if name == 'steer' else 0),
                   frame.get('max', 1000 if name == 'steer' else 1), frame.get('offset', 0), 1,
                   {'baseTranslation':{'x':0,'y':0,'z':0},
-                   'baseRotationGlobal':{'x':frame.get('rest_x', 70 if name=='steer' else 0),'y':0,'z':0}}])
+                   'baseRotationGlobal':{'x':prop_rest_x(name, frame),'y':0,'z':0}}])
+
+
+def prop_rest_x(name, frame):
+    """BeamNG baseRotationGlobal X turns opposite to the right-hand rule used for the frames.
+
+    Vanilla columns that rise toward the driver use negative X (md_series -21, sunburst2
+    -20.8/-47.45). The old positive value left the 1M wheel and dials about 140 degrees off.
+    """
+    return -frame.get('rest_x', STEER_REST_X if name == 'steer' else 0)
 
 
 def spec_parts(stock):

@@ -44,7 +44,24 @@ class UpgradeContracts(unittest.TestCase):
         # The DAE uses local origin zero. Without this, BeamNG retains model origin
         # at the car centre instead of positioning the control on its reference node.
         self.assertEqual(part['props'][1][-1]['baseTranslation'],{'x':0,'y':0,'z':0})
-        self.assertEqual(part['props'][1][-1]['baseRotationGlobal']['x'],70)
+        self.assertEqual(part['props'][1][-1]['baseRotationGlobal']['x'],-70)
+
+    def test_gauge_rest_rotation_uses_beamng_sign(self):
+        part={};frame={'pivot':[0,0,1],'axes':[(1,0,0),(0,1,0),(0,0,1)],'rest_x':-84,
+                       'func':'rpm','rate':.03,'min':0,'max':8000,'offset':0}
+        u.add_prop(part,'gauge_rpm',frame,'test_')
+        self.assertEqual(part['props'][1][-1]['baseRotationGlobal']['x'],84)
+
+    def test_cosmetic_mounts_are_damped_not_ringing(self):
+        import math
+        for kg,spring,damp in ((u.SEAT_NODE_KG,u.SEAT_SPRING,u.SEAT_DAMP),
+                               (u.PROP_NODE_KG,u.PROP_SPRING,u.PROP_DAMP)):
+            ratio=damp/(2*math.sqrt(spring*kg))
+            self.assertGreater(ratio,.08)   # old cages were ~2%: visible wobble
+            self.assertLess(.0005*math.sqrt(10*spring/kg),1)  # explicit step stays stable
+        part={};u.add_prop(part,'steer',{'pivot':[0,0,1],'axes':[(1,0,0),(0,1,0),(0,0,1)]},'t_')
+        self.assertEqual(part['nodes'][1]['nodeWeight'],u.PROP_NODE_KG)
+        self.assertEqual(part['beams'][1]['beamDamp'],u.PROP_DAMP)
 
     def test_front_structure_stays_at_donor_mounts_with_hidden_protruding_skin(self):
         self.assertAlmostEqual(build_ac_car.tf_y(-1),build_ac_car.SY*-1+build_ac_car.TY)

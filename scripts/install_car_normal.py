@@ -35,15 +35,19 @@ def verify_local_build(package, test_file):
     package, test_file = Path(package).resolve(), Path(test_file).resolve()
     proof = json.loads(test_file.read_text(encoding='utf-8'))
     version = proof.get('test', '').split(' ', 1)[0]
-    if not proof.get('completed') or proof.get('error') or version not in {'C002', 'C003'}:
-        raise RuntimeError('A completed C002/C003 native run is required')
+    if not proof.get('completed') or proof.get('error') or version not in {'C002', 'C003', 'C004'}:
+        raise RuntimeError('A completed C002/C003/C004 native run is required')
     checks = proof.get('checks', {})
     required = {'spawn_undamaged', 'drive_no_self_damage', 'reset_repairs_native',
                 'four_animated_controls', 'native_prop_meshes_created', 'native_shifter_moves'}
-    if version == 'C003':
+    if version in {'C003', 'C004'}:
         required.update({'four_native_gauges', 'three_native_mirrors',
                          'three_native_mirror_cameras', 'four_bmw_rim_meshes',
                          'gauges_receive_native_engine_signals', 'speed_gauge_receives_native_motion'})
+    if version == 'C004':
+        required.update({'lamp_glow_registered', 'lowbeam_and_brake_signals', 'interior_steady_at_idle',
+                         'interior_steady_while_driving', 'tires_auto_compound',
+                         'unladen_mass_within_three_percent'})
     if not required.issubset(checks) or not all(value is True for value in checks.values()):
         raise RuntimeError('Native validation is incomplete or failed')
     lab_copy = test_file.parent / 'mods' / package.name

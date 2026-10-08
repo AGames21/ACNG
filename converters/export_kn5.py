@@ -45,6 +45,30 @@ TAILLIGHT_MATERIALS = {'Fanali_POSTERIORI_OS', 'Fanali_POSTERIORI_TS', 'FARI_Pos
                        'FARI_Poseriori_EXTRA2'}
 
 
+# Lamp meshes by AC object name -> BeamNG electrics function. The glowMap swaps each one's
+# material for an emissive '_on' copy, the same way vanilla etkc_*light materials work.
+LIGHT_FUNCTIONS = (('front_light', 'headlight'), ('rear_light', 'taillight'),
+                   ('brake_light_2', 'chmsl'), ('brake_light', 'brakelight'),
+                   ('retro_light', 'reverselight'))
+GLOW_FUNCTIONS = {'headlight': {'lowbeam': 0.49, 'highbeam': 1}, 'taillight': {'lowhighbeam': 0.49},
+                  'brakelight': {'brakelights': 0.49}, 'chmsl': {'brakelights': 100},
+                  'reverselight': {'reverse': 1}}
+GLOW_COLOURS = {'headlight': (255, 248, 235), 'reverselight': (255, 255, 255),
+                'taillight': (255, 18, 8), 'brakelight': (255, 18, 8), 'chmsl': (255, 18, 8)}
+# AC lights its red lenses with low ksDiffuse; BeamNG has no equivalent, so unlit lenses
+# looked switched on in daylight. Dim their albedo instead.
+UNLIT_LENS_FACTOR = 0.45
+# AC cabin glass is an olive-tinted texture; BeamNG shows that as green glass. Keep its
+# opacity, drop the hue.
+GLASS_MATERIALS = {'VETRI_Texture', 'VETRI_defrost_interno'}
+VANILLA_MIRROR = 'mirror'  # vehicles/common: emissive, metallic 1, roughness 0, mirror_n normal
+
+
+def light_function(mesh):
+    name = mesh['name']
+    return next((func for start, func in LIGHT_FUNCTIONS if name.startswith(start)), None)
+
+
 def route(mesh, materials):
     """Return the target mesh group for one KN5 mesh, or SKIP."""
     name = mesh['name']
@@ -276,6 +300,38 @@ def _alpha_png(dds_bytes, invert=False):
     return buf.getvalue()
 
 
+def _alpha_range(dds_bytes):
+    from PIL import Image
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    return im.convert('RGBA').getchannel('A').getextrema()
+
+
+def _opacity_source(mat, textures):
+    """Texture whose alpha is the cutout: the diffuse, or the normal map when the diffuse is solid."""
+    diffuse, normal = mat['textures'].get('txDiffuse'), mat['textures'].get('txNormal')
+    if (mat['shader'] == 'ksPerPixelNM' and mat['blend'] == 1 and normal in textures
+            and _alpha_range(textures[diffuse])[0] >= 250 and _alpha_range(textures[normal])[0] < 128):
+        return normal
+    return diffuse
+
+
+def _grey_png(dds_bytes):
+    from PIL import Image
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    buf = io.BytesIO()
+    im.convert('L').convert('RGB').save(buf, 'PNG')
+    return buf.getvalue()
+
+
+def _solid_png(colour):
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new('RGB', (4, 4), colour).save(buf, 'PNG')
+    return buf.getvalue()
+
+
 def _rgb_png(dds_bytes):
     from PIL import Image
     im = Image.open(io.BytesIO(dds_bytes))
@@ -313,13 +369,17 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             if g is not None:  # spill into a lettered continuation mesh
                 name = name + '_' + 'abcdefgh'[sum(1 for k in groups if k.startswith(name))]
             g = groups[name] = Group(name)
-        g.add(mesh['material'], pos, nrm, uvs, tris)
+        func = light_function(mesh) if target in ('lights_F', 'lights_R', 'trunk') else None
+        g.add(mesh['material'] + ('@' + func if func else ''), pos, nrm, uvs, tris)
         report['meshes'][label] = name
     used = sorted({m for g in groups.values() for m in g.tris})
-    material_names = {m: ('mirror_' if m == 'MIRROR' else '') + prefix + m for m in used}
+    material_names = {m: VANILLA_MIRROR if m == 'MIRROR' else prefix + m.replace('@', '_') for m in used}
     write_collada(list(groups.values()), out / f'{prefix.rstrip("_")}.dae', material_names)
-    written, mats, converted = {}, {}, []
+    written, mats, converted, glow = {}, {}, [], {}
     for m in used:
+        if m == 'MIRROR':
+            continue  # the vanilla common material makes BeamNG's mirror render target visible
+        m, _, func = m.partition('@')
         mat = materials[m]
         for slot in ('txDiffuse', 'txNormal'):
             t = mat['textures'].get(slot)
@@ -343,17 +403,40 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             paint = {'base': base, 'opacity': opac}
         elif (mat['blend'] == 1 or mat['alpha_test']) and diffuse in model['textures']:
             opacity = f'textures/{prefix}{m.lower()}_o.data.png'
-            (out / opacity).write_bytes(_alpha_png(model['textures'][diffuse]))
+            source = _opacity_source(mat, model['textures'])
+            (out / opacity).write_bytes(_alpha_png(model['textures'][source]))
         key, entry = material_entry(prefix, vehicle_dir, mat, opacity, paint, written)
-        if m == 'MIRROR':
-            key = material_names[m]
-            entry.update(name=key, mapTo=key, translucent=False, activeLayers=1)
-            entry['Stages'] = [{'baseColorFactor': [1, 1, 1, 1], 'metallicFactor': 1,
-                                'roughnessFactor': 0}, {}, {}, {}]
+        stage = entry['Stages'][0]
+        if opacity and source != diffuse:
+            # The cutout lives in the normal map's alpha (AC ksPerPixelNM); its RGB is not a
+            # tangent-space normal map, which showed as a blue-green square on the gas cap.
+            stage.pop('normalMap', None)
+        if m in GLASS_MATERIALS and diffuse in model['textures']:
+            grey = f'textures/{prefix}{m.lower()}_b.color.png'
+            (out / grey).write_bytes(_grey_png(model['textures'][diffuse]))
+            stage['baseColorMap'] = f'/vehicles/{vehicle_dir}/{grey}'
+        if m in TAILLIGHT_MATERIALS and not paint:
+            stage['baseColorFactor'] = [UNLIT_LENS_FACTOR] * 3 + [1]
+        if func:
+            key = material_names[m + '@' + func]
+            entry.update(name=key, mapTo=key)
+            lit = json.loads(json.dumps(entry))
+            colour = GLOW_COLOURS[func]
+            glow_file = 'textures/{}glow_{:02x}{:02x}{:02x}.color.png'.format(prefix, *colour)
+            if not (out / glow_file).exists():
+                (out / glow_file).write_bytes(_solid_png(colour))
+            lit.update(name=key + '_on', mapTo=key + '_on')
+            lit['Stages'][0].update(emissiveFactor=[1, 1, 1], emissiveIntensityNits=15000,
+                                    emissiveMap=f'/vehicles/{vehicle_dir}/{glow_file}')
+            lit['Stages'][0].pop('baseColorFactor', None)
+            mats[key + '_on'] = lit
+            glow[key] = {'simpleFunction': GLOW_FUNCTIONS[func], 'off': key,
+                         'on': key + '_on', 'on_intense': key + '_on'}
         mats[key] = entry
     (out / 'main.materials.json').write_text(json.dumps(mats, indent=1), encoding='ascii')
     report['groups'] = {g.name: {'vertices': len(g.pos), 'triangles': sum(len(t) for t in g.tris.values()),
                                  'materials': sorted(g.tris)} for g in groups.values()}
+    report['glow'] = glow
     report['textures_written'] = len(written)
     report['textures_converted_png'] = sorted(converted)
     return report

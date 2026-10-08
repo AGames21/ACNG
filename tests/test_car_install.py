@@ -56,6 +56,22 @@ class CarInstallProof(unittest.TestCase):
             test.write_text(json.dumps(proof))
             self.assertEqual(verify_local_build(package, test)[1], 12)
 
+    def test_c004_requires_lamp_and_steadiness_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            package, test, proof = self.fixture(Path(temp))
+            proof['test'] = 'C004 1M lamps'
+            proof['checks'].update(dict.fromkeys(['four_native_gauges', 'three_native_mirrors',
+                'three_native_mirror_cameras', 'four_bmw_rim_meshes',
+                'gauges_receive_native_engine_signals', 'speed_gauge_receives_native_motion'], True))
+            test.write_text(json.dumps(proof))
+            with self.assertRaisesRegex(RuntimeError, 'incomplete'):
+                verify_local_build(package, test)
+            proof['checks'].update(dict.fromkeys(['lamp_glow_registered', 'lowbeam_and_brake_signals',
+                'interior_steady_at_idle', 'interior_steady_while_driving', 'tires_auto_compound',
+                'unladen_mass_within_three_percent'], True))
+            test.write_text(json.dumps(proof))
+            self.assertEqual(verify_local_build(package, test)[1], 18)
+
     def test_failed_or_incomplete_native_runs_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))

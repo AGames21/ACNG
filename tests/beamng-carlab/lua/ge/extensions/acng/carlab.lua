@@ -6,7 +6,7 @@
 local M={}
 local elapsed,co,response=0,nil,nil
 local MODEL='acng_bmw1m'
-local result={test='C003 1M gauges mirrors and rims',completed=false,checks={},probes={},shots={}}
+local result={test='C004 1M lamps glass mirrors and steady interior',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -36,6 +36,15 @@ local e=powertrain.getDevice('mainEngine');local gb=powertrain.getDevice('gearbo
 if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r.specs.peak_hp=d.maxPower;r.specs.peak_nm=d.maxTorque end end
 if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
 local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
+r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^acng_bmw1m_') then r.glow=r.glow+1 end end
+r.lights={lowbeam=electrics.values.lowbeam,brakelights=electrics.values.brakelights,reverse=electrics.values.reverse}
+if acngJ then
+  local worst,wname,base=0,nil,0
+  for name,s in pairs(acngJ.span) do local d=s[2]-s[1]
+    if name=='__chassis' then base=d elseif d>worst then worst,wname=d,name end end
+  r.jitter={max_mm=worst*1000,worst=wname,chassis_mm=base*1000,frames=acngJ.frames}
+  acngJ=nil
+end
 for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^acng_bmw1m_') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
  r.mirrors={};for _,m in pairs(v.data.mirrors or {}) do r.mirrors[#r.mirrors+1]={mesh=m.mesh,id=m.id} end
 for id,n in pairs(v.data.nodes or {}) do if n.name=='sh_l3' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
@@ -51,6 +60,7 @@ if r.tires then
   for _,t in ipairs(s.tires) do
     if t.surface_c==nil or t.grip==nil then r.finite=false end
     if t.tread then r.tread_min=math.min(r.tread_min or 1,t.tread) end
+    r.compound=t.compound
   end
 end
 obj:queueGameEngineLua(string.format('extensions.acng_carlab.receive(%q)',jsonEncode(r)))]]
@@ -66,16 +76,43 @@ local function probe(label,code)
   return response
 end
 local function vcmd(code) be:getPlayerVehicle(0):queueLuaCommand(code) end
+-- Distance from every ACNG seat/prop node to dash node dsh3, sampled once per frame. A steady
+-- mount keeps it within a millimetre or two; the old 2%-damped mounts rang visibly.
+local JIT=[[
+if not acngJ then acngJ={pairs={},span={},frames=0}
+  local cid={};for id,n in pairs(v.data.nodes) do if n.name then cid[n.name]=n.cid or id end end
+  for name,c in pairs(cid) do if tostring(name):find('^acng_bmw1m_') then acngJ.pairs[name]={c,cid.dsh3} end end
+  acngJ.pairs.__chassis={cid.dsh1l,cid.f7l}
+end
+acngJ.frames=acngJ.frames+1
+-- Copy coordinates at once: getNodePosition may hand back a reused vector.
+for name,p in pairs(acngJ.pairs) do local a=obj:getNodePosition(p[1]);local ax,ay,az=a.x,a.y,a.z
+  local b=obj:getNodePosition(p[2]);local d=math.sqrt((ax-b.x)^2+(ay-b.y)^2+(az-b.z)^2)
+  local s=acngJ.span[name];if s then s[1]=math.min(s[1],d);s[2]=math.max(s[2],d) else acngJ.span[name]={d,d} end end]]
+local function sampleJitter(seconds)
+  local stop=elapsed+seconds
+  while elapsed<stop do vcmd(JIT);coroutine.yield() end
+end
 local function anyBroken(r) for _,w in ipairs(r.wheels) do if w.broken then return true end end return false end
 local function anyDeflated(r) for _,w in ipairs(r.wheels) do if w.deflated then return true end end return false end
 local DRIVE="controller.mainController.setGearboxMode('arcade'); input.event('parkingbrake',0,1); input.event('clutch',0,1); input.event('brake',0,1); input.event('steering',0,1)"
 local STOP="controller.mainController.setGearboxMode('realistic'); input.event('throttle',0,1); input.event('clutch',1,1); input.event('brake',1,1)"
-local function peakDuring(seconds)
+local function peakDuring(seconds,jitter)
   local stop,peak=elapsed+seconds,0
-  while elapsed<stop do peak=math.max(peak,be:getPlayerVehicle(0):getVelocity():length());coroutine.yield() end
+  while elapsed<stop do
+    peak=math.max(peak,be:getPlayerVehicle(0):getVelocity():length())
+    if jitter then vcmd(JIT) end
+    coroutine.yield()
+  end
   return peak
 end
 -- Free camera looking at the car from (dx,dy,dz) metres away; then an in-engine screenshot.
+-- The stock screenshot module must know the job id, or later captures are silently dropped.
+local function capture(file)
+  local opts={filename=file,writeJPG=true,superSampling=1}
+  if screenshot and screenshot.createScreenshotTracked then return screenshot.createScreenshotTracked(opts) or 0 end
+  return type(createScreenshot2)=='function' and createScreenshot2(opts) or 0
+end
 local function shot(name,dx,dy,dz,cockpit)
   stage='shot '..name
   local p=be:getPlayerVehicle(0):getPosition()
@@ -112,7 +149,25 @@ local function shot(name,dx,dy,dz,cockpit)
   end)
   delay(3)
   local file='screenshots/acng_c001_'..name
-  local id=type(createScreenshot2)=='function' and createScreenshot2({filename=file,writeJPG=true,superSampling=1}) or 0
+  local id=capture(file)
+  result.shots[#result.shots+1]={name=name,camera=ok,file=file..'.jpg',id=id};save()
+  delay(4)
+  pcall(function() commands.setGameCamera() end)
+end
+-- Camera placed relative to the car: eye/target are {forward, right, up} metres from its position.
+local function localShot(name,eye,target)
+  stage='shot '..name
+  local ok=pcall(function()
+    local veh=be:getPlayerVehicle(0);local p=veh:getPosition()
+    local f=veh:getDirectionVector();local up=veh:getDirectionVectorUp();local right=f:cross(up)
+    local function at(o) return p+f*o[1]+right*o[2]+up*o[3] end
+    commands.setFreeCamera()
+    local e=at(eye);local q=quatFromDir((at(target)-e):normalized(),vec3(0,0,1))
+    core_camera.setPosRot(0,e.x,e.y,e.z,q.x,q.y,q.z,q.w)
+  end)
+  delay(3)
+  local file='screenshots/acng_c001_'..name
+  local id=capture(file)
   result.shots[#result.shots+1]={name=name,camera=ok,file=file..'.jpg',id=id};save()
   delay(4)
   pcall(function() commands.setGameCamera() end)
@@ -158,8 +213,22 @@ local function run()
   check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
   check('verified_first_and_sixth_ratios',r.specs.ratios and math.abs((r.specs.ratios['1'] or r.specs.ratios[1] or 0)-4.11)<0.001 and math.abs((r.specs.ratios['6'] or r.specs.ratios[6] or 0)-0.846)<0.001)
   check('verified_final_drive',math.abs((r.specs.final_drive or 0)-3.154)<0.001)
+  check('lamp_glow_registered',(r.glow or 0)>=5)
+  sampleJitter(3);r=probe('idle_jitter');result.idle_jitter=r.jitter
+  -- worst is nil when nothing was measured; never pass on an empty sample.
+  check('interior_steady_at_idle',r.jitter and r.jitter.worst and r.jitter.frames>20 and r.jitter.max_mm<2)
   shot('spawn_front',4.2,5.2,1.4)
   shot('spawn_rear',-4.2,-5.2,1.6)
+  localShot('wheelwell_FL',{2.7,-2.3,0.5},{1.33,-0.82,0.1})
+  localShot('wheelwell_FR',{2.7,2.3,0.5},{1.33,0.82,0.1})
+  localShot('fuel_door_RR',{0.2,1.9,0.9},{-1.4,0.8,0.5})
+  -- Realistic gearbox: in arcade mode a held brake at rest selects reverse instead.
+  vcmd(STOP..";electrics.setLightsState(1)");delay(2)
+  r=probe('lights_on')
+  check('lowbeam_and_brake_signals',(r.lights.lowbeam or 0)>0.4 and (r.lights.brakelights or 0)>0.4)
+  localShot('lights_front',{5.5,1.8,0.6},{1.8,0,0.35})
+  localShot('lights_rear',{-5.5,1.8,0.8},{-2,0,0.5})
+  vcmd("electrics.setLightsState(0);input.event('brake',0,1)");delay(1)
   shot('cockpit_neutral',0.36,0.18,1.14,'wheel')
   shot('gauges_idle',0,0,0,'gauges')
   vcmd(STOP..";input.event('throttle',0.35,1)");delay(3)
@@ -185,14 +254,17 @@ local function run()
   delay(3)
   check('core_attaches_tires',status().tires_vehicle_id==veh:getID())
   r=probe('acng_on')
-  check('tires_road',r.tires and r.profile=='road')
+  check('tires_auto_compound',r.tires and r.profile=='auto' and (r.compound=='road' or r.compound=='sport' or r.compound=='race'))
+  result.auto_compound=r.compound
   check('all_tires_tracked',r.native_tires>0 and r.acng_tires==r.native_tires)
   vcmd(DRIVE..";input.event('throttle',1,1)")
   delay(3);r=probe('gauges_driving');local speed=0
   for _,p in ipairs(r.props) do if p.func=='wheelspeed' then speed=p.input end end
   check('speed_gauge_receives_native_motion',speed>3)
   shot('gauges_driving',0,0,0,'gauges')
-  result.drive_peak_m_s=peakDuring(7)
+  result.drive_peak_m_s=peakDuring(7,true)
+  r=probe('drive_jitter');result.drive_jitter=r.jitter
+  check('interior_steady_while_driving',r.jitter and r.jitter.worst and r.jitter.frames>50 and r.jitter.max_mm<4)
   vcmd("input.event('throttle',0,1); input.event('brake',1,1)");delay(5)
   r=probe('driven')
   check('drive_moved',result.drive_peak_m_s>8)

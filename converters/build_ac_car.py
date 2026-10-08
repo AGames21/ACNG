@@ -246,6 +246,8 @@ def build(ac_car, beamng, out_root, skin):
                 if pname == 'etkc':
                     data[pname]['information'] = {'authors': 'local AC conversion (personal use)',
                                                   'name': 'BMW 1M (local)'}
+                    # Native light switching: electrics swap each AC lamp to its emissive copy.
+                    data[pname].setdefault('glowMap', {}).update(report['mesh']['glow'])
         # Bind each exported AC mesh (and any lettered overflow mesh) to its ETK damage groups.
         added = []
         for gname in groups:
