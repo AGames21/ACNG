@@ -19,6 +19,18 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def contains_model(package):
+    try:
+        with zipfile.ZipFile(package) as archive:
+            return 'vehicles/' + MODEL + '/info.json' in archive.namelist()
+    except (zipfile.BadZipFile, UnicodeDecodeError):
+        # Some third-party ZIPs mark legacy-encoded filenames as UTF-8. Preserve
+        # them; this installer does not repair or rewrite somebody else's mod.
+        if package.name.lower().startswith('acng'):
+            raise RuntimeError('Unreadable ACNG archive requires manual review')
+        return False
+
+
 def verify_local_build(package, test_file):
     package, test_file = Path(package).resolve(), Path(test_file).resolve()
     proof = json.loads(test_file.read_text(encoding='utf-8'))
@@ -71,12 +83,8 @@ def main():
     for other in (user / 'mods').rglob('*.zip'):
         if other == installed:
             continue
-        try:
-            with zipfile.ZipFile(other) as archive:
-                if 'vehicles/' + MODEL + '/info.json' in archive.namelist():
-                    raise RuntimeError('Another ZIP contains this car; preserve and review it')
-        except zipfile.BadZipFile:
-            continue
+        if contains_model(other):
+            raise RuntimeError('Another ZIP contains this car; preserve and review it')
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     backup = args.zip.resolve().parent / ('normal-install-backup-' + stamp)
     backup.mkdir()

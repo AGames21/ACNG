@@ -6,10 +6,22 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from install_car_normal import verify_local_build
+from install_car_normal import verify_local_build, contains_model
 
 
 class CarInstallProof(unittest.TestCase):
+    def test_unreadable_unrelated_mod_is_preserved_and_skipped(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'other-mod.zip';path.write_bytes(b'not a ZIP')
+            self.assertFalse(contains_model(path))
+            self.assertEqual(path.read_bytes(),b'not a ZIP')
+
+    def test_unreadable_acng_archive_requires_review(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'acng-unknown.zip';path.write_bytes(b'not a ZIP')
+            with self.assertRaisesRegex(RuntimeError,'review'):
+                contains_model(path)
+
     def fixture(self, root):
         package = root / 'acng_bmw1m.zip'
         with zipfile.ZipFile(package, 'w') as archive:
