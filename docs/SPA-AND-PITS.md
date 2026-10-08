@@ -22,7 +22,7 @@ alone is not a BeamNG vehicle. A driveable conversion also requires original
 JBeam structure, mechanical systems, materials, collision and damage validation.
 Extracted assets stay outside Git and outside ACNG distribution packages.
 
-## Implemented prototype (not deployed to the normal game)
+## Implemented pit services (P001 passed in an isolated lab)
 
 `lua/vehicle/extensions/acng/pits.lua`, core lifecycle wiring and the existing
 control panel's Advanced > Pits tab implement a session-local 4 m service box.
@@ -41,11 +41,15 @@ are refused. Native APIs and wheel flags were checked against local BeamNG
 Offline evidence: 140 Python/Lua tests and existing six Node app suites passed
 2026-10-08. New contracts cover timing, cancellation, master lifecycle, damage,
 leaks, unsupported vehicles, tread/heat preservation and callback-safe commands.
-Mocks do not prove game behavior. P001 native harness is prepared under
+Mocks do not prove game behavior. The P001 native harness lives under
 `tests/beamng-pitlab`, not distributed; run only in a fresh isolated profile:
-`scripts/launch-lab.ps1 -Experiment PitLab -LabUser <fresh>/ACNG-pit-001/current`.
-It refuses to launch while normal BeamNG is running. Require P001 success before
-updating the normal installed ZIP. Spa-specific box positioning and presentation
+`scripts/launch-lab.ps1 -Experiment PitLab -LabUser <fresh>/ACNG-pit-NNN/current`.
+It refuses to launch while normal BeamNG is running.
+
+In game, P001b passed 13 of 13 on 2026-10-08 (see
+`docs/test-results/P001-pit-service.md`): real panel clicks, native tank 5 to
+50 L, tread 0.867 to 1.0, a native puncture refuses tread service and stays flat,
+and master OFF unloads pits and tires without repairing anything. Spa-specific box positioning and presentation
 also require the map download and a live load.
 
 ## External dependency

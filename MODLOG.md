@@ -66,3 +66,6 @@ GitHub publication audit added; CLI authentication remains user-required.
 
 ## 2026-10-08 ? Optional pit prototype and Spa/car investigation
 Added guarded session-local service box, timed native refueling and intact-tire ACNG tread refresh, Advanced Pits controls, cancellation on master OFF/reset/switch/movement, isolated P001 harness, and original read-only KN5 inventory tool. 140 offline contracts passed; no live pit/track success yet. Normal install unchanged. AC BMW 1M file readable; actual car conversion not complete. See docs/SPA-AND-PITS.md.
+
+## 2026-10-08 - P001 pit service live (Claude)
+P001 (Codex) and P001a stopped at the first vehicle probe: `code..';local r=...'` with an empty command starts the chunk with `;`, a LuaJIT syntax error, so the probe never replied. Joined with a newline; added stage tracking and a click log to the harness. P001b 13/13 on a fresh isolated profile. No production code changed.

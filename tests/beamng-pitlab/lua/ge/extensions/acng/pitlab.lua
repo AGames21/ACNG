@@ -4,15 +4,17 @@ local elapsed,co,response=0,nil,nil
 local result={test='P001 native pit service',completed=false,checks={}}
 local function save() jsonWriteFile('/acng-pit-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then error(name) end end
+local stage='start'
 local function waitFor(fn,timeout)
   local start=elapsed
-  while not fn() do if elapsed-start>(timeout or 12) then error('Native wait timeout') end;coroutine.yield() end
+  while not fn() do if elapsed-start>(timeout or 12) then error('Native wait timeout at '..stage) end;coroutine.yield() end
 end
 local function delay(seconds) local stop=elapsed+seconds;while elapsed<stop do coroutine.yield() end end
 local function status() return extensions.acng_core.getStatus() end
 local function command(code)
-  local veh=be:getPlayerVehicle(0);assert(veh);response=nil
-  veh:queueLuaCommand(code..[[;local r={pit=extensions.isExtensionLoaded('acng_pits'),tires=extensions.isExtensionLoaded('acng_tires'),fuel={},wheels={}}
+  stage='vehicle command';local veh=be:getPlayerVehicle(0);assert(veh);response=nil
+  -- newline, not ';': LuaJIT rejects a chunk that starts with an empty statement.
+  veh:queueLuaCommand(code..'\n'..[[local r={pit=extensions.isExtensionLoaded('acng_pits'),tires=extensions.isExtensionLoaded('acng_tires'),fuel={},wheels={}}
     if r.pit then r.service=extensions.acng_pits.getSnapshot() end
     if r.tires then r.tire_state=extensions.acng_tires.getSnapshot() end
     for name,s in pairs(energyStorage.getStorages()) do if s.type=='fuelTank' then r.fuel[name]={liters=s.storedEnergy/(s.fuelLiquidDensity*s.energyDensity),capacity=s.capacity,leak=s.currentLeakRate} end end
@@ -21,8 +23,10 @@ local function command(code)
   waitFor(function() return response~=nil end)
   return response
 end
+result.clicks={}
 local function click(label)
-  be:queueJS('(function(){var e=document.querySelector('..jsonEncode('.acng-control [aria-label="'..label..'"]')..');if(e)e.click();})()');delay(1)
+  stage='click '..label;delay(0.8)
+  be:queueJS('(function(){var e=document.querySelector('..jsonEncode('.acng-control [aria-label="'..label..'"]')..');if(e)e.click();bngApi.engineLua("extensions.acng_pitlab.clicked("+JSON.stringify('..jsonEncode(label)..')+","+(e?(e.disabled?"\\"disabled\\"":"true"):"false")+")");})()');delay(1)
 end
 local function run()
   waitFor(function() return core_modmanager.isReady() end,60)
@@ -77,6 +81,7 @@ local function run()
   result.completed=true;save();log('I','ACNGPitLab','P001 complete')
 end
 M.receive=function(encoded) response=jsonDecode(encoded) end
+M.clicked=function(label,state) result.clicks[#result.clicks+1]=label..'='..tostring(state);save() end
 M.onUpdate=function(dtReal)
   elapsed=elapsed+dtReal
   if not co then co=coroutine.create(run) end
