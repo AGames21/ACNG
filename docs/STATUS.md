@@ -1,3 +1,19 @@
+# Latest checkpoint - 2026-10-08: local 1M upgrades
+
+Freeroam remains primary; no automatic AI or race-session changes.
+The local converter now splits dash/cabin/seats/shifter, creates four native
+control props, hides protruding front bar/support meshes and supplies separate
+BMW-target and donor configs. Native chassis weights remain unchanged.
+C002 placement run: 34/34; zero spawn/drive damage; crash/puncture/wheel loss,
+OFF preservation and reset passed. Measured ~1,533 kg, 249 kW, 507 Nm; healthy
+weight is 2.5% above the BMW reference. 162 Python tests/six UI suites passed.
+Exact final ZIP validation and normal installation are being completed.
+See [conversion limits](AC-CAR-CONVERSION.md) and [C002](test-results/C002-1m-upgrades.md).
+Claude's committed wear-readout fix will be included in the normal package update.
+Next: targeted user road playtest, then matched handling/braking benchmarks.
+
+---
+
 ## Current checkpoint ? freeroam priority
 New single ACNG control app: master ON/OFF, Advanced tabs for tires/assists/FFB/diagnostics. First ON selects heat/wear, keeps factory assists and FFB optional; custom selections survive OFF/ON. Atomic backed-up preferences; new game starts OFF; panel OFF stops streaming too. GUI001 12/12 native checks; 124 Python tests and Node suites pass. Game left at West Coast USA, master OFF, no AI or automatic driving.
 Next: road-driving heat/pressure calibration, more vehicle/reset/damage coverage and physical-wheel FFB feedback. Track work deferred in Obsidian Freeroam Plan / Track Later. No car mod started.

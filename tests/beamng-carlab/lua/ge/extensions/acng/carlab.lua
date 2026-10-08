@@ -6,7 +6,7 @@
 local M={}
 local elapsed,co,response=0,nil,nil
 local MODEL='acng_bmw1m'
-local result={test='C001 AC car conversion',completed=false,checks={},probes={},shots={}}
+local result={test='C002 1M rig and specifications',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -17,11 +17,28 @@ end
 local function delay(seconds) local stop=elapsed+seconds;while elapsed<stop do coroutine.yield() end end
 local function status() return extensions.acng_core.getStatus() end
 local PROBE=[[
-local r={tires=extensions.isExtensionLoaded('acng_tires'),damage=beamstate.damage,wheels={},native_tires=0,finite=true,
+local r={props={},mass_kg=0,body_mass_kg=0,specs={},tires=extensions.isExtensionLoaded('acng_tires'),damage=beamstate.damage,wheels={},native_tires=0,finite=true,
   tread_min=nil,ac_meshes={},etk_skin=0,flexbodies=0}
 local wd=v.data.wheels
 if wd then for i=0,tableSizeC(wd)-1 do local w=wd[i];if w and (w.hasTire or w.hasTire==nil) then r.native_tires=r.native_tires+1 end end end
 for _,w in pairs(wheels.wheels or {}) do r.wheels[#r.wheels+1]={name=w.name,broken=w.isBroken==true,deflated=w.isTireDeflated==true} end
+for id,node in pairs(v.data.nodes or {}) do local mass=obj:getNodeMass(node.cid or id);r.mass_kg=r.mass_kg+mass;if node.partOrigin=='etkc_body' then r.body_mass_kg=r.body_mass_kg+mass end end
+r.broken_beams={};r.new_nodes={}
+for id,b in pairs(v.data.beams or {}) do
+ if obj:beamIsBroken(b.cid or id) and #r.broken_beams<12 then
+  r.broken_beams[#r.broken_beams+1]={part=b.partOrigin,n1=v.data.nodes[b.id1].name,n2=v.data.nodes[b.id2].name}
+ end
+end
+for id,n in pairs(v.data.nodes or {}) do if tostring(n.name):find('^acng_bmw1m') then
+ local p=obj:getNodePosition(n.cid or id);r.new_nodes[#r.new_nodes+1]={name=n.name,cid=n.cid or id,x=p.x,y=p.y,z=p.z,mass=obj:getNodeMass(n.cid or id)}
+end end
+local e=powertrain.getDevice('mainEngine');local gb=powertrain.getDevice('gearbox');local diff=powertrain.getDevice('differential_R')
+if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r.specs.peak_hp=d.maxPower;r.specs.peak_nm=d.maxTorque end end
+if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
+local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
+for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^acng_bmw1m_') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
+for id,n in pairs(v.data.nodes or {}) do if n.name=='sh_l3' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
+r.controls={steering=electrics.values.steering,brake=electrics.values.brake,throttle=electrics.values.throttle,clutch=electrics.values.clutch,shift_x=electrics.values.hPatternAxisX,shift_y=electrics.values.hPatternAxisY}
 for _,f in pairs(v.data.flexbodies or {}) do
   r.flexbodies=r.flexbodies+1
   local m=tostring(f.mesh)
@@ -58,15 +75,30 @@ local function peakDuring(seconds)
   return peak
 end
 -- Free camera looking at the car from (dx,dy,dz) metres away; then an in-engine screenshot.
-local function shot(name,dx,dy,dz)
+local function shot(name,dx,dy,dz,cockpit)
   stage='shot '..name
   local p=be:getPlayerVehicle(0):getPosition()
   local ok=pcall(function()
     commands.setFreeCamera()
     local eye=vec3(p.x+dx,p.y+dy,p.z+dz)
     local dir=(vec3(p.x,p.y,p.z+0.5)-eye):normalized()
+    if cockpit then
+      local veh=be:getPlayerVehicle(0);local f=veh:getDirectionVector();local up=veh:getDirectionVectorUp();local right=f:cross(up)
+      eye=p-right*dx-f*dy+up*dz
+      local target=p-right*0.36-f*(-0.75)+up*(cockpit=='pedals' and 0.32 or 0.87)
+      dir=(target-eye):normalized()
+      if cockpit=='pedals' then
+        local snapshot=result.probes[#result.probes]
+        for _,n in ipairs(snapshot.new_nodes or {}) do if n.name=='acng_bmw1m_pedal_brake_ref' then
+          target=p+veh:getNodePosition(n.cid)-up*0.05
+          eye=target-f*0.42+up*0.24
+          dir=(target-eye):normalized()
+        end end
+      end
+    end
     local q=quatFromDir(dir,vec3(0,0,1))
     core_camera.setPosRot(0,eye.x,eye.y,eye.z,q.x,q.y,q.z,q.w)
+    if cockpit=='wheel' then commands.setGameCamera();core_camera.setByName(0,'driver',false) end
   end)
   delay(3)
   local file='screenshots/acng_c001_'..name
@@ -83,6 +115,10 @@ local function run()
   delay(6)
   check('startup_off',not status().enabled)
   stage='spawn'
+  core_vehicles.replaceVehicle(MODEL,{config='vehicles/'..MODEL..'/acng_etk_baseline.pc'})
+  waitFor(function() local v=be:getPlayerVehicle(0);return v and v:getJBeamFilename()==MODEL end,90)
+  delay(8)
+  local baseline=probe('etk_baseline');check('donor_baseline_undamaged',(baseline.damage or 0)<50)
   core_vehicles.replaceVehicle(MODEL,{})
   waitFor(function() local v=be:getPlayerVehicle(0);return v and v:getJBeamFilename()==MODEL end,90)
   delay(8)
@@ -95,8 +131,26 @@ local function run()
   check('etk_skin_removed',r.etk_skin==0)
   check('car_at_rest',veh:getVelocity():length()<0.3)
   check('spawn_undamaged',(r.damage or 0)<50)
+  check('four_animated_controls',#r.props==4)
+  check('native_prop_meshes_created',#r.props==4 and r.props[1].pid~=nil and r.props[2].pid~=nil and r.props[3].pid~=nil and r.props[4].pid~=nil)
+  check('unladen_mass_within_three_percent',math.abs(r.mass_kg-1495)/1495<0.03)
+  check('power_and_torque_target',math.abs((r.specs.peak_hp or 0)*0.745699872-250)<5 and math.abs((r.specs.peak_nm or 0)-500)<12)
+  check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
+  check('verified_first_and_sixth_ratios',r.specs.ratios and math.abs((r.specs.ratios['1'] or r.specs.ratios[1] or 0)-4.11)<0.001 and math.abs((r.specs.ratios['6'] or r.specs.ratios[6] or 0)-0.846)<0.001)
+  check('verified_final_drive',math.abs((r.specs.final_drive or 0)-3.154)<0.001)
   shot('spawn_front',4.2,5.2,1.4)
   shot('spawn_rear',-4.2,-5.2,1.6)
+  shot('cockpit_neutral',0.36,0.18,1.14,'wheel')
+  vcmd("controller.mainController.setGearboxMode('realistic');input.event('steering',0.3,1);input.event('brake',1,1);input.event('clutch',1,1)");delay(2)
+  r=probe('controls_applied');check('native_controls_received',math.abs(r.controls.steering or 0)>1 and (r.controls.brake or 0)>0.9)
+  shot('cockpit_controls',0.36,0.18,1.14,'wheel')
+  shot('pedals_applied',0.36,0.25,0.60,'pedals')
+  vcmd("controller.mainController.shiftToGearIndex(1)");delay(2)
+  local first=probe('shifter_first')
+  vcmd("controller.mainController.shiftToGearIndex(2)");delay(2)
+  local second=probe('shifter_second')
+  check('native_shifter_moves',first.shifter_position and second.shifter_position and vec3(unpack(first.shifter_position)):distance(vec3(unpack(second.shifter_position)))>0.005)
+  vcmd("input.event('steering',0,1);input.event('brake',0,1);input.event('clutch',0,1)")
   -- ACNG on this car: master, Road tires, wear, ABS and TC.
   extensions.acng_core.setEnabled(true)
   for _,f in ipairs({'tire_temperature','tire_wear','abs','tc'}) do extensions.acng_core.setFeature(f,true) end

@@ -77,3 +77,16 @@ New isolated harnesses `tests/beamng-roadheat` (RoadHeat) and `tests/beamng-stoc
 `scripts/launch-lab.ps1`: `-ExtraMod` path join fixed (the missing backslash hid the map); `CarLab` added. New `tests/beamng-spalab` (P002, 18/18 on Spa) and `tests/beamng-carlab` (C001). New original converters `converters/kn5_model.py`, `jbeam_io.py`, `export_kn5.py`, `build_ac_car.py`: AC BMW 1M skin bound as flexbodies to the stock ETK K-Series damage groups, output refused inside the repo. Uncompressed AC DDS converted to PNG and incompressible zip entries stored, after C001 showed BeamNG rejecting both. `tests/test_ac_car_converters.py` uses synthetic data only. No ACNG runtime code changed.
 
 2026-10-08, other PCs: user asked to get the whole mod on their other PCs from GitHub. The private repo already held all source, so added a private GitHub Release with the verified player ZIP (acng-freeroam.zip + build manifest) and README steps: download from Releases, drop in the mods folder. Spa (author forbids reupload) and the personal AC BMW 1M (game assets) stay out of GitHub; the 1M is rebuilt per PC with converters/build_ac_car.py or copied by the user between their own PCs.
+
+
+## 2026-10-08 - Local 1M rig and specifications
+
+Separated dash/cabin/front seats/shifter, four native steering/pedal props, hidden
+front donor bar/support meshes. Verified BMW gearing, native fuel tank and net
+power/torque calibration; retained an independent donor config. A/B rejected
+uniform chassis mass reduction after immediate front-subframe damage. Chassis
+weights/mounts remain native; measured weight remains ~2.5% above reference.
+C002 placement run 34/34, wheel-pose screenshots reviewed, 162 Python/six UI suites
+passed. Final package validation/install pending. New installer requires the exact
+natively tested local ZIP; normal updater recognizes only the recorded car hash.
+No game assets enter this repository or public package.

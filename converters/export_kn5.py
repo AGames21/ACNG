@@ -71,8 +71,10 @@ def route(mesh, materials):
         return 'bumper_R'
     if 'STEER_HR' in parents:
         return 'steer'
+    if mesh.get('acng_group'):
+        return mesh['acng_group']
     if 'COCKPIT_HR' in parents or 'CINTURE_OFF' in parents:
-        return 'interior'
+        return 'cabin'
     if name in ('Plate_LODA', 'brake_light_2'):
         return 'trunk'
     front = _center_y(mesh) > 0
@@ -106,6 +108,11 @@ def convert_mesh(mesh, lift):
     pos = [to_beamng(p, lift) for p in mesh['positions']]
     nrm = [to_beamng(n, 0.0) for n in mesh['normals']]
     uvs = [(u, 1.0 - v) for u, v in mesh['uvs']]
+    frame = mesh.get('prop_frame')
+    if frame:
+        pivot,axes=frame['pivot'],frame['axes']
+        pos=[tuple(_dot(_sub(p,pivot),a) for a in axes) for p in pos]
+        nrm=[tuple(_dot(n,a) for a in axes) for n in nrm]
     tris = [tuple(mesh['indices'][i:i + 3]) for i in range(0, len(mesh['indices']), 3)]
     agree = disagree = 0
     for a, b, c in tris:

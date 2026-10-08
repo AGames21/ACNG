@@ -57,7 +57,18 @@ def main():
         raise RuntimeError('Recorded ACNG ZIP is missing; review by hand')
     if digest(installed)!=record['package_sha256']:
         raise RuntimeError('Installed ACNG ZIP is not the recorded build; review by hand')
-    others=[p for p in (user/'mods').rglob('*') if p.name.lower().startswith('acng') and p!=installed]
+    # A separately verified local vehicle is not another copy of the ACNG extension.
+    # Never exclude arbitrary similarly named ZIPs: require our installer record/hash.
+    allowed_car=None
+    car_record_path=ROOT/'.local/car-install.json'
+    if car_record_path.is_file():
+        car_record=json.loads(car_record_path.read_text(encoding='utf-8'))
+        candidate=user/'mods/acng_bmw1m.zip'
+        if (candidate.is_file() and not candidate.is_symlink()
+                and Path(car_record.get('installed','')).resolve()==candidate.resolve()
+                and digest(candidate)==car_record.get('sha256')):
+            allowed_car=candidate
+    others=[p for p in (user/'mods').rglob('*') if p.name.lower().startswith('acng') and p not in (installed,allowed_car)]
     if others:
         raise RuntimeError('Another ACNG copy needs review: '+str(others[0]))
     package=ROOT/'dist/acng-freeroam.zip'

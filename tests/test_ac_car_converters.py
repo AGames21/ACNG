@@ -152,7 +152,7 @@ class Builder(unittest.TestCase):
 
     def test_every_exported_group_has_a_flexbody_owner(self):
         targets = {'body', 'door_L', 'door_R', 'hood', 'bumper_F', 'bumper_R', 'lights_F', 'lights_R',
-                   'trunk', 'interior', 'steer'}
+                   'trunk', 'dash', 'cabin', 'seat_L', 'seat_R', 'shifter', 'shifter_boot'}
         self.assertEqual(set(build_ac_car.FLEXBODIES), targets)
 
 

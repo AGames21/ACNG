@@ -1,9 +1,9 @@
 """Build a personal, local BeamNG car from the user's own Assetto Corsa car on the stock ETK K-Series.
 
-Original code. The result keeps BeamNG's own soft-body physics: every node, beam, suspension,
-powertrain and damage part is the stock ETK K-Series (etkc), lightly stretched to the AC car's
-wheelbase and roof height. Only the visible skin changes: ETK body/interior meshes are removed
-and the AC car's meshes (export_kn5.py) are bound to the same damage groups as flexbodies.
+Original code. BeamNG retains the chassis, suspension and damage simulation. The ETK K-Series
+is fitted to the AC car's wheelbase/roof; separate interior flexbodies and native control props
+are added. A local specification config calibrates the native powertrain, gearing and fuel tank;
+a separate donor config retains ETK powertrain values. Chassis node weights stay native.
 
 Output goes OUTSIDE this repository and is never committed or distributed: it contains the
 user's AC car meshes/textures and copies of the user's own BeamNG etkc mesh files.
@@ -13,6 +13,8 @@ Usage:
       --beamng <BeamNG.drive install> --out <folder outside the repo> [--skin valencia_orange]
 """
 import argparse
+import copy
+import car_upgrades
 import io
 import json
 import re
@@ -55,13 +57,17 @@ FLEXBODIES = {
     'bumper_F': ('etkc_bumper_F', ['etkc_bumper_F']),
     'bumper_R': ('etkc_bumper_R', ['etkc_bumper_R']),
     'trunk': ('etkc_trunk', ['etkc_trunk']),
-    'interior': ('etkc_dash', ['etkc_body', 'etkc_dash', 'etkc_floor', 'etkc_seat_FL', 'etkc_seat_FR']),
-    'steer': ('etkc_dash', ['etkc_dash']),
+    'dash': ('etkc_dash', ['etkc_dash']),
+    'cabin': ('etkc_dash', ['etkc_body', 'etkc_floor']),
+    'seat_L': ('etkc_dash', ['acng_bmw1m_seat_L']),
+    'seat_R': ('etkc_dash', ['acng_bmw1m_seat_R']),
+    'shifter': ('etkc_shifter_M', ['etkc_shifterknob_M']),
+    'shifter_boot': ('etkc_shifter_M', ['etkc_shifterboot_M', 'etkc_shifterbase_M']),
 }
 
 
 def tf_y(y):
-    return SY * y + TY
+    return SY*y+TY
 
 
 def tf_z(z):
@@ -73,6 +79,8 @@ def strip_visible(mesh):
         return False
     if mesh.startswith('$='):
         return 'etkc_' in mesh
+    if mesh == 'etkc_radsupport':
+        return True
     if mesh == 'licenseplate':
         return True
     return mesh.startswith('etkc_') and not mesh.startswith(KEEP_PREFIXES)
@@ -209,14 +217,15 @@ def build(ac_car, beamng, out_root, skin):
     common_zip = beamng / 'content' / 'vehicles' / 'common.zip'
 
     model = kn5_model.read((ac_car / (ac_car.name + '.kn5')).read_bytes())
-    report = {'mesh': export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT)}
+    model,prop_frames=car_upgrades.prepare_model(model,MESH_LIFT)
+    report = {'mesh': export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT), 'prop_frames': prop_frames}
     groups = report['mesh']['groups']
 
     with zipfile.ZipFile(etkc_zip) as z:
         files = {}
         for n in z.namelist():
-            if n.startswith('vehicles/etkc/') and n.endswith('.jbeam') and n.count('/') == 2:
-                files[n.rsplit('/', 1)[1]] = jbeam_io.loads(z.read(n).decode('utf-8', 'replace'))
+            if n.startswith('vehicles/etkc/') and n.endswith('.jbeam'):
+                files[n[len('vehicles/etkc/'):]] = jbeam_io.loads(z.read(n).decode('utf-8', 'replace'))
         local_types = {p.get('slotType') for f in files.values() for p in f.values()}
         slot_defaults = set()
         for f in files.values():
@@ -239,15 +248,23 @@ def build(ac_car, beamng, out_root, skin):
         for gname in groups:
             target = gname[len(VEHICLE) + 1:]
             base = re.sub(r'_[a-h]$', '', target) if target not in FLEXBODIES else target
+            if base in prop_frames:
+                continue
             owner, node_groups = FLEXBODIES[base]
             for data in files.values():
                 if owner in data:
                     flex = data[owner].setdefault('flexbodies', [['mesh', '[group]:', 'nonFlexMaterials']])
                     flex.append([gname, node_groups])
                     added.append((gname, owner))
+        for data in files.values():
+            if 'etkc_dash' in data:
+                car_upgrades.add_seat_cages(data['etkc_dash'], model, MESH_LIFT,VEHICLE+'_')
+                for name,frame in prop_frames.items():
+                    car_upgrades.add_prop(data['etkc_dash'], name,frame,VEHICLE+'_')
         report['stripped_meshes'] = sorted(set(stripped))
         report['added_flexbodies'] = added
         for fname, data in files.items():
+            (vdir / fname).parent.mkdir(parents=True,exist_ok=True)
             (vdir / fname).write_text(jbeam_io.dumps(data), encoding='ascii')
         # The kept mechanical flexbodies need etkc's own meshes; copy them from the user's install.
         for n in ('etkc.cdae', 'etkc_extraparts.cdae', 'etkc_transfercase.cdae'):
@@ -258,7 +275,19 @@ def build(ac_car, beamng, out_root, skin):
     pc['model'] = VEHICLE
     for slot in ('etkc_licenseplate_R', 'etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
         pc['parts'][slot] = ''
+    old_pc=copy.deepcopy(pc)
+    (vdir / 'acng_etk_baseline.pc').write_text(json.dumps(old_pc,indent=2),encoding='ascii')
+    stock={}
+    with zipfile.ZipFile(common_zip) as common:
+        for name in common.namelist():
+            if name.endswith('.jbeam') and '/etk' in name.lower():
+                try: stock.update(jbeam_io.loads(common.read(name).decode('utf-8','replace')))
+                except ValueError: pass
+    stock['etkc_fueltank']=next(data['etkc_fueltank'] for data in files.values() if 'etkc_fueltank' in data)
+    (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(car_upgrades.spec_parts(stock)),encoding='ascii')
+    pc=car_upgrades.spec_config(pc)
     (vdir / f'{CONFIG}.pc').write_text(json.dumps(pc, indent=2), encoding='ascii')
+    (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')
 
     paints = ac_paints(ac_car)
     default_paint = skin.replace('_', ' ').title()
@@ -269,7 +298,7 @@ def build(ac_car, beamng, out_root, skin):
             'paints': paints}
     (vdir / 'info.json').write_text(json.dumps(info, indent=2), encoding='ascii')
     (vdir / f'info_{CONFIG}.json').write_text(json.dumps(
-        {'Configuration': '1M (ETK K-Series chassis)', 'Config Type': 'Factory', 'Drivetrain': 'RWD',
+        {'Configuration': '1M specifications target (experimental)', 'Config Type': 'Custom', 'Drivetrain': 'RWD',
          'Transmission': 'Manual', 'defaultPaintName1': info['defaultPaintName1']}, indent=2), encoding='ascii')
     preview = ac_car / 'skins' / skin / 'preview.jpg'
     if preview.is_file():
