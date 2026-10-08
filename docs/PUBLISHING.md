@@ -68,4 +68,5 @@ visibility change:
 - No game assets, maps, cars, binaries or game logs are tracked or attached to
   releases. Spa and the personal AC car live only in the maintainer's separate
   private repository.
-- Licence and the actual visibility switch are the maintainer's decisions.
+- The maintainer chose the MIT licence and asked to make the repository public
+  on 2026-10-08.

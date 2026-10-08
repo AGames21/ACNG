@@ -134,7 +134,7 @@ and whether it also happens with master OFF. Remove personal paths from log exce
 
 Offline/single-player modding only. No proprietary code, extracted models, textures,
 sounds or binaries belong here. Unofficial and unaffiliated with BeamNG or Assetto
-Corsa. No open-source license has been selected yet.
+Corsa. Code is MIT licensed ([LICENSE](LICENSE)); BeamNG, Assetto Corsa and any maps or cars stay under their owners' terms.
 
 ### Optional Spa and pit development
 
