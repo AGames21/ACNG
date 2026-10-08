@@ -37,3 +37,17 @@ git ls-remote origin refs/heads/main
 Compare the remote main hash with local HEAD. Record the verified URL and commit
 in the existing Obsidian project notes. Do not claim upload success from a local
 commit or configured remote alone.
+
+## Releases for the user's other PCs
+
+On 2026-10-08 the user asked to get the whole mod on their other PCs, which is
+the separate request for a release. Releases stay in the private repository and
+carry only `dist/acng-freeroam.zip` and its `.build.json` from `tools/build_freeroam.py`
+at a pushed commit. Never attach Spa, the personal AC car zip or any game asset.
+
+```powershell
+python tools/build_freeroam.py
+gh release create <tag> dist/acng-freeroam.zip dist/acng-freeroam.build.json -R AGames21/ACNG --title <title> --notes-file <notes>
+```
+
+Verify by downloading the asset again and comparing its SHA256 with the manifest.

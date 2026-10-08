@@ -70,13 +70,22 @@ pressure rise. Native rolling/deformation also affects pressure.
 Requires your own BeamNG.drive installation. Tested on **0.39.4**; other builds
 and third-party vehicles need verification. Use an isolated profile while experimental.
 
+**Easiest (any PC):** sign in to GitHub, open this repository's
+[Releases](https://github.com/AGames21/ACNG/releases/latest) and download
+`acng-freeroam.zip`. No Python or Git needed.
+
+**Or build it yourself:**
+
 ```sh
 git clone https://github.com/AGames21/ACNG.git
 cd ACNG
 python tools/build_freeroam.py
 ```
 
-1. Place `dist/acng-freeroam.zip` in your active BeamNG user folder's `mods` directory.
+1. With BeamNG closed, place `acng-freeroam.zip` (from Releases or `dist/`) in your
+   BeamNG user folder's `mods` directory. On Windows that is
+   `%LOCALAPPDATA%\BeamNG\BeamNG.drive\current\mods`; the BeamNG launcher's
+   "Open user folder" button finds it on any PC.
    Keep only one enabled ACNG package; disable older copies.
 2. In **UI Apps**, add **ACNG**, spawn a stock vehicle and turn the master ON.
 3. Under **Advanced → Tires**, select **Road** or **Sport**. Reset for fresh tires
@@ -125,4 +134,6 @@ Corsa. No open-source license has been selected yet.
 
 ### Optional Spa and pit development
 
-An opt-in pit-service prototype adds timed refueling and intact-tire ACNG tread refresh to Advanced > Pits. It is **offline-tested, awaiting native validation**, and is not yet installed in the normal player profile. Spa stays a separate author-distributed map; no track or car assets are bundled. The installed AC BMW 1M geometry format was successfully inventoried, but no driveable conversion exists yet. See [Spa and pit development](docs/SPA-AND-PITS.md).
+An opt-in pit service adds timed refueling and intact-tire ACNG tread refresh to Advanced > Pits. It passed in game (P001b/P001c) and on the user's own Spa download (P002). Spa stays a separate author-distributed map; download it from its author on each PC. See [Spa and pit development](docs/SPA-AND-PITS.md).
+
+A personal converter turns your own Assetto Corsa BMW 1M into a drivable BeamNG car on stock ETK physics with full damage (C001). The car contains AC and BeamNG assets, so it is never in this repository or its Releases. On another PC with both games installed, rebuild it there with one command. See [AC car conversion](docs/AC-CAR-CONVERSION.md).

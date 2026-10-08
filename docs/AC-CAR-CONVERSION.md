@@ -41,6 +41,11 @@ That writes `<out>/acng_bmw1m.zip` (about 11 MB) and `build_report.json`. To
 play it, copy the zip into the user's own `%LOCALAPPDATA%/BeamNG/BeamNG.drive/current/mods/`.
 It appears as "BMW 1M (local)".
 
+On another PC, clone the repository, then run the same command with that PC's
+Assetto Corsa and BeamNG paths (Python 3 and Pillow needed). The car zip is not in
+GitHub Releases because it holds game assets; copying your own zip between your own
+PCs over USB or your home network works too.
+
 ## Evidence
 
 C001 (`docs/test-results/C001-ac-car.md`) ran in an isolated lab. It covered
