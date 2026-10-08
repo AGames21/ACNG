@@ -364,7 +364,7 @@ class CoreTireFeature(unittest.TestCase):
 
     def test_reserved_features_cannot_be_enabled(self):
         mod = self.load()
-        self.assertFalse(mod.setFeature("ffb", True))
+        self.assertFalse(mod.setFeature("aero", True))
         self.assertFalse(mod.setFeature("nonsense", True))
         self.assertFalse(mod.getStatus()["features"]["tire_temperature"])
 
@@ -383,7 +383,7 @@ class CoreTireFeature(unittest.TestCase):
         self.assertIn(self.load_cmd(7), self.cmds()[n:])
 
     def test_runtime_file_only_restores_implemented_features(self):
-        self.lua.execute("saved={schema_version=1,enabled=true,features={tire_temperature=true,ffb=true}}")
+        self.lua.execute("saved={schema_version=1,enabled=true,features={tire_temperature=true,aero=true}}")
         mod = self.load()
         status = mod.getStatus()
         self.assertTrue(status["enabled"])
@@ -401,7 +401,7 @@ class CoreTireFeature(unittest.TestCase):
         status = mod.getStatus()
         self.assertTrue(status["features"]["tire_wear"])
         self.assertFalse(status["features"]["tire_temperature"])
-        self.assertEqual(list(status["implemented_physics_features"].values()), ["tire_temperature", "tire_wear", "abs", "tc"])
+        self.assertEqual(list(status["implemented_physics_features"].values()), ["tire_temperature", "tire_wear", "abs", "tc", "ffb"])
         self.assertEqual(status["physics_writes"], 1)
 
     def test_flag_change_reconfigures_without_reload(self):

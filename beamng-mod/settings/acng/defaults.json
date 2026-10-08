@@ -24,5 +24,6 @@
     "weather_grip": false
   },
   "assist_levels": {"abs": 2, "tc": 2},
+  "ffb_settings": {"gain": 1, "min_force": 0, "filter": null, "kerb": 0.3, "road": 0.5, "slip": 0.3, "car_gain": {}},
   "telemetry": {"enabled": false, "rate_hz": 50, "port": 44443}
 }

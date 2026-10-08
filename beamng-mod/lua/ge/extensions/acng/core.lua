@@ -12,7 +12,7 @@ local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 -- Physics features that are implemented and lab-validated. Each loads into the player
 -- vehicle while the master and its own flag are ON; unloading restores stock values.
-local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true}
+local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, ffb=true}
 -- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
 -- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
@@ -28,6 +28,19 @@ local ASSISTS_UNLOAD = "extensions.unload('acng_assists')"
 local ASSIST_LEVEL_DEFAULT = 2
 local assistsId
 local assistsParts
+-- ffb loads the acng_ffb vehicle extension: AC-style gain, filter, minimum force and
+-- kerb/road/slip feel on top of BeamNG's own steering force. gain is multiplied by the
+-- per-car strength (car_gain, by vehicle model) before it is sent.
+local FFB_LOAD = "extensions.load('acng_ffb')"
+local FFB_CONFIGURE = "if extensions.isExtensionLoaded('acng_ffb') then extensions.acng_ffb.configure(%s,%s,%s,%s,%s,%s) end"
+local FFB_UNLOAD = "extensions.unload('acng_ffb')"
+-- name = {default, min, max}; filter may also be nil (keep the player's BeamNG smoothing).
+local FFB_LIMITS = {gain={1, 0, 2}, min_force={0, 0, 0.3}, filter={nil, 0, 1}, kerb={0.3, 0, 2},
+  road={0.5, 0, 2}, slip={0.3, 0, 2}}
+local FFB_NAMES = {'gain', 'min_force', 'filter', 'kerb', 'road', 'slip'}
+local CAR_GAIN_MAX = 2
+local ffbId
+local ffbParts
 local function defaults()
   return jsonReadFile('/settings/acng/defaults.json')
 end
@@ -62,6 +75,14 @@ local function stopAssists()
   assistsId = nil
   assistsParts = nil
 end
+local function stopFFB()
+  if ffbId then
+    local veh = be:getObjectByID(ffbId)
+    if veh then veh:queueLuaCommand(FFB_UNLOAD) end
+  end
+  ffbId = nil
+  ffbParts = nil
+end
 local function feature(name)
   return config and config.features and config.features[name] == true or false
 end
@@ -84,14 +105,44 @@ local function assistsConfigure()
   return string.format(ASSISTS_CONFIGURE, feature('abs') and tostring(assistLevel('abs')) or 'nil',
     feature('tc') and tostring(assistLevel('tc')) or 'nil')
 end
+local function ffbWanted()
+  return config and config.enabled and feature('ffb')
+end
+local function validFFB(name, value)
+  local lim = FFB_LIMITS[name]
+  return lim and type(value) == 'number' and value == value and value >= lim[2] and value <= lim[3]
+end
+local function ffbSetting(name)
+  local s = config and config.ffb_settings
+  local value = s and s[name]
+  if validFFB(name, value) then return value end
+  return FFB_LIMITS[name][1]
+end
+local function carGain(model)
+  local map = config and config.ffb_settings and config.ffb_settings.car_gain
+  local value = type(model) == 'string' and type(map) == 'table' and map[model]
+  if type(value) == 'number' and value == value and value >= 0 and value <= CAR_GAIN_MAX then return value end
+  return 1
+end
+local function luaNum(x)
+  return x == nil and 'nil' or string.format('%.6g', x)
+end
+local function ffbConfigure(model)
+  return string.format(FFB_CONFIGURE, luaNum(ffbSetting('gain') * carGain(model)), luaNum(ffbSetting('min_force')),
+    luaNum(ffbSetting('filter')), luaNum(ffbSetting('kerb')), luaNum(ffbSetting('road')), luaNum(ffbSetting('slip')))
+end
+local function vehicleModel(veh)
+  return veh and veh.getJBeamFilename and veh:getJBeamFilename() or nil
+end
 local function physicsWrites()
-  return (tiresId and 1 or 0) + (assistsId and 1 or 0)
+  return (tiresId and 1 or 0) + (assistsId and 1 or 0) + (ffbId and 1 or 0)
 end
 local function stopAll()
   stopVehicle()
   stopPerf()
   stopTires()
   stopAssists()
+  stopFFB()
 end
 local function onExtensionLoaded()
   config = defaults()
@@ -115,12 +166,19 @@ local function onExtensionLoaded()
         if saved.assist_levels[name] ~= nil then config.assist_levels[name] = saved.assist_levels[name] end
       end
     end
+    if type(saved.ffb_settings) == 'table' then
+      config.ffb_settings = config.ffb_settings or {}
+      for _, name in ipairs(FFB_NAMES) do
+        if saved.ffb_settings[name] ~= nil then config.ffb_settings[name] = saved.ffb_settings[name] end
+      end
+      if type(saved.ffb_settings.car_gain) == 'table' then config.ffb_settings.car_gain = saved.ffb_settings.car_gain end
+    end
   end
   log('I', 'ACNG', 'FOUNDATION_LOADED schema=1 master=' .. tostring(config.enabled) .. ' physics_writes=0')
 end
 local function setEnabled(value)
   config.enabled = value == true
-  if not config.enabled then stopPerf(); stopTires(); stopAssists() else pollTime = 0.25 end
+  if not config.enabled then stopPerf(); stopTires(); stopAssists(); stopFFB() else pollTime = 0.25 end
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
   return config.enabled
 end
@@ -131,6 +189,7 @@ local function setFeature(name, value)
   config.features[name] = value == true
   if not tiresWanted() then stopTires() else pollTime = 0.25 end
   if not assistsWanted() then stopAssists() else pollTime = 0.25 end
+  if not ffbWanted() then stopFFB() else pollTime = 0.25 end
   log('I', 'ACNG', 'FEATURE ' .. name .. '=' .. tostring(config.features[name]))
   return config.features[name]
 end
@@ -142,6 +201,31 @@ local function setAssistLevel(name, value)
   config.assist_levels[name] = value
   pollTime = 0.25
   log('I', 'ACNG', 'ASSIST ' .. name .. '_level=' .. value)
+  return value
+end
+-- One FFB setting (see FFB_LIMITS). filter also takes false to go back to BeamNG's own
+-- smoothing. Applies while the ffb flag is ON.
+local function setFFBSetting(name, value)
+  if not config or not FFB_LIMITS[name] then return false end
+  if name == 'filter' and (value == false or value == nil) then value = nil
+  elseif not validFFB(name, value) then return false end
+  config.ffb_settings = config.ffb_settings or {}
+  config.ffb_settings[name] = value
+  pollTime = 0.25
+  log('I', 'ACNG', 'FFB ' .. name .. '=' .. tostring(value))
+  return value == nil and 'stock' or value
+end
+-- Per-car FFB strength (multiplies gain) for a vehicle model; nil model = the player's car.
+local function setCarGain(model, value)
+  if not config then return false end
+  if model == nil then model = vehicleModel(be:getPlayerVehicle(0)) end
+  if type(model) ~= 'string' or model == '' then return false end
+  if type(value) ~= 'number' or value ~= value or value < 0 or value > CAR_GAIN_MAX then return false end
+  config.ffb_settings = config.ffb_settings or {}
+  config.ffb_settings.car_gain = config.ffb_settings.car_gain or {}
+  config.ffb_settings.car_gain[model] = value
+  pollTime = 0.25
+  log('I', 'ACNG', 'FFB car_gain ' .. model .. '=' .. value)
   return value
 end
 local function setTelemetryEnabled(value)
@@ -189,6 +273,19 @@ local function onUpdate(dtReal)
       assistsParts = parts
     end
   end
+  if ffbWanted() then
+    local parts = ffbConfigure(vehicleModel(veh))
+    if id ~= ffbId then
+      stopFFB()
+      if veh then
+        veh:queueLuaCommand(FFB_LOAD .. '; ' .. parts)
+        ffbId, ffbParts = id, parts
+      end
+    elseif parts ~= ffbParts and veh then
+      veh:queueLuaCommand(parts)
+      ffbParts = parts
+    end
+  end
   if not config.telemetry.enabled then return end
   if id ~= attachedId then
     stopVehicle()
@@ -221,17 +318,24 @@ local function onVehicleSpawned(id)
     assistsId, assistsParts = nil, nil
     pollTime = 0.25
   end
+  if id == ffbId then
+    ffbId, ffbParts = nil, nil
+    pollTime = 0.25
+  end
 end
 local function getStatus()
+  local model = vehicleModel(be:getPlayerVehicle(0))
+  local ffb = {car_model=model, car_gain=carGain(model)}
+  for _, name in ipairs(FFB_NAMES) do ffb[name] = ffbSetting(name) end
   return {schema_version=1, enabled=config and config.enabled or false,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
-    tires_vehicle_id=tiresId, assists_vehicle_id=assistsId,
+    tires_vehicle_id=tiresId, assists_vehicle_id=assistsId, ffb_vehicle_id=ffbId,
     features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear'),
-      abs=feature('abs'), tc=feature('tc')},
-    assist_levels={abs=assistLevel('abs'), tc=assistLevel('tc')},
-    implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc'}, physics_writes=physicsWrites()}
+      abs=feature('abs'), tc=feature('tc'), ffb=feature('ffb')},
+    assist_levels={abs=assistLevel('abs'), tc=assistLevel('tc')}, ffb_settings=ffb,
+    implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc', 'ffb'}, physics_writes=physicsWrites()}
 end
 M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = stopAll
@@ -242,5 +346,7 @@ M.setEnabled = setEnabled
 M.setTelemetryEnabled = setTelemetryEnabled
 M.setFeature = setFeature
 M.setAssistLevel = setAssistLevel
+M.setFFBSetting = setFFBSetting
+M.setCarGain = setCarGain
 M.getStatus = getStatus
 return M

@@ -1,0 +1,20 @@
+{
+  "domElement": "<acng-ffb></acng-ffb>",
+  "name": "ACNG FFB",
+  "description": "Original Assetto Corsa-style force feedback app: overall gain, per-car strength, minimum force, filter, and kerb, road and slip feel on top of BeamNG's own steering force, with a clipping meter. OFF puts BeamNG's force feedback back exactly as set in Options.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "left": "24px",
+    "top": "380px",
+    "width": "330px",
+    "height": "260px"
+  },
+  "author": "ACNG",
+  "version": "0.1",
+  "directive": "acngFfb",
+  "category": "Dashboard",
+  "preserveAspectRatio": true,
+  "interactive": "yes"
+}

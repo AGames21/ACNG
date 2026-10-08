@@ -45,3 +45,6 @@ Added `abs` and `tc` flags, OFF by default, with levels OFF/1/2/3 (`setAssistLev
 
 ## 2026-10-07 - Tire heat balance (T007)
 User reported hot tires staying hot. T007a swept five heat sets over 6 lap-like cycles, T007b ran the shipped set against the chosen one over 12 cycles. Old set: core 91 C and rising, corner peaks past the window, parked tire stays hot. New set (air 0.10 to 40 m/s, core 0.005, friction 0.06): peaks settle at 103-105 C, straights cool to about 41 C, core 71 C. Road-contact heat (nodeToSurface) behaved erratically and is not used. Harness tests/beamng-tirecool, analysis scripts/analyze_tirecool.py.
+
+## 2026-10-07 - Force feedback (T008)
+Added `acng_ffb` (vehicle), FFB settings in `acng_core` (gain, min_force, filter, kerb, road, slip, per-model car_gain; saved in runtime.json), and the ACNG FFB app. Min force and effects use hydros' testHook so the exact stock force is known each physics step; the hook is only taken when free and only while an effect is above 0. T008a 19/21: harness compared math.huge with abs(a-b) (NaN); fixed, T008b 21/21 on a fresh profile with BeamNG's virtual wheel. Harness tests/beamng-ffblab. Primary profile untouched; lab closed.
