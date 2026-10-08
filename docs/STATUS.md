@@ -15,7 +15,7 @@ FR001 measured gentler thermal settings; FR001b final Road driving repeat comple
 33.87 C peak surface / 0.29 psi peak pressure rise in the short moderate proxy.
 129 offline Python checks and Node suites passed. Road grip constants are a
 provisional usability preset, not measured AC/real-compound calibration. GitHub
-private repository creation is user-authorized but awaiting GitHub CLI login;
+private repository is now created and uploaded at github.com/AGames21/ACNG;
 see docs/PUBLISHING.md. Earlier dated status below is historical.
 
 Updated:2026-10-07 (America/Chicago). M1 independent/default-OFF mod foundation validated; M2 telemetry/oracle active. No physics tuning.

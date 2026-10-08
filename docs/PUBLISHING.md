@@ -1,10 +1,21 @@
 # GitHub checkpoint
 
+Created and verified 2026-10-08: **https://github.com/AGames21/ACNG**, private,
+default branch main, full local history uploaded. Custom original SVG banner,
+native control-app screenshot, evidence-backed README, repository topics and bug/
+driving feedback templates are included. No public visibility or release upload.
+
+The CLI's combined `--source . --push` path could not discover the local repository.
+Creating the repository without `--source`, then adding the HTTPS origin and using
+native Git worked. For HTTPS pushes, the command-local helper
+`git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push`
+uses GitHub CLI authentication without changing global Git credential settings.
+
 The user authorized creating a GitHub repository on 2026-10-08. Default to a private
 personal repository named ACNG. Do not change visibility, force-push, overwrite an
 existing repository, or publish a release without a separate request.
 
-The local GitHub CLI is installed but was not authenticated at setup. Run
+The local GitHub CLI is installed and now authenticated; it was not authenticated at setup. Run
 `gh auth login` and complete the user's browser authorization, then check
 `gh auth status`. Credentials never belong in the project or Obsidian.
 

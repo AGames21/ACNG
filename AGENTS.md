@@ -27,7 +27,8 @@ User direction (2026-10-07): FREEROAM FIRST. Single ACNG master/Advanced app is 
 2026-10-08: Road/Sport presets and GUI002/FR002 compatibility passed; FR001/FR001b
 record short road-speed thermal effects, not AC or real-compound calibration.
 Stock ETK/Bolide/pickup reset/switch plus ETK puncture/wheel-break checked natively.
-User authorized a private GitHub repository and push; CLI login is required first.
+User authorized a private GitHub repository and push; github.com/AGames21/ACNG
+now exists and origin/main is connected. CLI login is verified.
 See docs/PUBLISHING.md and tools/publication_audit.py. No force-push or public
 visibility change authorized. Respect the parked road playtest handoff; do not
 take controls while the user drives. Physical FFB still requires a real wheel.
