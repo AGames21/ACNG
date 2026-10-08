@@ -60,7 +60,9 @@ def prepare_model(model, lift):
     meshes = []
     for mesh in model['meshes']:
         path = mesh['path'][:-1]
-        if 'COCKPIT_HR' in path and not any(p.startswith(('DOOR_', 'ARROW_', 'STEER_')) for p in path):
+        if mesh.get('acng_group'):
+            meshes.append(mesh)
+        elif 'COCKPIT_HR' in path and not any(p.startswith(('DOOR_', 'ARROW_', 'STEER_')) for p in path):
             if any(p.startswith('SHIFT_HR') for p in path):
                 mesh = dict(mesh, acng_group='shifter')
                 meshes.append(mesh)
@@ -142,14 +144,14 @@ def add_prop(part, name, frame, prefix):
             beams.append([i, anchor])
     for a, b in ((0, 1), (0, 2), (1, 2)):
         beams.append([ids[a], ids[b]])
-    func = 'steering' if name == 'steer' else name.replace('pedal_', '')
-    rotation = {'x': 0, 'y': 0, 'z': 1} if name == 'steer' else {'x': -20, 'y': 0, 'z': 0}
+    func = frame.get('func', 'steering' if name == 'steer' else name.replace('pedal_', ''))
+    rotation = {'x': 0, 'y': 0, 'z': frame['rate']} if 'rate' in frame else {'x': 0, 'y': 0, 'z': 1} if name == 'steer' else {'x': -20, 'y': 0, 'z': 0}
     props = part.setdefault('props', [PROP_HEADER])
     props.append([func, prefix+name, *ids, {'x': 0, 'y': 0, 'z': 0}, rotation,
-                  {'x': 0, 'y': 0, 'z': 0}, -1000 if name == 'steer' else 0,
-                  1000 if name == 'steer' else 1, 0, 1,
+                  {'x': 0, 'y': 0, 'z': 0}, frame.get('min', -1000 if name == 'steer' else 0),
+                  frame.get('max', 1000 if name == 'steer' else 1), frame.get('offset', 0), 1,
                   {'baseTranslation':{'x':0,'y':0,'z':0},
-                   'baseRotationGlobal':{'x':70 if name=='steer' else 0,'y':0,'z':0}}])
+                   'baseRotationGlobal':{'x':frame.get('rest_x', 70 if name=='steer' else 0),'y':0,'z':0}}])
 
 
 def spec_parts(stock):

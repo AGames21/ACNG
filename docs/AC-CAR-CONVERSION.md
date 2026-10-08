@@ -55,6 +55,10 @@ PCs over USB or your home network works too.
 
 ## Evidence
 
+The next detail build adds native RPM/speed/fuel/oil needles, three detailed
+mirrors and BMW rim visuals. It is **not yet installed or runtime verified**.
+See [C003](test-results/C003-1m-details.md) for the checks and current limits.
+
 C001 (`docs/test-results/C001-ac-car.md`) ran in an isolated lab. It covered
 spawn, AC meshes bound, driving, a crash into a parked pickup, a puncture, a
 lost wheel, master OFF/ON and reset. Unit contracts are in

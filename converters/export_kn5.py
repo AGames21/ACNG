@@ -55,6 +55,8 @@ def route(mesh, materials):
     # Broken-glass overlays, AC-only LOD/cockpit duplicates, needles and the worn seat belt.
     if shader == 'ksBrokenGlass' or any(p.startswith('DAMAGE_GLASS') for p in parents):
         return SKIP
+    if mesh.get('acng_group'):
+        return mesh['acng_group']
     if any(p.startswith(('WHEEL_', 'SUSP_', 'DISC_', 'COCKPIT_LR', 'CINTURE_ON', 'ARROW_')) for p in parents):
         return SKIP
     if mesh['material'] == 'INT_VETRO_INTERNO':
@@ -195,7 +197,7 @@ def write_collada(groups, path, material_names):
     path.write_text('\n'.join(out), encoding='ascii')
 
 
-METALLIC = {'INT_Cromato', 'MIRROR', 'Chassis_METAL', 'LOGHI_RIM'}
+METALLIC = {'INT_Cromato', 'MIRROR', 'Chassis_METAL', 'LOGHI_RIM', 'RT_rim'}
 
 
 def _texture_file(name):
@@ -314,7 +316,7 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
         g.add(mesh['material'], pos, nrm, uvs, tris)
         report['meshes'][label] = name
     used = sorted({m for g in groups.values() for m in g.tris})
-    material_names = {m: prefix + m for m in used}
+    material_names = {m: ('mirror_' if m == 'MIRROR' else '') + prefix + m for m in used}
     write_collada(list(groups.values()), out / f'{prefix.rstrip("_")}.dae', material_names)
     written, mats, converted = {}, {}, []
     for m in used:
@@ -343,6 +345,11 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             opacity = f'textures/{prefix}{m.lower()}_o.data.png'
             (out / opacity).write_bytes(_alpha_png(model['textures'][diffuse]))
         key, entry = material_entry(prefix, vehicle_dir, mat, opacity, paint, written)
+        if m == 'MIRROR':
+            key = material_names[m]
+            entry.update(name=key, mapTo=key, translucent=False, activeLayers=1)
+            entry['Stages'] = [{'baseColorFactor': [1, 1, 1, 1], 'metallicFactor': 1,
+                                'roughnessFactor': 0}, {}, {}, {}]
         mats[key] = entry
     (out / 'main.materials.json').write_text(json.dumps(mats, indent=1), encoding='ascii')
     report['groups'] = {g.name: {'vertices': len(g.pos), 'triangles': sum(len(t) for t in g.tris.values()),

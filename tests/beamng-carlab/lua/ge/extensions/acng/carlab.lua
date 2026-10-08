@@ -6,7 +6,7 @@
 local M={}
 local elapsed,co,response=0,nil,nil
 local MODEL='acng_bmw1m'
-local result={test='C002 1M rig and specifications',completed=false,checks={},probes={},shots={}}
+local result={test='C003 1M gauges mirrors and rims',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -37,6 +37,7 @@ if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r
 if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
 local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
 for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^acng_bmw1m_') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
+ r.mirrors={};for _,m in pairs(v.data.mirrors or {}) do r.mirrors[#r.mirrors+1]={mesh=m.mesh,id=m.id} end
 for id,n in pairs(v.data.nodes or {}) do if n.name=='sh_l3' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
 r.controls={steering=electrics.values.steering,brake=electrics.values.brake,throttle=electrics.values.throttle,clutch=electrics.values.clutch,shift_x=electrics.values.hPatternAxisX,shift_y=electrics.values.hPatternAxisY}
 for _,f in pairs(v.data.flexbodies or {}) do
@@ -95,6 +96,15 @@ local function shot(name,dx,dy,dz,cockpit)
           dir=(target-eye):normalized()
         end end
       end
+      if cockpit=='gauges' then
+        local points={};local snapshot=result.probes[#result.probes]
+        for _,n in ipairs(snapshot.new_nodes or {}) do
+          if n.name=='acng_bmw1m_gauge_rpm_ref' or n.name=='acng_bmw1m_gauge_speed_ref' then points[#points+1]=p+veh:getNodePosition(n.cid) end
+        end
+        assert(#points==2,'Gauge pivots missing')
+        target=(points[1]+points[2])*0.5;eye=target-f*0.18+up*0.015
+        dir=(target-eye):normalized()
+      end
     end
     local q=quatFromDir(dir,vec3(0,0,1))
     core_camera.setPosRot(0,eye.x,eye.y,eye.z,q.x,q.y,q.z,q.w)
@@ -114,6 +124,8 @@ local function run()
   waitFor(function() return worldReadyState==2 and be:getPlayerVehicle(0) end,150)
   delay(6)
   check('startup_off',not status().enabled)
+  settings.setValue('GraphicDynMirrorsEnabled',true) -- isolated lab only
+  check('detailed_mirrors_enabled',settings.getValue('GraphicDynMirrorsEnabled')==true)
   stage='spawn'
   core_vehicles.replaceVehicle(MODEL,{config='vehicles/'..MODEL..'/acng_etk_baseline.pc'})
   waitFor(function() local v=be:getPlayerVehicle(0);return v and v:getJBeamFilename()==MODEL end,90)
@@ -131,8 +143,16 @@ local function run()
   check('etk_skin_removed',r.etk_skin==0)
   check('car_at_rest',veh:getVelocity():length()<0.3)
   check('spawn_undamaged',(r.damage or 0)<50)
-  check('four_animated_controls',#r.props==4)
-  check('native_prop_meshes_created',#r.props==4 and r.props[1].pid~=nil and r.props[2].pid~=nil and r.props[3].pid~=nil and r.props[4].pid~=nil)
+  local controls,gauges,created=0,0,true
+  for _,p in ipairs(r.props) do if p.mesh:find('gauge_') then gauges=gauges+1 else controls=controls+1 end;created=created and p.pid~=nil end
+  check('four_animated_controls',controls==4)
+  check('four_native_gauges',gauges==4)
+  check('native_prop_meshes_created',#r.props==8 and created)
+  check('three_native_mirrors',#r.mirrors==3)
+  local liveMirrors=0;for _,m in ipairs(r.mirrors) do if m.id and veh:getMirror(m.id) then liveMirrors=liveMirrors+1 end end
+  check('three_native_mirror_cameras',liveMirrors==3)
+  local rims=0;for _,m in ipairs(r.ac_meshes) do if m:find('rim_') then rims=rims+1 end end
+  check('four_bmw_rim_meshes',rims==4)
   check('unladen_mass_within_three_percent',math.abs(r.mass_kg-1495)/1495<0.03)
   check('power_and_torque_target',math.abs((r.specs.peak_hp or 0)*0.745699872-250)<5 and math.abs((r.specs.peak_nm or 0)-500)<12)
   check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
@@ -141,6 +161,14 @@ local function run()
   shot('spawn_front',4.2,5.2,1.4)
   shot('spawn_rear',-4.2,-5.2,1.6)
   shot('cockpit_neutral',0.36,0.18,1.14,'wheel')
+  shot('gauges_idle',0,0,0,'gauges')
+  vcmd(STOP..";input.event('throttle',0.35,1)");delay(3)
+  r=probe('gauges_revved')
+  local rpm,fuel,oil=0,nil,nil
+  for _,p in ipairs(r.props) do if p.func=='rpm' then rpm=p.input elseif p.func=='fuel' then fuel=p.input elseif p.func=='oiltemp' then oil=p.input end end
+  check('gauges_receive_native_engine_signals',rpm>2000 and fuel and fuel>0.8 and fuel<=1 and oil and oil>0)
+  shot('gauges_revved',0,0,0,'gauges')
+  vcmd(STOP);delay(2)
   vcmd("controller.mainController.setGearboxMode('realistic');input.event('steering',0.3,1);input.event('brake',1,1);input.event('clutch',1,1)");delay(2)
   r=probe('controls_applied');check('native_controls_received',math.abs(r.controls.steering or 0)>1 and (r.controls.brake or 0)>0.9)
   shot('cockpit_controls',0.36,0.18,1.14,'wheel')
@@ -160,6 +188,10 @@ local function run()
   check('tires_road',r.tires and r.profile=='road')
   check('all_tires_tracked',r.native_tires>0 and r.acng_tires==r.native_tires)
   vcmd(DRIVE..";input.event('throttle',1,1)")
+  delay(3);r=probe('gauges_driving');local speed=0
+  for _,p in ipairs(r.props) do if p.func=='wheelspeed' then speed=p.input end end
+  check('speed_gauge_receives_native_motion',speed>3)
+  shot('gauges_driving',0,0,0,'gauges')
   result.drive_peak_m_s=peakDuring(7)
   vcmd("input.event('throttle',0,1); input.event('brake',1,1)");delay(5)
   r=probe('driven')

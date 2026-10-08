@@ -1,5 +1,14 @@
 # Latest checkpoint - 2026-10-08: local 1M upgrades
 
+## 2026-10-08 - 1M details pending native test
+
+Native instruments, three mirrors and BMW rim adapters are implemented in the
+local converter. 170 Python tests and C003 LuaJIT syntax pass; the local package
+builds successfully outside this repository. The normal profile still has the
+verified C002 car. A running player instance prevented the isolated test, so
+C003 is not runtime verified, installed or released. See
+[C003](test-results/C003-1m-details.md) for the exact checks and limitations.
+
 Freeroam remains primary; no automatic AI or race-session changes.
 The local converter now splits dash/cabin/seats/shifter, creates four native
 control props, hides protruding front bar/support meshes and supplies separate

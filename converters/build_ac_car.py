@@ -15,6 +15,7 @@ Usage:
 import argparse
 import copy
 import car_upgrades
+import car_details
 import io
 import json
 import re
@@ -217,7 +218,9 @@ def build(ac_car, beamng, out_root, skin):
     common_zip = beamng / 'content' / 'vehicles' / 'common.zip'
 
     model = kn5_model.read((ac_car / (ac_car.name + '.kn5')).read_bytes())
+    model,gauge_frames,mirror_centers=car_details.prepare(model,MESH_LIFT)
     model,prop_frames=car_upgrades.prepare_model(model,MESH_LIFT)
+    prop_frames.update(gauge_frames)
     report = {'mesh': export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT), 'prop_frames': prop_frames}
     groups = report['mesh']['groups']
 
@@ -250,6 +253,8 @@ def build(ac_car, beamng, out_root, skin):
             base = re.sub(r'_[a-h]$', '', target) if target not in FLEXBODIES else target
             if base in prop_frames:
                 continue
+            if base.startswith(('mirror_', 'rim_')):
+                continue  # native mirror/rim parts own these detail meshes
             owner, node_groups = FLEXBODIES[base]
             for data in files.values():
                 if owner in data:
@@ -261,6 +266,8 @@ def build(ac_car, beamng, out_root, skin):
                 car_upgrades.add_seat_cages(data['etkc_dash'], model, MESH_LIFT,VEHICLE+'_')
                 for name,frame in prop_frames.items():
                     car_upgrades.add_prop(data['etkc_dash'], name,frame,VEHICLE+'_')
+        car_details.add_mirrors(files,mirror_centers,VEHICLE+'_')
+        report['mirror_centers']=mirror_centers
         report['stripped_meshes'] = sorted(set(stripped))
         report['added_flexbodies'] = added
         for fname, data in files.items():
@@ -275,6 +282,7 @@ def build(ac_car, beamng, out_root, skin):
     pc['model'] = VEHICLE
     for slot in ('etkc_licenseplate_R', 'etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
         pc['parts'][slot] = ''
+    pc=car_details.wheel_config(pc)
     old_pc=copy.deepcopy(pc)
     (vdir / 'acng_etk_baseline.pc').write_text(json.dumps(old_pc,indent=2),encoding='ascii')
     stock={}
@@ -284,7 +292,9 @@ def build(ac_car, beamng, out_root, skin):
                 try: stock.update(jbeam_io.loads(common.read(name).decode('utf-8','replace')))
                 except ValueError: pass
     stock['etkc_fueltank']=next(data['etkc_fueltank'] for data in files.values() if 'etkc_fueltank' in data)
-    (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(car_upgrades.spec_parts(stock)),encoding='ascii')
+    parts=car_upgrades.spec_parts(stock)
+    parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
+    (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
     pc=car_upgrades.spec_config(pc)
     (vdir / f'{CONFIG}.pc').write_text(json.dumps(pc, indent=2), encoding='ascii')
     (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')

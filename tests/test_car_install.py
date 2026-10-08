@@ -44,6 +44,18 @@ class CarInstallProof(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'differs'):
                 verify_local_build(package, test)
 
+    def test_c003_requires_actual_native_detail_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            package, test, proof = self.fixture(Path(temp))
+            proof['test'] = 'C003'; test.write_text(json.dumps(proof))
+            with self.assertRaisesRegex(RuntimeError, 'incomplete'):
+                verify_local_build(package, test)
+            proof['checks'].update(dict.fromkeys(['four_native_gauges', 'three_native_mirrors',
+                'three_native_mirror_cameras', 'four_bmw_rim_meshes',
+                'gauges_receive_native_engine_signals', 'speed_gauge_receives_native_motion'], True))
+            test.write_text(json.dumps(proof))
+            self.assertEqual(verify_local_build(package, test)[1], 12)
+
     def test_failed_or_incomplete_native_runs_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))
