@@ -1,1 +1,18 @@
-{"domElement":"<acng-control></acng-control>","name":"ACNG","description":"One master switch for ACNG. Advanced chooses tire, steering and assist effects. Freeroam first; native BeamNG suspension and AI remain in charge.","types":["ui.apps.categories.vehicle_info"],"css":{"right":"24px","top":"70px","width":"360px","height":"480px"},"author":"ACNG","version":"0.2","directive":"acngControl","interactive":"yes"}
+{
+  "domElement": "<acng-control></acng-control>",
+  "name": "ACNG",
+  "description": "One master switch for ACNG. Advanced chooses tire, steering and assist effects. Freeroam first; native BeamNG suspension and AI remain in charge.",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "css": {
+    "right": "24px",
+    "top": "70px",
+    "width": "220px",
+    "height": "44px"
+  },
+  "author": "ACNG",
+  "version": "0.3",
+  "directive": "acngControl",
+  "interactive": "yes"
+}

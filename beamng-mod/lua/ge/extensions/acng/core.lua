@@ -92,7 +92,7 @@ local function tiresWanted()
   return config and config.enabled and (feature('tire_temperature') or feature('tire_wear'))
 end
 local function tiresConfigure()
-  return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')), config.tire_profile or 'road')
+  return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')), config.tire_profile or 'auto')
 end
 local function assistsWanted()
   return config and config.enabled and (feature('abs') or feature('tc'))
@@ -195,9 +195,13 @@ local function onExtensionLoaded()
   end
   -- Runtime overrides are deliberately limited to known, passive settings.
   local saved = jsonReadFile('/settings/acng/runtime.json')
-  config.tire_profile='road'
+  -- Auto follows each car's fitted native tires. A saved 'road' from before the player
+  -- could pick a compound was only the old default, so it moves to Auto once.
+  config.tire_profile='auto'
   if saved and saved.schema_version == 1 then
-    if saved.tire_profile=='sport' then config.tire_profile='sport' end
+    if saved.tire_profile=='road' or saved.tire_profile=='sport' or saved.tire_profile=='race' or saved.tire_profile=='auto' then config.tire_profile=saved.tire_profile end
+    config.tire_profile_chosen=saved.tire_profile_chosen==true
+    if config.tire_profile=='road' and not config.tire_profile_chosen then config.tire_profile='auto' end
     config.control_panel_initialized=saved.control_panel_initialized==true
     config.enabled = saved.enabled == true
     config.developer_mode = saved.developer_mode == true
@@ -232,8 +236,8 @@ local function setEnabled(value)
 end
 -- Only implemented features can be switched; reserved flags stay off.
 local function setTireProfile(name)
-  if not config or (name~='road' and name~='sport') then return false end
-  config.tire_profile=name;changed();pollTime=0.25
+  if not config or (name~='road' and name~='sport' and name~='race' and name~='auto') then return false end
+  config.tire_profile=name;config.tire_profile_chosen=true;changed();pollTime=0.25
   return true
 end
 local function setFeature(name, value)
@@ -412,7 +416,7 @@ local function getStatus()
   for _, name in ipairs(FFB_NAMES) do ffb[name] = ffbSetting(name) end
   return {schema_version=1, enabled=config and config.enabled or false,
     control_panel_initialized=config and config.control_panel_initialized==true or false,
-    settings_error=settingsError, settings_pending=settingsDirty, tire_profile=config and config.tire_profile or 'road',
+    settings_error=settingsError, settings_pending=settingsDirty, tire_profile=config and config.tire_profile or 'auto',
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,

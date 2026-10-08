@@ -39,17 +39,83 @@ M.HOT_RANGE_C = 40
 M.GRIP_STEP = 0.002
 local GRIP_INTERVAL_S = 0.1
 
--- Road is a gentler engineering preset, not a measured real-compound model.
--- Sport preserves the previous T007 setup for comparisons and optional track use.
+-- Compounds sit on top of the tire's own native grip (vanilla race tires already grip
+-- far more than standard ones: noLoadCoef about 1.74-2.15 against 1.04-1.45). ACNG adds
+-- how each compound behaves with heat and wear, AC style, as engineering presets, not a
+-- measured real-compound model:
+--   road  works from cold, wide window, warms slowly, lasts longest (wear x0.6);
+--   sport the T007 setup: needs some heat, moderate cold/hot penalties (wear x1);
+--   race  slick behaviour: poor grip cold, warms fast under load, narrow hot side and
+--         wears fastest (wear x1.7).
 local profile = 'sport'
 local PROFILES = {
-  road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,
+  road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,wear=0.6,
     heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.001,
       coreToNodes=0.001,nodeToSurface=0,friction=0.03,flashFriction=0,strain=0,heatAffectsPressure=true}},
-  sport={low=75,high=105,cold=0.85,hot=0.85,coldRange=60,hotRange=40,
+  sport={low=75,high=105,cold=0.85,hot=0.85,coldRange=60,hotRange=40,wear=1,
     heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.005,
-      coreToNodes=0.005,nodeToSurface=0,friction=0.06,flashFriction=0,strain=0,heatAffectsPressure=true}}
+      coreToNodes=0.005,nodeToSurface=0,friction=0.06,flashFriction=0,strain=0,heatAffectsPressure=true}},
+  race={low=85,high=115,cold=0.70,hot=0.75,coldRange=65,hotRange=30,wear=1.7,
+    heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.006,
+      coreToNodes=0.006,nodeToSurface=0,friction=0.08,flashFriction=0,strain=0,heatAffectsPressure=true}}
 }
+
+-- Heat ceiling. Real tread surfaces start to smoke and shed rubber around 200 C, which
+-- carries heat away; burnouts do not keep climbing past 300 C. From HEAT_FADE_C the
+-- friction heat written to the native model fades to nothing at HEAT_LIMIT_C, so the
+-- physics settles below the limit (the readout is never clamped). Cooling is unchanged.
+M.HEAT_FADE_C = 200
+M.HEAT_LIMIT_C = 250
+-- Past the hot ramp, wear keeps climbing to WEAR_BURN_MULT at the ceiling, so a long
+-- burnout wears through and the tire punctures natively.
+M.WEAR_BURN_MULT = 4
+local compoundCache={}
+local puncturedByWear={}
+
+-- Compound from a native tire part name: most vanilla names end in the tire type.
+-- Names without one (whitewalls, redlines, mixed) return nil and physics decides.
+local ROAD_WORDS = {'standard', 'eco', 'offroad', 'heavy', 'desert', 'rally', 'mud', 'allterrain',
+  'snow', 'winter', 'touring', 'drift'}
+local function compoundFromName(part)
+  part=tostring(part or ''):lower()
+  if part:find('semislick',1,true) or part:find('semi_slick',1,true) or part:find('sport',1,true) then return 'sport' end
+  if part:find('race',1,true) or part:find('slick',1,true) or part:find('asphalt',1,true)
+    or part:find('drag',1,true) then return 'race' end
+  for _,word in ipairs(ROAD_WORDS) do if part:find(word,1,true) then return 'road' end end
+  return nil
+end
+
+-- Compound from the wheel's own native tire physics, for mod tires without a usable
+-- name: slick tread with race-level grip is race, sport-level grip is sport.
+local function compoundFromPhysics(wd)
+  local grip, treadCoef = tonumber(wd and wd.noLoadCoef), tonumber(wd and wd.treadCoef)
+  if not grip then return nil end
+  if grip >= 1.7 and treadCoef and treadCoef <= 0.2 then return 'race' end
+  if grip >= 1.5 then return 'sport' end
+  return 'road'
+end
+
+-- Auto: the fitted front/rear native tire part decides, once per reset/configuration;
+-- without one clear part the wheel's own physics decides, and failing that Road.
+-- Native peak grip is never overwritten.
+local function compoundFor(wd)
+  if profile~='auto' then return profile end
+  local id=wd and wd.wheelID
+  if id~=nil and compoundCache[id] then return compoundCache[id] end
+  local axle=wd and tostring(wd.name or ''):match('^([FR])[LR]')
+  local found={}
+  for slot,part in pairs(v.config and v.config.parts or {}) do
+    if type(slot)=='string' and type(part)=='string' and part~='' and axle and slot:match('^tire_'..axle..'_') then
+      local name=compoundFromName(part)
+      if name then found[name]=true end
+    end
+  end
+  local selected,count=nil,0
+  for name in pairs(found) do selected=name;count=count+1 end
+  if count~=1 then selected=compoundFromPhysics(wd) or 'road' end
+  if id~=nil then compoundCache[id]=selected end
+  return selected
+end
 
 -- Wear. Each tire's tread starts at 1 (new) and is worn down by the slip energy BeamNG
 -- reports per wheel every frame (wheels.wheels[cid].slipEnergy, the same slip work the
@@ -74,6 +140,7 @@ local active = false
 local sinceSend = 0
 local sinceGrip = 0
 local applied = {}  -- wheelID -> grip last written
+local heatScale = {} -- wheelID -> heat-ceiling fade last written
 local tread = {}    -- wheelID -> tread left, 1 new to 0 gone
 local slipWork = {} -- wheelID -> slip energy integrated since the last fresh set
 local lastC = {}    -- wheelID -> surface temperature at the last grip update
@@ -103,11 +170,22 @@ local function stockCurve(wd)
     checkNum(wd.frictionCoefMiddle, 1), checkNum(wd.frictionCoefHigh, 1)}
 end
 
--- ACNG heat; the wheel keeps its own smoking and melting temperatures.
-local function acngThermal(wd)
-  local h, stock = M.HEAT, stockThermal(wd)
+-- ACNG heat; the wheel keeps its own smoking and melting temperatures. scale (0..1)
+-- is the heat-ceiling fade on friction heat.
+local function acngThermal(wd, scale)
+  local h, stock = profile=='auto' and PROFILES[compoundFor(wd)].heat or M.HEAT, stockThermal(wd)
+  scale = type(scale) == 'number' and scale or 1
   return {h.nodeToEnv, h.envMultStationary, h.envTerminalSpeed, h.nodeToCore, h.coreToNodes,
-    h.nodeToSurface, h.friction, h.flashFriction, h.strain, stock[10], stock[11], h.heatAffectsPressure}
+    h.nodeToSurface, h.friction * scale, h.flashFriction * scale, h.strain, stock[10], stock[11],
+    h.heatAffectsPressure}
+end
+
+-- Friction-heat multiplier at a surface temperature: 1 up to HEAT_FADE_C, 0 at
+-- HEAT_LIMIT_C, in tenths so the native parameters are only rewritten on real change.
+local function heatFade(c)
+  if type(c) ~= 'number' or c ~= c or c <= M.HEAT_FADE_C then return 1 end
+  if c >= M.HEAT_LIMIT_C then return 0 end
+  return math.ceil(10 * (M.HEAT_LIMIT_C - c) / (M.HEAT_LIMIT_C - M.HEAT_FADE_C)) / 10
 end
 
 -- A flat curve: the same grip at every temperature, so only the ramp below decides it.
@@ -128,21 +206,25 @@ local function eachTire(fn)
 end
 
 -- 'cold', 'window' or 'hot' for a surface temperature in Celsius.
-local function windowState(c)
+local function windowState(c, wd)
   if type(c) ~= 'number' then return nil end
-  if c < M.WINDOW_LOW_C then return 'cold' end
-  if c > M.WINDOW_HIGH_C then return 'hot' end
+  local p=profile=='auto' and PROFILES[compoundFor(wd)]
+  if c < (p and p.low or M.WINDOW_LOW_C) then return 'cold' end
+  if c > (p and p.high or M.WINDOW_HIGH_C) then return 'hot' end
   return 'window'
 end
 
 -- Grip factor at a surface temperature in Celsius: the value written to the tire.
-local function gripAt(c)
+local function gripAt(c, wd)
   if type(c) ~= 'number' or c ~= c then return nil end
-  if c < M.WINDOW_LOW_C then
-    return math.max(M.COLD_GRIP, 1 - (1 - M.COLD_GRIP) * (M.WINDOW_LOW_C - c) / M.COLD_RANGE_C)
+  local p=profile=='auto' and PROFILES[compoundFor(wd)]
+  local low,high=p and p.low or M.WINDOW_LOW_C,p and p.high or M.WINDOW_HIGH_C
+  local cold,hot=p and p.cold or M.COLD_GRIP,p and p.hot or M.HOT_GRIP
+  if c < low then
+    return math.max(cold, 1 - (1 - cold) * (low - c) / (p and p.coldRange or M.COLD_RANGE_C))
   end
-  if c > M.WINDOW_HIGH_C then
-    return math.max(M.HOT_GRIP, 1 - (1 - M.HOT_GRIP) * (c - M.WINDOW_HIGH_C) / M.HOT_RANGE_C)
+  if c > high then
+    return math.max(hot, 1 - (1 - hot) * (c - high) / (p and p.hotRange or M.HOT_RANGE_C))
   end
   return 1
 end
@@ -158,18 +240,30 @@ local function wearGrip(left)
   return 1 - M.WEAR_GRIP_LOSS * (1 - math.max(0, math.min(1, left)))
 end
 
--- Wear rate multiplier at a surface temperature: 1 up to the window top, then rising
--- linearly to WEAR_HOT_MULT at HOT_RANGE_C past it. Without heat it stays 1.
-local function wearHeatMult(c)
-  if not parts.heat or type(c) ~= 'number' or c ~= c or c <= M.WINDOW_HIGH_C then return 1 end
-  return 1 + (M.WEAR_HOT_MULT - 1) * math.min(1, (c - M.WINDOW_HIGH_C) / M.HOT_RANGE_C)
+-- Wear rate multiplier at a surface temperature: 1 up to the window top, rising
+-- linearly to WEAR_HOT_MULT at HOT_RANGE_C past it, then on to WEAR_BURN_MULT at the
+-- heat ceiling. Without heat it stays 1.
+local function wearHeatMult(c, wd)
+  local p=profile=='auto' and PROFILES[compoundFor(wd)]
+  local high=p and p.high or M.WINDOW_HIGH_C
+  if not parts.heat or type(c) ~= 'number' or c ~= c or c <= high then return 1 end
+  local hot = high + (p and p.hotRange or M.HOT_RANGE_C)
+  if c <= hot then return 1 + (M.WEAR_HOT_MULT - 1) * (c - high) / (hot - high) end
+  if hot >= M.HEAT_LIMIT_C then return M.WEAR_HOT_MULT end
+  return M.WEAR_HOT_MULT + (M.WEAR_BURN_MULT - M.WEAR_HOT_MULT) * math.min(1, (c - hot) / (M.HEAT_LIMIT_C - hot))
+end
+
+-- Compound wear multiplier: road tires last longer, race tires wear faster.
+local function compoundWear(wd)
+  local p = PROFILES[compoundFor(wd)]
+  return p and p.wear or 1
 end
 
 -- The grip written to a tire: heat window times wear, each only while its part is on.
 local function targetGrip(wd, c)
   local heatGrip = 1
   if parts.heat then
-    heatGrip = gripAt(c)
+    heatGrip = gripAt(c, wd)
     if not heatGrip then return nil end
   end
   return heatGrip * (parts.wear and wearGrip(tread[wd.wheelID]) or 1)
@@ -181,16 +275,17 @@ local function setGrip(wobj, grip)
 end
 
 local function freshTires()
-  tread, slipWork = {}, {}
+  tread, slipWork, compoundCache, puncturedByWear = {}, {}, {}, {}
   eachTire(function(wd) tread[wd.wheelID], slipWork[wd.wheelID] = 1, 0 end)
 end
 
 local function applyAcng()
   applied = {}
   return eachTire(function(wd, wobj)
-    local t = parts.heat and acngThermal(wd) or stockThermal(wd)
-    wobj:setThermal(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
     local c = surfaceC(wd)
+    heatScale[wd.wheelID] = heatFade(c)
+    local t = parts.heat and acngThermal(wd, heatScale[wd.wheelID]) or stockThermal(wd)
+    wobj:setThermal(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
     lastC[wd.wheelID] = c
     local grip = targetGrip(wd, c) or 1
     setGrip(wobj, grip)
@@ -204,6 +299,14 @@ local function updateGrip()
   eachTire(function(wd, wobj)
     local c = surfaceC(wd)
     lastC[wd.wheelID] = c
+    if parts.heat then
+      local fade = heatFade(c)
+      if fade ~= heatScale[wd.wheelID] then
+        local t = acngThermal(wd, fade)
+        wobj:setThermal(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
+        heatScale[wd.wheelID] = fade
+      end
+    end
     local grip = targetGrip(wd, c)
     local last = applied[wd.wheelID]
     if grip and (not last or math.abs(grip - last) >= M.GRIP_STEP) then
@@ -225,15 +328,20 @@ local function wearStep(dt)
     local id = wd and wd.wheelID
     local rt = wd and runtime[wd.cid]
     local e = rt and rt.slipEnergy
-    if tread[id] and type(e) == 'number' and e > 0 and e < math.huge then
+    if tread[id] and rt and not rt.isBroken and not rt.isTireDeflated and type(e) == 'number' and e > 0 and e < math.huge then
       slipWork[id] = slipWork[id] + e * dt
-      tread[id] = math.max(0, tread[id] - e * scale * wearHeatMult(lastC[id]))
+      tread[id] = math.max(0, tread[id] - e * scale * wearHeatMult(lastC[id], wd) * compoundWear(wd))
+      if tread[id]<=0 and not puncturedByWear[id] and beamstate and type(beamstate.deflateTire)=='function' then
+        -- Native puncture persists across ACNG OFF. Only native repair/reset fixes it.
+        beamstate.deflateTire(wd.cid)
+        puncturedByWear[id]=true
+      end
     end
   end
 end
 
 local function applyStock()
-  applied = {}
+  applied, heatScale = {}, {}
   return eachTire(function(wd, wobj)
     local t, c = stockThermal(wd), stockCurve(wd)
     wobj:setThermal(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
@@ -250,13 +358,18 @@ local function snapshot()
   local tires = {}
   eachTire(function(wd)
     local c = surfaceC(wd)
+    local compound=compoundFor(wd)
+    local tireProfile=PROFILES[compound]
     local core = obj:getWheelCoreTemperature(wd.wheelID)
     local group = wd.pressureGroup and v.data.pressureGroups and v.data.pressureGroups[wd.pressureGroup]
     local pa = group and obj:getGroupPressure(group)
     tires[#tires + 1] = {name=wd.name, surface_c=round(c, 0.1),
       core_c=type(core) == 'number' and round(core - K, 0.1) or nil,
       psi=type(pa) == 'number' and round((pa - ATM_PA) / PSI_PA, 0.1) or nil,
-      state=parts.heat and windowState(c) or nil,
+      state=parts.heat and windowState(c, wd) or nil,
+      compound=compound, worn_through=puncturedByWear[wd.wheelID]==true,
+      window_low_c=parts.heat and tireProfile.low or nil,
+      window_high_c=parts.heat and tireProfile.high or nil,
       grip=round(applied[wd.wheelID] or targetGrip(wd, c), 0.001),
       tread=parts.wear and round(tread[wd.wheelID], 0.001) or nil}
   end)
@@ -305,9 +418,10 @@ end
 -- Choose the parts that run (heat window, wear). Tread carries over; only a reset or a
 -- reload gives fresh tires. With neither part on, acng_core unloads the extension.
 local function setProfile(name)
-  local p=PROFILES[name]
+  local p=PROFILES[name=='auto' and 'road' or name]
   if not p then return false end
   profile=name
+  compoundCache={}
   M.HEAT={};for k,value in pairs(p.heat) do M.HEAT[k]=value end
   M.WINDOW_LOW_C,M.WINDOW_HIGH_C=p.low,p.high
   M.COLD_GRIP,M.HOT_GRIP=p.cold,p.hot
@@ -368,9 +482,14 @@ M.windowState = windowState
 M.gripAt = gripAt
 M.wearGrip = wearGrip
 M.wearHeatMult = wearHeatMult
+M.heatFade = heatFade
+M.compoundWear = compoundWear
+M.compoundFromName = compoundFromName
+M.compoundFromPhysics = compoundFromPhysics
 M.wearState = wearState
 M.configure = configure
 M.setProfile = setProfile
+M.compoundFor = compoundFor
 M.setWearRate = setWearRate
 M.snapshot = snapshot
 M.getSnapshot = snapshot

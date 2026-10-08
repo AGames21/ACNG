@@ -40,12 +40,14 @@
         if (tread !== null) tread = Math.max(0, Math.min(1, tread));
         return {name: String(t.name || '?'), surface: fixed(c, 0, '\u00b0'), core: fixed(t.core_c, 0, '\u00b0'),
           psi: fixed(t.psi, 1, ''), state: t.state === 'cold' || t.state === 'hot' || t.state === 'window' ? t.state : '',
-          color: low === null || high === null ? '#3a414c' : tempColor(c, low, high),
+          color: low === null || high === null ? '#3a414c' : tempColor(c, number(t.window_low_c)===null?low:t.window_low_c, number(t.window_high_c)===null?high:t.window_high_c),
+          compound: ['road','sport','race'].indexOf(t.compound)>=0?t.compound:'', failed:t.worn_through===true,
           grip: percent(t.grip), tread: percent(tread), treadWidth: tread === null ? '0%' : (tread * 100).toFixed(1) + '%',
           treadColor: treadColor(tread)};
       });
     var rate = number(s.wear_rate), parts = [];
-    if (low !== null && high !== null) parts.push('Grip window ' + low + '\u2013' + high + '\u00b0C');
+    if (s.profile==='auto') parts.push('Auto compounds · Temperatures °C');
+    else if (low !== null && high !== null) parts.push('Grip window ' + low + '\u2013' + high + '\u00b0C');
     if (wear) parts.push('Wear ' + (rate === null || rate === 1 ? 'on' : 'x' + +rate.toFixed(1)));
     return {on: on, heat: heat, wear: wear, tires: list, window: parts.join(' \u00b7 ')};
   }
@@ -78,7 +80,7 @@
         <div ng-if="tires.on"><div class="window">{{tires.view.window}}</div>
         <div class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index">
           <div class="swatch" ng-style="{background:t.color}"></div>
-          <div class="info"><div class="top"><span class="name">{{t.name}}</span><span class="state" ng-class="t.state">{{t.state}}</span></div>
+          <div class="info"><div class="top"><span class="name">{{t.name}} {{t.compound}}</span><span class="state" ng-class="t.state">{{t.failed?'PUNCTURED':t.state}}</span></div>
           <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread"><b>GRIP</b>{{t.grip}}</span></div>
           <div class="meta"><span><b>CORE</b>{{t.core}}</span><span><b>PSI</b>{{t.psi}}</span></div>
           <div class="tread" ng-if="tires.view.wear"><b>TREAD</b><span class="bar"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></span><span>{{t.tread}}</span></div></div>

@@ -64,6 +64,96 @@ class TireContracts(unittest.TestCase):
         self.assertEqual(thermal[9:], [500, 600, True])
         self.assertEqual(list(self.mod.stockCurve(fr).values())[0], 300)
 
+    def test_auto_compound_is_per_axle_and_unknown_falls_back_safely(self):
+        self.lua.execute("v.config={parts={tire_F_19x9='tire_F_sport',tire_R_19x10='tire_R_race'}};v.data.wheels[1].name='RR'")
+        self.mod.onExtensionLoaded();self.mod.configure(True, True, 'auto')
+        snap=self.mod.snapshot()
+        self.assertEqual(snap.tires[1].compound,'sport')
+        self.assertEqual(snap.tires[2].compound,'race')
+        self.assertAlmostEqual(self.mod.gripAt(15,self.g.v.data.wheels[1]),.70)
+        self.assertEqual(self.mod.gripAt(90,self.g.v.data.wheels[1]),1)
+        self.lua.execute("v.config.parts={tire_F_19x9='custom_unclassified'}")
+        self.mod.onReset()
+        self.assertEqual(self.mod.snapshot().tires[1].compound,'road')
+
+    def test_compound_detection_by_name_then_physics(self):
+        m = self.mod
+        for part, want in (("tire_F_17x8_sport", "sport"), ("tire_R_semislick", "sport"), ("tire_F_race", "race"),
+                           ("tire_R_slick_19x11", "race"), ("tire_F_asphalt_rally", "race"), ("tire_R_drag", "race"),
+                           ("tire_F_17x8_standard", "road"), ("tire_F_eco", "road"), ("tire_R_offroad", "road")):
+            self.assertEqual(m.compoundFromName(part), want, part)
+        for part in ("tire_F_15x7_14_redline", "tire_R_16_ww", "tire_F_14_mixed", "modded_tire_F"):
+            self.assertIsNone(m.compoundFromName(part), part)   # no type in the name: physics decides
+        wd = self.lua.eval("function(a,b) return {noLoadCoef=a,treadCoef=b} end")
+        self.assertEqual(m.compoundFromPhysics(wd(1.95, 0)), "race")
+        self.assertEqual(m.compoundFromPhysics(wd(1.95, 0.6)), "sport")   # grippy but treaded
+        self.assertEqual(m.compoundFromPhysics(wd(1.6, 0.5)), "sport")
+        self.assertEqual(m.compoundFromPhysics(wd(1.2, 0.6)), "road")
+        self.assertIsNone(m.compoundFromPhysics(self.lua.eval("{}")))
+
+    def test_auto_uses_native_physics_when_the_part_name_is_unclear(self):
+        self.lua.execute("v.config={parts={tire_F_19x9='modded_tire_F'}};v.data.wheels[0].noLoadCoef=1.9;v.data.wheels[0].treadCoef=0")
+        self.mod.onExtensionLoaded();self.mod.configure(True, True, 'auto')
+        self.assertEqual(self.mod.snapshot().tires[1].compound, 'race')
+
+    def test_compound_sets_wear_rate(self):
+        self.mod.onExtensionLoaded()
+        rates = {}
+        for name in ("road", "sport", "race"):
+            self.mod.configure(True, True, name)
+            rates[name] = self.mod.compoundWear(self.g.v.data.wheels[0])
+        self.assertLess(rates["road"], rates["sport"])
+        self.assertLess(rates["sport"], rates["race"])
+        self.assertEqual(rates["sport"], 1)                 # the calibrated T007 setup
+
+    def test_heat_fades_to_a_ceiling_instead_of_climbing_forever(self):
+        m = self.mod
+        self.assertEqual(m.heatFade(150), 1)
+        self.assertEqual(m.heatFade(m.HEAT_FADE_C), 1)
+        self.assertEqual(m.heatFade(225), 0.5)
+        self.assertEqual(m.heatFade(m.HEAT_LIMIT_C), 0)
+        self.assertEqual(m.heatFade(400), 0)
+        self.assertEqual(m.heatFade(None), 1)
+        self.assertEqual(m.heatFade(float("nan")), 1)
+        self.assertLess(m.HEAT_LIMIT_C, 300)                 # burnouts no longer read 300+
+
+    def test_burnout_heat_rewrites_native_friction_heat(self):
+        self.mod.onExtensionLoaded();self.mod.configure(True, False, 'sport')
+        def friction():
+            return [c for c in self.calls() if c[0] == 0 and c[1] == 'thermal'][-1][2][6]
+        self.mod.updateGFX(.5)
+        cool = friction()
+        self.assertGreater(cool, 0)
+        self.g.temps[0] = 273.15 + 260
+        self.mod.updateGFX(.5)
+        self.assertEqual(friction(), 0)                      # no more friction heat at the ceiling
+        self.g.temps[0] = 273.15 + 90
+        self.mod.updateGFX(.5)
+        self.assertAlmostEqual(friction(), cool)             # full heat again once it cools
+        self.mod.onExtensionUnloaded()
+        self.assertEqual(friction(), 0)                      # stock again: no ACNG friction heat
+
+    def test_zero_tread_calls_native_puncture_once_and_off_does_not_repair(self):
+        self.lua.execute("punctures={};beamstate={deflateTire=function(id) punctures[#punctures+1]=id;wheels.wheels[id].isTireDeflated=true end}")
+        self.mod.onExtensionLoaded();self.mod.configure(False,True)
+        self.g.wheels.wheels[0].slipEnergy=1e9
+        self.mod.updateGFX(.1);self.mod.updateGFX(.1)
+        self.assertEqual(len(self.g.punctures),1)
+        self.assertEqual(self.g.punctures[1],0)
+        self.assertEqual(self.tread()['FL'][0],0)
+        self.mod.onExtensionUnloaded()
+        self.assertTrue(self.g.wheels.wheels[0].isTireDeflated)
+
+    def test_wear_disabled_and_broken_wheels_never_trigger_puncture(self):
+        self.lua.execute("punctures={};beamstate={deflateTire=function(id) punctures[#punctures+1]=id end}")
+        self.mod.onExtensionLoaded();self.mod.configure(True,False)
+        self.g.wheels.wheels[0].slipEnergy=1e9
+        self.mod.updateGFX(.1)
+        self.mod.configure(True,True);self.g.wheels.wheels[0].isBroken=True
+        self.mod.updateGFX(.1)
+        self.assertEqual(len(self.g.punctures),0)
+        self.assertEqual(self.tread()['FL'][0],1)
+
     def test_road_preset_switch_retains_wear_and_restores_stock(self):
         self.mod.onExtensionLoaded()
         self.mod.configure(True, True, 'road')
@@ -225,7 +315,10 @@ class TireContracts(unittest.TestCase):
         self.assertEqual(m.wearHeatMult(105), 1)
         self.assertAlmostEqual(m.wearHeatMult(125), 1.5)
         self.assertEqual(m.wearHeatMult(145), m.WEAR_HOT_MULT)
-        self.assertEqual(m.wearHeatMult(400), m.WEAR_HOT_MULT)
+        # Past the hot ramp a burnout keeps raising wear, up to WEAR_BURN_MULT at the ceiling.
+        self.assertAlmostEqual(m.wearHeatMult(145 + (m.HEAT_LIMIT_C - 145) / 2), (m.WEAR_HOT_MULT + m.WEAR_BURN_MULT) / 2)
+        self.assertEqual(m.wearHeatMult(m.HEAT_LIMIT_C), m.WEAR_BURN_MULT)
+        self.assertEqual(m.wearHeatMult(400), m.WEAR_BURN_MULT)
         self.assertEqual(m.wearHeatMult(None), 1)
         m.configure(False, True)
         self.assertEqual(m.wearHeatMult(140), 1)           # no heat model, no heat penalty
@@ -348,12 +441,12 @@ class CoreTireFeature(unittest.TestCase):
     @staticmethod
     def load_cmd(vid, heat=True, wear=False):
         return (f"{vid}:extensions.load('acng_tires'); if extensions.isExtensionLoaded('acng_tires') "
-                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"road") end')
+                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"auto") end')
 
     @staticmethod
     def configure_cmd(vid, heat, wear):
         return (f"{vid}:if extensions.isExtensionLoaded('acng_tires') "
-                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"road") end')
+                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"auto") end')
 
     def load(self):
         mod = self.lua.execute(CORE.read_text())

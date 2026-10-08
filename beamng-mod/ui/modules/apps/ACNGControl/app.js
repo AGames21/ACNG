@@ -2,7 +2,7 @@
   'use strict';
   var FEATURES=['tire_temperature','tire_wear','ffb','abs','tc'];
   function command(action,status,key,value){
-    if(action==='profile' && (value==='road'||value==='sport'))return "extensions.acng_core.setTireProfile('"+value+"')";
+    if(action==='profile' && ['auto','road','sport','race'].indexOf(value)>=0)return "extensions.acng_core.setTireProfile('"+value+"')";
     if(action==='master') return 'extensions.acng_core.setControlEnabled('+(!status.enabled)+')';
     if(action==='pit' && ['mark','cancel','service'].indexOf(key)>=0)return "extensions.acng_core.pitCommand('"+key+"', "+(value && value.refuel===true)+", "+(value && value.tread===true)+")";
     if(action==='feature' && (FEATURES.indexOf(key)>=0||key==='pits')) return "extensions.acng_core.setFeature('"+key+"', "+(value===true)+')';
@@ -32,26 +32,26 @@
     return {restrict:'E',replace:true,scope:true,template:`
       <section class="acng-control">
         <style>
-          .acng-control{box-sizing:border-box;max-height:100%;overflow:auto;color:#eef3fa;background:rgba(15,19,27,.96);border:1px solid #3a4352;border-radius:14px;padding:16px;font:13px 'Segoe UI',sans-serif;box-shadow:0 10px 28px #0006;user-select:none}
-          .acng-control *{box-sizing:border-box}.acng-control header{display:flex;justify-content:space-between;align-items:center}.acng-control .brand{font-size:22px;font-weight:800;letter-spacing:3px}.acng-control .tag{font-size:10px;letter-spacing:1.5px;color:#a4b2c7}.acng-control .pill{font-size:10px;letter-spacing:1px;border:1px solid #495568;padding:4px 8px;border-radius:20px;color:#a4b2c7}.acng-control .pill.on{color:#77edb6;border-color:#377858}
-          .acng-control button,.acng-control select{font:inherit;border:1px solid #475469;border-radius:8px;background:#232d3d;color:#eef3fa;cursor:pointer}.acng-control button:focus-visible,.acng-control select:focus-visible,.acng-control input:focus-visible{outline:2px solid #8dbbff;outline-offset:3px}.acng-control button:disabled{opacity:.4;cursor:default}
-          .acng-control .master{width:100%;padding:15px 10px;margin:14px 0 8px;font-size:16px;font-weight:700;letter-spacing:1px;background:#273347}.acng-control .master.on{background:#77edb6;border-color:#77edb6;color:#101c17}.acng-control .note{font-size:11px;line-height:1.5;color:#b2bfd1;min-height:18px}.acng-control .advanced{width:100%;margin-top:12px;padding:8px;background:transparent;font-size:12px;color:#c0cee1}
-          .acng-control fieldset{border:0;border-top:1px solid #354255;margin:16px 0 0;padding:12px 0 0}.acng-control legend{color:#8dbbff;font-weight:700;font-size:11px;letter-spacing:1px}.acng-control .row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}.acng-control .row label{flex:1}.acng-control input[type=checkbox]{width:18px;height:18px;accent-color:#77edb6;cursor:pointer}.acng-control select{padding:5px;max-width:150px}.acng-control input[type=range]{width:130px;accent-color:#77edb6}.acng-control small{display:block;color:#9cacc3;font-size:10px;line-height:1.5}.acng-control .value{font-variant-numeric:tabular-nums;min-width:38px;text-align:right}.acng-control .footer{margin-top:14px;font-size:10px;color:#8295ad}
-          .acng-control .tabs{display:flex;gap:5px;margin-top:12px}.acng-control .tabs button{flex:1;padding:6px 3px;font-size:11px}.acng-control .tabs button.on{border-color:#77edb6;color:#77edb6}
+          .acng-control{box-sizing:border-box;width:100%;max-height:100%;overflow:auto;color:#e6edf4;background:rgba(16,21,28,.92);border:1px solid #ffffff24;border-radius:8px;padding:6px 8px;font:12px 'Segoe UI',sans-serif;user-select:none}
+          .acng-control *{box-sizing:border-box}.acng-control header{display:flex;align-items:center;gap:8px;height:28px}.acng-control .brand{flex:1;font-size:13px;font-weight:700;letter-spacing:1.5px}
+          .acng-control button,.acng-control select{font:inherit;border:1px solid #ffffff25;border-radius:5px;background:#202a35;color:#e6edf4;cursor:pointer}.acng-control button:focus-visible,.acng-control select:focus-visible,.acng-control input:focus-visible{outline:2px solid #82baff;outline-offset:2px}.acng-control button:disabled{opacity:.4;cursor:default}
+          .acng-control .master{min-width:48px;height:26px;padding:0 10px;font-size:11px;font-weight:700}.acng-control .master.on{background:#244b3b;border-color:#569d78;color:#9de7bd}.acng-control .advanced{height:26px;min-width:30px;padding:0 7px;background:transparent;color:#a8b8c9;font-size:16px}.acng-control .note{font-size:11px;line-height:1.4;color:#b2bfd1;margin-top:6px}
+          .acng-control fieldset{border:0;margin:10px 0 0;padding:0}.acng-control legend{display:none}.acng-control .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0}.acng-control .row label{flex:1}.acng-control input[type=checkbox]{width:16px;height:16px;accent-color:#80ceaa;cursor:pointer}.acng-control select{padding:4px;max-width:145px}.acng-control input[type=range]{width:95px;accent-color:#80ceaa}.acng-control small{display:block;color:#97a8ba;font-size:10px;line-height:1.4}.acng-control .value{font-variant-numeric:tabular-nums;min-width:32px;text-align:right}
+          .acng-control .tabs{display:flex;gap:3px;margin:10px 0 12px}.acng-control .tabs button{flex:1;padding:5px 2px;font-size:10px;background:transparent;border-color:transparent}.acng-control .tabs button.on{border-bottom-color:#80ceaa;color:#9de7bd}.acng-control .footer{margin-top:10px;font-size:10px;color:#8295ad}
         </style>
-        <header><div><div class="brand">ACNG</div><span class="tag">FREEROAM · DRIVING</span></div><span class="pill" ng-class="{on:p.view.on}">{{p.view.on?'ENABLED':'OFF'}}</span></header>
-        <button class="master" ng-class="{on:p.view.on}" ng-click="p.send('master')" ng-disabled="!p.view.available || p.busy" aria-label="Toggle ACNG master">{{p.view.on?'ACNG ON':'ACNG OFF'}}</button>
-        <div class="note" role="status">{{p.error || p.view.note}}</div>
-        <small ng-if="p.view.first">First ON enables tire heat and wear. Steering and assists are optional.</small>
-        <button class="advanced" ng-click="p.advanced=!p.advanced" ng-attr-aria-expanded="{{p.advanced}}" aria-label="Show advanced ACNG settings">{{p.advanced?'Hide advanced ↑':'Advanced ↓'}}</button>
-        <div ng-if="p.advanced"><small>Choose effects here. They only run while the master is ON.</small>
+        <header><span class="brand">ACNG</span>
+          <button class="master" ng-class="{on:p.view.on}" ng-click="p.send('master')" ng-disabled="!p.view.available || p.busy" aria-label="Toggle ACNG master" ng-attr-aria-pressed="{{p.view.on}}">{{p.view.on?'ON':'OFF'}}</button>
+          <button class="advanced" ng-click="p.toggleAdvanced()" ng-attr-aria-expanded="{{p.advanced}}" aria-label="Show advanced ACNG settings" title="Advanced settings">{{p.advanced?'▴':'▾'}}</button>
+        </header>
+        <div class="note" role="status" ng-if="p.error || !p.view.available">{{p.error || p.view.note}}</div>
+        <div ng-if="p.advanced"><small>{{p.view.note}}</small><small ng-if="p.view.first">First ON enables heat and wear. Assists and steering are optional.</small>
           <nav class="tabs"><button aria-label="ACNG tires tab" ng-click="p.tab='tires'" ng-class="{on:p.tab==='tires'}">Tires</button><button aria-label="ACNG assists tab" ng-click="p.tab='assists'" ng-class="{on:p.tab==='assists'}">Assists</button><button aria-label="ACNG steering tab" ng-click="p.tab='steering'" ng-class="{on:p.tab==='steering'}">Wheel</button><button aria-label="ACNG pits tab" ng-click="p.tab='pits'" ng-class="{on:p.tab==='pits'}">Pits</button><button aria-label="ACNG diagnostics tab" ng-click="p.tab='diagnostics'" ng-class="{on:p.tab==='diagnostics'}">Debug</button></nav>
           <fieldset ng-if="p.tab==='tires'"><legend>TIRES</legend>
-            <div class="row"><label>Tire preset</label><select aria-label="ACNG tire preset" ng-model="p.profile" ng-change="p.send('profile',null,p.profile)" ng-disabled="p.busy"><option value="road">Road</option><option value="sport">Sport (previous)</option></select></div>
-            <small>Road uses gentler warm-up and cold grip. Presets are experimental; switching keeps current heat and wear.</small>
+            <div class="row"><label>Tire preset</label><select aria-label="ACNG tire preset" ng-model="p.profile" ng-change="p.send('profile',null,p.profile)" ng-disabled="p.busy"><option value="auto">Auto — fitted tires</option><option value="road">Road</option><option value="sport">Sport</option><option value="race">Race</option></select></div>
+            <small>Auto follows fitted front/rear tires. Native peak grip stays in place; unknown tires use Road. Thermal presets are experimental.</small>
             <div class="row"><label for="acng-heat">Temperature &amp; grip</label><input id="acng-heat" aria-label="ACNG tire temperature" type="checkbox" ng-model="p.heat" ng-change="p.send('feature','tire_temperature',p.heat)" ng-disabled="p.busy"></div>
             <small>Cold / warm grip and heat-driven pressure. No separate pressure switch yet.</small>
-            <div class="row"><label for="acng-wear">Tire wear</label><input id="acng-wear" aria-label="ACNG tire wear" type="checkbox" ng-model="p.wear" ng-change="p.send('feature','tire_wear',p.wear)" ng-disabled="p.busy"></div>
+            <div class="row"><label for="acng-wear">Tire wear &amp; failure</label><input id="acng-wear" aria-label="ACNG tire wear" type="checkbox" ng-model="p.wear" ng-change="p.send('feature','tire_wear',p.wear)" ng-disabled="p.busy"></div><small>Worn-through tires puncture. Switching OFF does not repair damage.</small>
           </fieldset>
           <fieldset ng-if="p.tab==='assists'"><legend>ASSISTS</legend><small>Factory keeps the car’s native assist settings.</small>
             <div class="row" ng-repeat="a in p.assists"><label>{{a.label}}</label><select ng-model="a.value" ng-change="p.send('assist',a.key,a.value)" ng-disabled="p.busy" aria-label="ACNG {{a.label}}"><option value="factory">Factory</option><option value="0">Off</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option></select></div>
@@ -77,11 +77,27 @@
           </fieldset>
           <fieldset ng-if="p.tab==='diagnostics'"><legend>DIAGNOSTICS</legend><div class="row"><label for="acng-logging">Telemetry stream</label><input id="acng-logging" aria-label="ACNG telemetry stream" type="checkbox" ng-model="p.telemetry" ng-change="p.send('telemetry',null,p.telemetry)" ng-disabled="!p.view.on || p.busy"></div><small>Requires the local developer collector. Master OFF stops streaming too.</small></fieldset>
         </div>
-        <div class="footer">Native BeamNG suspension, damage and AI. Choices saved; startup stays OFF.</div>
-      </section>`,link:function(scope){
+        <div class="footer" ng-if="p.advanced">Choices saved · Startup OFF</div>
+      </section>`,link:function(scope,element){
         var alive=true,latest=null,sentAt=0;var p=scope.p={advanced:false,tab:'tires',busy:false,refuel:true,newTread:false,pit:{},view:view(null)};
+        function resizePanel(){
+          // BeamNG 0.39 wraps legacy apps in .overlay-item sized in em units; older
+          // builds use an absolutely placed element with pixel sizes.
+          var host=element[0].closest&&element[0].closest('.overlay-item');
+          if(!host)host=element[0].parentElement;
+          while(host && host!==document.body && !host.classList.contains('overlay-item')){
+            if(/^[0-9.]+px$/.test(host.style.width) && /^[0-9.]+px$/.test(host.style.height) && getComputedStyle(host).position==='absolute')break;
+            host=host.parentElement;
+          }
+          if(host && host!==document.body){
+            host.setAttribute('data-acng-control-host','true');
+            host.style.height=p.advanced?'410px':'44px';host.style.width=p.advanced?'290px':'220px';
+          }
+        }
+        p.toggleAdvanced=function(){p.advanced=!p.advanced;resizePanel();};
+        requestAnimationFrame(resizePanel);
         function render(s){
-          latest=s;p.view=view(s);if(!s)return;p.profile=s.tire_profile||'road';
+          latest=s;p.view=view(s);if(!s)return;p.profile=s.tire_profile||'auto';
           var f=s.features||{},v=s.ffb_settings||{};p.heat=f.tire_temperature===true;p.wear=f.tire_wear===true;p.ffb=f.ffb===true;p.pits=f.pits===true;p.telemetry=s.telemetry_enabled===true;
           p.assists=[{key:'abs',label:'ABS',value:f.abs?String(s.assist_levels.abs):'factory'},{key:'tc',label:'Traction control',value:f.tc?String(s.assist_levels.tc):'factory'}];
           p.filter=typeof v.filter==='number'?String(Math.round(v.filter*100)):'stock';

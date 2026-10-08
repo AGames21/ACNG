@@ -1,4 +1,4 @@
-param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod)
+param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab','ControlLab')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path $PSScriptRoot -Parent
 $paths=Get-Content (Join-Path $repoRoot '.local\paths.json') -Raw | ConvertFrom-Json
@@ -21,7 +21,7 @@ Get-ChildItem -LiteralPath $source -Recurse -File | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
 }
 # Reject conflicting test mods rather than deleting user content.
-foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear','acng_assistprobe','acng_assistlab','acng_tireplay','acng_tirecool','acng_ffblab','acng_pitlab','acng_roadheat','acng_stocklab','acng_spalab','acng_carlab')){
+foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear','acng_assistprobe','acng_assistlab','acng_tireplay','acng_tirecool','acng_ffblab','acng_pitlab','acng_roadheat','acng_stocklab','acng_spalab','acng_carlab','acng_controllab')){
   if($other -ne $modName -and (Test-Path (Join-Path $labCurrent ('mods\unpacked\'+$other)))){throw 'Use a fresh lab profile per experiment; conflicting test harness present.'}
 }
 # Optional user-supplied content (e.g. the user's own Spa download) goes into this lab only;

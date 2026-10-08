@@ -20,11 +20,17 @@ class ControlContracts(unittest.TestCase):
         self.assertFalse(s['features']['abs']);self.assertFalse(s['features']['tc']);self.assertFalse(s['features']['ffb'])
 
     def test_tire_profile_default_validation_and_saved_selection(self):
-        self.assertEqual(self.core.getStatus()['tire_profile'], 'road')
+        self.assertEqual(self.core.getStatus()['tire_profile'], 'auto')
         self.assertFalse(self.core.setTireProfile('slick; injected()'))
         self.assertTrue(self.core.setTireProfile('sport'))
         self.core.saveSettings();self.core.onExtensionLoaded()
         self.assertEqual(self.core.getStatus()['tire_profile'], 'sport')
+
+    def test_old_default_road_moves_to_auto_but_a_chosen_road_stays(self):
+        self.l.execute("files['/settings/acng/runtime.json']={schema_version=1,tire_profile='road'}")
+        self.core.onExtensionLoaded();self.assertEqual(self.core.getStatus()['tire_profile'],'auto')
+        self.assertTrue(self.core.setTireProfile('road'));self.core.saveSettings();self.core.onExtensionLoaded()
+        self.assertEqual(self.core.getStatus()['tire_profile'],'road')
 
     def test_off_stops_developer_stream_and_preserves_choices(self):
         self.core.setControlEnabled(True);self.core.setTelemetryEnabled(True);self.core.setControlEnabled(False)

@@ -1,6 +1,11 @@
 -- Stationary control/UI test, no AI spawning or driving inputs.
 local M={};local real,sim,co=0,0,nil;local response
-local result={test='GUI002 road preset and FR002 vehicle damage lifecycle',completed=false,checks={},vehicles={}}
+local result={test='GUI003 compact controls and compound/wear failure',completed=false,checks={},vehicles={}}
+local uiResponse
+local function uiProbe(label)
+  uiResponse=nil
+  be:queueJS([[(()=>{var e=document.querySelector('.acng-control'),h=e&&e.closest('[data-acng-control-host]');var parents=[],n=e;while(n&&parents.length<5){parents.push({tag:n.tagName,cls:n.className,style:n.getAttribute('style')});n=n.parentElement;}var r=e?{width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,host:!!h,hostHeight:h&&h.getBoundingClientRect().height,parents:parents}:{};bngApi.engineLua('extensions.acng_controllab.uiReceive('+JSON.stringify(JSON.stringify(r))+')');})()]])
+end
 local function save() jsonWriteFile('/acng-control-test.json',result,true) end
 local function check(k,x) result.checks[k]=x==true;save();if not x then error(k) end end
 local function waitFor(f,t) local start=real;while not f() do if real-start>(t or 12) then error('wait timeout') end;coroutine.yield() end end
@@ -27,12 +32,18 @@ local function run()
   core_vehicles.replaceVehicle('etkc',{config='vehicles/etkc/kc6_360_M.pc'});delay(8)
   check('startup_off',not status().enabled)
   extensions.load('ui_appLayouts')
-  local layout=ui_appLayouts.createLayout({title='ACNG Freeroam',type='freeroam',apps={{appName='acngControl',placement={right='24px',top='70px',width='360px',height='480px'}}}})
+  local layout=ui_appLayouts.createLayout({title='ACNG Freeroam',type='freeroam',apps={{appName='acngControl',placement={right='24px',top='70px',width='220px',height='44px'}}}})
   ui_appLayouts.setUsedLayout(layout);guihooks.trigger('ChangeState',{state='play'});delay(5)
+  uiProbe();waitFor(function() return uiResponse end);result.collapsed=uiResponse
+  check('compact_collapsed_size',uiResponse.width<=230 and uiResponse.height<=50)
+  createScreenshot2({filename='screenshots/acng_gui003_collapsed',writeJPG=true});delay(2)
   click('Toggle ACNG master');waitFor(function() return status().enabled end)
   waitFor(function() local r=probe();return r and r.tires and r.state.heat and r.state.wear end)
   check('real_master_click_native_heat_and_wear',true)
   click('Show advanced ACNG settings');delay(1)
+  uiProbe();waitFor(function() return uiResponse end);result.expanded=uiResponse
+  check('advanced_expands_host',uiResponse.host and uiResponse.hostHeight>=300 and uiResponse.height>100)
+  createScreenshot2({filename='screenshots/acng_gui003_expanded',writeJPG=true});delay(2)
   screenshot.takeScreenShot();delay(1)
   click('ACNG tire wear');waitFor(function() return not status().features.tire_wear end)
   waitFor(function() local r=probe();return r and r.state and r.state.heat and not r.state.wear end)
@@ -41,6 +52,11 @@ local function run()
   check('real_sport_preset_selector',status().tire_profile=='sport')
   change('ACNG tire preset','road');waitFor(function() local r=probe();return r and r.state and r.state.profile=='road' end)
   check('real_road_preset_selector',status().tire_profile=='road')
+  change('ACNG tire preset','auto');waitFor(function() local r=probe();return r and r.state and r.state.profile=='auto' end)
+  check('auto_detects_native_sport_tires',response.state.tires[1].compound=='sport')
+  change('ACNG tire preset','race');waitFor(function() local r=probe();return r and r.state and r.state.profile=='race' end)
+  check('race_preset_has_own_window',response.state.window_low_c==85 and response.state.window_high_c==115)
+  change('ACNG tire preset','road');waitFor(function() return status().tire_profile=='road' end)
   click('ACNG steering tab');delay(1)
   click('ACNG force feedback');waitFor(function() local r=probe();return status().features.ffb and r and r.ffb end)
   check('real_ffb_switch',true)
@@ -84,9 +100,12 @@ local function run()
   end
   core_vehicles.replaceVehicle('etkc',{config='vehicles/etkc/kc6_360_M.pc'});response=nil;delay(8);waitFor(tireReady)
   local v=be:getPlayerVehicle(0)
-  v:queueLuaCommand([[for _,wd in pairs(wheels.wheels) do if wd.name=='FL' then beamstate.deflateTire(wd.cid) end end]])
+  -- Controlled slip-work injection validates the native failure path, not tire life.
+  v:queueLuaCommand([[for _,wd in pairs(wheels.wheels) do if wd.name=='FL' then local old=wd.slipEnergy;wd.slipEnergy=1e10;extensions.acng_tires.updateGFX(0.1);wd.slipEnergy=old end end]])
   waitFor(function() local r=probe();if not r then return false end;for _,w in ipairs(r.wheels) do if w.name=='FL' and w.deflated then return true end end;return false end)
   check('native_puncture_survives_acng',true)
+  waitFor(function() local r=probe();if not r or not r.state then return false end;for _,w in ipairs(r.state.tires) do if w.name=='FL' then return w.tread==0 and w.worn_through end end end)
+  check('zero_tread_caused_native_puncture',true)
   waitFor(function() local r=probe();if not r or not r.state then return false end;for _,w in ipairs(r.state.tires) do if w.name=='FL' then return type(w.psi)=='number' and w.psi<5 end end;return false end)
   check('puncture_pressure_remains_low',true)
   v:queueLuaCommand('obj:requestReset(RESET_PHYSICS)');delay(2)
@@ -112,4 +131,5 @@ local function onUpdate(dt,dts)
   if not ok then result.failure=tostring(err);save();log('E','ACNG_GUI001',result.failure) end
 end
 M.onUpdate=onUpdate;M.receive=function(s) response=jsonDecode(s) end
+M.uiReceive=function(s) uiResponse=jsonDecode(s) end
 return M
