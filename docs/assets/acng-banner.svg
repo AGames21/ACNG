@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-labelledby="title description">
+  <title id="title">ACNG — Racing feel. Open roads. Real consequences.</title>
+  <desc id="description">Original ACNG artwork: cyan roads and an orange node-beam chassis on a dark dashboard.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#09101c"/><stop offset="1" stop-color="#182637"/></linearGradient>
+    <linearGradient id="line"><stop stop-color="#70efc2"/><stop offset="1" stop-color="#62bfff"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#a2c7e5" stroke-opacity=".065"/></pattern>
+  </defs>
+  <rect width="1200" height="460" rx="24" fill="url(#bg)"/>
+  <rect width="1200" height="460" rx="24" fill="url(#grid)"/>
+  <path d="M710 0L590 460H1200V0Z" fill="#020710" opacity=".24"/>
+  <path d="M50 36H190" stroke="#f69a54" stroke-width="5"/>
+  <g font-family="Segoe UI,Arial,sans-serif">
+    <text x="54" y="80" fill="#87a1bb" font-size="13" letter-spacing="4">BEAMNG · FREEROAM DRIVING SYSTEMS</text>
+    <text x="48" y="191" fill="#f0f6ff" font-size="110" font-weight="800" letter-spacing="12">ACNG</text>
+    <text x="54" y="243" fill="#78edc5" font-size="24" font-weight="600">Racing feel. Open roads.</text>
+    <text x="54" y="279" fill="#e1eafa" font-size="24" font-weight="600">Real consequences.</text>
+    <text x="54" y="327" fill="#a9bbd0" font-size="15">Richer tires and feedback. Native suspension and damage.</text>
+    <g font-size="11" letter-spacing="1.5" font-weight="600">
+      <rect x="54" y="367" width="155" height="34" rx="8" fill="#112f2b" stroke="#356b5e"/>
+      <text x="72" y="389" fill="#78edc5">FREEROAM FIRST</text>
+      <rect x="219" y="367" width="149" height="34" rx="8" fill="#202c3b" stroke="#46566b"/>
+      <text x="236" y="389" fill="#bdcddd">OFF BY DEFAULT</text>
+      <rect x="378" y="367" width="143" height="34" rx="8" fill="#33291f" stroke="#7a5332"/>
+      <text x="397" y="389" fill="#ffb77b">PROTOTYPE</text>
+    </g>
+  </g>
+  <g transform="translate(690 78)">
+    <path d="M18 261C131 225 191 170 163 121S206 24 395 14" stroke="url(#line)" stroke-width="3" fill="none" opacity=".75"/>
+    <path d="M16 285C151 245 222 177 193 117S238 53 401 41" stroke="#627e9a" stroke-width="2" fill="none" stroke-dasharray="8 10"/>
+    <g fill="none" stroke="#ffad70" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M19 164L58 142L116 140L153 100L242 100L286 140L356 149L374 176L360 192H40L19 180Z"/>
+      <path d="M58 142L83 192L116 140L154 191L195 141L242 100L244 191L286 140L319 192L356 149" opacity=".72"/>
+      <path d="M116 140H286M153 100L154 140M195 100V141M242 100L244 140"/>
+      <circle cx="83" cy="190" r="26" fill="#102032"/><circle cx="319" cy="190" r="26" fill="#102032"/>
+      <circle cx="83" cy="190" r="12"/><circle cx="319" cy="190" r="12"/>
+    </g>
+    <g fill="#ffc99f"><circle cx="58" cy="142" r="4"/><circle cx="116" cy="140" r="4"/><circle cx="153" cy="100" r="4"/>
+      <circle cx="195" cy="141" r="4"/><circle cx="242" cy="100" r="4"/><circle cx="286" cy="140" r="4"/>
+      <circle cx="356" cy="149" r="4"/><circle cx="154" cy="191" r="4"/><circle cx="244" cy="191" r="4"/></g>
+    <text x="22" y="324" font-family="Segoe UI,Arial,sans-serif" font-size="11" letter-spacing="2" fill="#87a1bb">NATIVE STRUCTURE. ORIGINAL EXTENSIONS.</text>
+  </g>
+</svg>
