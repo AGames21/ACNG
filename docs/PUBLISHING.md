@@ -51,3 +51,21 @@ gh release create <tag> dist/acng-freeroam.zip dist/acng-freeroam.build.json -R 
 ```
 
 Verify by downloading the asset again and comparing its SHA256 with the manifest.
+
+## Public readiness (2026-10-08)
+
+The user asked to get this repository ready to make public. Checked before any
+visibility change:
+
+- Every reachable Git blob scanned for personal paths, emails, LAN addresses and
+  tokens: none. All commits use the generic `ACNG Engineering` identity. Older
+  revisions of AGENTS.md still mention the maintainer's notebook path and that they
+  were using other apps; no secrets. Removing that from history would need a
+  force-push, which is not authorized.
+- AGENTS.md now holds only public engineering rules. The maintainer's private
+  workspace notes moved to the ignored `.local/AGENTS.local.md`, which AGENTS.md
+  tells agents to read first.
+- No game assets, maps, cars, binaries or game logs are tracked or attached to
+  releases. Spa and the personal AC car live only in the maintainer's separate
+  private repository.
+- Licence and the actual visibility switch are the maintainer's decisions.

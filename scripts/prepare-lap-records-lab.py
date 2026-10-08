@@ -24,11 +24,11 @@ def prepare(parent):
     for name,data in archives.items(): (mods/name).write_bytes(data)
     manifest={"test":"LR001","source_commit":commit,"launched":False,
               "files":{name:hashlib.sha256(data).hexdigest() for name,data in archives.items()},
-              "constraint":"Do not launch until user releases uninterrupted Roblox/Chrome use."}
+              "constraint":"Do not launch until the user allows interrupting their other apps."}
     (current/"acng-lab-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     (lab/"README.txt").write_text(
         "LR001 isolated test profile. PREPARED ONLY; NEVER AUTO-LAUNCHED.\n"
-        "Wait for explicit release of uninterrupted Roblox/Chrome use.\n"
+        "Wait for the user to allow interrupting their other apps.\n"
         "After that: launch BeamNG with -userpath pointing at this parent directory, not current.\n"
         "Result: current/acng-lap-records-test.json. completed alone is not a pass; require passed=true.\n"
         "The test drives a stock car, tests archive reload/CLEAR, then stops it.\n"

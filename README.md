@@ -38,6 +38,7 @@ starts OFF. Master OFF stops active ACNG modules and its telemetry stream.
 | **Force feedback** | Strength, per-car gain, minimum force, filtering and optional effects | Virtual-wheel tests; real wheel and road/kerb feel pending |
 | **Driving instruments** | Gear/speed/RPM HUD, pedals, acceleration and braking timers | Native HUD/timing evidence |
 | **Optional lap tools** | Delta, sectors and saved best-lap references | Native timing/persistence evidence |
+| **Pit service (optional)** | Timed refuel and fresh ACNG tread at a marked pit box; damage and punctures stay | Native P001b/P001c; Spa pit lane P002 |
 | **Telemetry** | Passive BeamNG capture and local AC shared-memory research | Machine-readable capture/comparison tooling |
 
 FFB requires a force-feedback wheel; it does not change keyboard/gamepad steering.
@@ -45,12 +46,16 @@ Pressure currently follows heat. Presets do not detect every car's real tire com
 
 ## Measured progress
 
-**129 Python checks + Node app suites passed locally.**
-**27 native GUI/vehicle/damage checks passed in BeamNG 0.39.4.**
+**150 Python checks + 6 Node app suites passed locally.**
+**Native in-game checks in BeamNG 0.39.4, all in isolated profiles:**
 
-Native checks covered preset selectors, saved preferences, ETK/Bolide/pickup
-switching and resets, plus ETK puncture/wheel-break compatibility. Master OFF
-did not repair the broken wheel.
+- Six stock models (FWD, RWD, 3-wheel, van, 10-tire semi) driven, crashed,
+  punctured and run on a broken-off wheel: 110/110. Master OFF never repairs damage;
+  reset repairs and gives fresh tread.
+- Sustained limit driving (16 lap cycles): Road preset +1.7 psi with flat 50 °C peaks;
+  Sport +8.5 psi.
+- Pit service 13/13, control panel, presets, saved preferences, lap timer and
+  car switching/reset checks.
 
 | Short road-speed proxy | Peak tire surface | Largest pressure rise |
 |---|---:|---:|
@@ -70,9 +75,8 @@ pressure rise. Native rolling/deformation also affects pressure.
 Requires your own BeamNG.drive installation. Tested on **0.39.4**; other builds
 and third-party vehicles need verification. Use an isolated profile while experimental.
 
-**Easiest (any PC):** sign in to GitHub, open this repository's
-[Releases](https://github.com/AGames21/ACNG/releases/latest) and download
-`acng-freeroam.zip`. No Python or Git needed.
+**Easiest:** open [Releases](https://github.com/AGames21/ACNG/releases/latest)
+and download `acng-freeroam.zip`. No Python or Git needed.
 
 **Or build it yourself:**
 
@@ -120,8 +124,8 @@ docs/         Architecture, research, benchmarks and evidence
 ```
 
 Code/configuration/evidence belong in Git. Private paths, game profiles, credentials,
-logs and raw capture runs stay ignored. Engineering memory lives in the existing
-Obsidian vault; agents should read [AGENTS.md](AGENTS.md) before making changes.
+logs and raw capture runs stay ignored. Contributors and coding agents should read
+[AGENTS.md](AGENTS.md) before making changes.
 
 ## Report something useful
 

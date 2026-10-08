@@ -58,9 +58,9 @@ Tire-wear update (Claude): second physics feature, `tire_wear`, OFF by default a
 
 ## 2026-10-07 - Quiet background saved-lap work (Codex)
 
-Claude's tire heat/wear commits are current; its uncommitted assists work was preserved. Added local saved start line, best-lap trace and best sectors per map/model/parts/tuning. 13 lap/archive LuaJIT tests and Node lap-app checks pass. Native VM/filesystem and UI behavior remain unverified for this addition; no BeamNG launch or foreground automation under the user's uninterrupted Roblox/Chrome constraint. See docs/LAP-TIMER.md for limits and the deferred live test. Existing dist package was not rebuilt from a tree containing unfinished assists.
+Claude's tire heat/wear commits are current; its uncommitted assists work was preserved. Added local saved start line, best-lap trace and best sectors per map/model/parts/tuning. 13 lap/archive LuaJIT tests and Node lap-app checks pass. Native VM/filesystem and UI behavior remain unverified for this addition; no BeamNG launch or foreground automation while the user asked not to be interrupted. See docs/LAP-TIMER.md for limits and the deferred live test. Existing dist package was not rebuilt from a tree containing unfinished assists.
 
-Saved-lap follow-up: malformed archive shapes now fail validation, and LR001 native save/reload/CLEAR harness plus committed-only profile preparation are ready. 15 offline LuaJIT tests and Node lap-app checks pass. No runtime experiment launched; uninterrupted Roblox/Chrome constraint remains active.
+Saved-lap follow-up: malformed archive shapes now fail validation, and LR001 native save/reload/CLEAR harness plus committed-only profile preparation are ready. 15 offline LuaJIT tests and Node lap-app checks pass. No runtime experiment launched; the do-not-interrupt constraint remains active.
 
 ## Saved laps - live verified
 User released interruption constraint. LR001 and full-process-restart LR002 passed all 9 native checks on stock ETK/Small Grid. Saved time 10.64619860656 s restored exactly; CLEAR persisted. Both owned game instances closed. See docs/test-results/LR001-LR002-saved-laps.md. Map/tuning isolation remains offline-only; physical app clicks and restarted live-delta accuracy remain unchecked. Claude's assists work preserved.
