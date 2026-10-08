@@ -29,3 +29,16 @@ the recorded backup, restore the saved freeroam layout, and remove only newly
 created ACNG-specific settings if desired. Do not restore the whole settings tree
 over newer saves or reset unrelated mods. The backup is recovery evidence, not a
 reason to overwrite subsequent user work.
+
+## Updates
+
+`scripts/update_normal.py --confirm-normal` replaces the installed ZIP with a newer
+verified `dist/acng-freeroam.zip` (build it with `tools/build_freeroam.py` from a
+committed tree). It refuses a running game, a ZIP that is not the recorded build,
+or a second ACNG copy. It backs up the old ZIP, the ACNG settings folder and the
+mod database first, and leaves the UI layout alone. Each update is appended to the
+ignored `.local/normal-install.json`. Roll back by copying the backed-up ZIP over
+`mods/acng-freeroam.zip` with BeamNG closed.
+
+2026-10-08: updated 133798e to 1fc97d8 (pit services). The same ZIP passed P001c
+13/13 in an isolated lab profile.

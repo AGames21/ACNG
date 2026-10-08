@@ -13,6 +13,7 @@ The ACNG control panel was opened through a temporary lab layout. Every main ste
 | P001 (Codex) | 1 of 13 | Stopped at the first vehicle probe ("Native wait timeout"). |
 | P001a | 1 of 13 | Same stop, now with stage tracking. App clicks were confirmed to reach the page. Cause: the probe sent `code..';local r=...'`. With an empty `code` the chunk starts with `;`, which LuaJIT rejects as a syntax error, so the probe never answered. Harness bug, not a pit bug. |
 | P001b | **13 of 13** | Probe joined with a newline. Fresh profile. Raw results: `P001-pit-service.json`. |
+| P001c | **13 of 13** | Same harness against the shipped `dist/acng-freeroam.zip` (source `1fc97d8`) instead of the source folder; the ZIP is the one now in the normal profile. Raw results: `P001c-pit-service-zip.json`. |
 
 ## P001b results
 | Check | Result |
