@@ -28,8 +28,9 @@
     if (t === null) return '#3a414c';
     return t > 0.5 ? mix(AMBER, GREEN, (t - 0.5) / 0.5) : mix(RED, AMBER, t / 0.5);
   }
+  // GRIP shows only with heat on: with wear alone it would just repeat the TREAD readout.
   function view(snapshot) {
-    var s = snapshot || {}, on = s.mode === 'on', wear = on && s.wear === true;
+    var s = snapshot || {}, on = s.mode === 'on', wear = on && s.wear === true, heat = on && s.heat === true;
     var low = number(s.window_low_c), high = number(s.window_high_c);
     var list = Array.isArray(s.tires) ? s.tires.slice() : s.tires ? Object.keys(s.tires).map(function (k) { return s.tires[k]; }) : [];
     list = list.map(function (t, i) { return {t: t || {}, i: i}; })
@@ -46,7 +47,7 @@
     var rate = number(s.wear_rate), parts = [];
     if (low !== null && high !== null) parts.push('Grip window ' + low + '\u2013' + high + '\u00b0C');
     if (wear) parts.push('Wear ' + (rate === null || rate === 1 ? 'on' : 'x' + +rate.toFixed(1)));
-    return {on: on, wear: wear, tires: list, window: parts.join(' \u00b7 ')};
+    return {on: on, heat: heat, wear: wear, tires: list, window: parts.join(' \u00b7 ')};
   }
   view.tempColor = tempColor;
   view.treadColor = treadColor;
@@ -66,7 +67,7 @@
           .acng-tires .info{flex:1;min-width:0}.acng-tires .top{display:flex;justify-content:space-between;align-items:baseline}
           .acng-tires .name{font-size:10px;letter-spacing:1px;color:#7f8a9b}.acng-tires .state{font-size:9px;letter-spacing:1px;color:#7f8a9b;text-transform:uppercase}
           .acng-tires .state.cold{color:#6fb0ff}.acng-tires .state.window{color:#5fe39a}.acng-tires .state.hot{color:#ff8a6a}
-          .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:22px;font-weight:700;line-height:1.1}.acng-tires .grip{font-size:13px;font-weight:700;color:#cad0da}
+          .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:22px;font-weight:700;line-height:1.1}.acng-tires .grip{font-size:13px;font-weight:700;color:#cad0da}.acng-tires .grip b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px;margin-right:3px}
           .acng-tires .meta{display:flex;justify-content:space-between;font-size:11px;color:#aeb8c6}.acng-tires .meta b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px;margin-right:3px}
           .acng-tires .tread{display:flex;align-items:center;gap:5px;font-size:11px;color:#aeb8c6;margin-top:2px}.acng-tires .tread b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px}
           .acng-tires .bar{flex:1;height:5px;border-radius:3px;background:#2c343f;overflow:hidden}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
@@ -78,7 +79,7 @@
         <div class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index">
           <div class="swatch" ng-style="{background:t.color}"></div>
           <div class="info"><div class="top"><span class="name">{{t.name}}</span><span class="state" ng-class="t.state">{{t.state}}</span></div>
-          <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" title="Grip">{{t.grip}}</span></div>
+          <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread"><b>GRIP</b>{{t.grip}}</span></div>
           <div class="meta"><span><b>CORE</b>{{t.core}}</span><span><b>PSI</b>{{t.psi}}</span></div>
           <div class="tread" ng-if="tires.view.wear"><b>TREAD</b><span class="bar"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></span><span>{{t.tread}}</span></div></div>
         </div></div></div>

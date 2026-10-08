@@ -49,4 +49,11 @@ assert.equal(view({mode:'on',wear:true,wear_rate:11.27,tires:[]}).window,'Wear x
 assert.equal(v.tires[0].color,'#3a414c');
 assert.equal(view({mode:'on',wear:false,window_low_c:75,window_high_c:105,tires:[]}).wear,false);
 assert.equal(view({mode:'off',wear:true}).wear,false);
-console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, grip %, temperature colours, missing data, object tables, extra wheels, tread and wear line.');
+// One wear readout: GRIP is shown only with heat on, so wear alone shows just TREAD.
+assert.equal(v.heat,false);
+assert.equal(view({mode:'on',heat:true,wear:false,tires:[]}).heat,true);
+assert.equal(view({mode:'off',heat:true}).heat,false);
+const src=require('node:fs').readFileSync(require.resolve('../beamng-mod/ui/modules/apps/ACNGTires/app.js'),'utf8');
+assert.match(src,/class="grip" ng-if="tires\.view\.heat"[^>]*><b>GRIP<\/b>/);
+assert.match(src,/class="tread" ng-if="tires\.view\.wear"/);
+console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, labelled grip only with heat, temperature colours, missing data, object tables, extra wheels, tread and wear line.');
