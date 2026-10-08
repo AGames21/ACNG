@@ -12,3 +12,6 @@
 10. Generalize: capability-driven support beyond the initial vehicle, polished settings/UI, profiling and regression matrix.
 
 Each milestone requires source tests, real-game evidence, stock/OFF restoration checks, repeatable results, performance measurements, damage checks where applicable, status updates and a meaningful Git checkpoint. Native RE requires an explicit narrow question first.
+
+## Freeroam-first priority (2026-10-07)
+Unified ACNG master/Advanced app is complete with GUI001 evidence. Next milestone is road-driving calibration and compatibility, not race systems. Test stock-versus-ACNG cold/warm tires in city stops, cruising and winding-road runs; tune pressure rise using recorded data. Then expand vehicle reset/switch/puncture/bent-geometry coverage and physical-wheel FFB. Optional roadside service and compounds follow reliable road behavior. Track work stays deferred in Obsidian Track Later.

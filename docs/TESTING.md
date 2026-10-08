@@ -25,3 +25,9 @@ For every dynamics change: baseline, original implementation, same maneuver, com
 D001: `-Experiment Damage` invokes native sacrificial collision, repair, FL puncture and verified break group in a separate lab profile. `telemetry.damage_report` checks actual snapshots/packets/receiver counters, with cross-VM acknowledgement before repair. See D001-native-damage.md for evidence and coverage limits. It does not add damage writes to production ACNG.
 
 AC clean route candidate: `ac-offline-smoke.py --mode keyboard --start grid --track drag2000` requests stock BMW1M/ks_drag/drag2000 in an offline single-car race at START. Native shared memory confirms the base track; layout still requires config/visual evidence because the current prefix does not expose layout identity. Race countdown, input edges, controls/assists, setup, fuel, grip and reset state must be recorded before accepting comparisons.
+
+## Planned freeroam regression runs
+- FR001: same stock ETK/config/road route, fresh reset, matched OFF/ON repeats; idle/city stops/cruise/winding road. Log surface/core temperature, pressure, grip, tread and speed; do not assume race-slick temperatures suit road tires.
+- FR002: reset and switch among stock drivetrain types while chosen features stay enabled; test punctures, bent suspension and missing wheels. OFF must restore saved native coefficients/assists and stop streams without repairing damage.
+- FR003: physical-wheel road/understeer/curb runs with clipping observations. Keep native physical steering as the main force source; no physical-wheel success claimed from virtual-wheel tests.
+These are planned, not completed. Existing GUI001 validates native DOM command/state and settings lifecycle, not driving feel or new tire calibration.
