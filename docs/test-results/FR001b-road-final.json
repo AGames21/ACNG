@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "test": "FR001b final Road preset, controlled road-speed proxy",
+  "completed": true,
+  "checks": {
+    "final_master_off": true,
+    "final_no_physics_writes": true,
+    "startup_off": true
+  },
+  "summary": [
+    {
+      "name": "road_final",
+      "samples": 267,
+      "tires": {
+        "FL": {
+          "peak_surface_c": 29.072503662109,
+          "peak_core_c": 15.413873291016,
+          "pressure_rise_psi": 0.2943042445150006,
+          "last_surface_c": 20.978723144531
+        },
+        "FR": {
+          "peak_surface_c": 30.13076171875,
+          "peak_core_c": 15.393487548828,
+          "pressure_rise_psi": 0.216690921811999,
+          "last_surface_c": 21.436456298828
+        },
+        "RL": {
+          "peak_surface_c": 32.258996582031,
+          "peak_core_c": 15.527703857422,
+          "pressure_rise_psi": 0.14696855886299787,
+          "last_surface_c": 17.031335449219
+        },
+        "RR": {
+          "peak_surface_c": 33.870843505859,
+          "peak_core_c": 15.459222412109,
+          "pressure_rise_psi": 0.14669208066399975,
+          "last_surface_c": 16.964654541016
+        }
+      },
+      "stages": {
+        "idle": {
+          "samples": 19,
+          "mean_speed_m_s": 0.00015524136180990961
+        },
+        "cruise": {
+          "samples": 76,
+          "mean_speed_m_s": 20.271802820358374
+        },
+        "corner": {
+          "samples": 57,
+          "mean_speed_m_s": 14.912949252027262
+        },
+        "cruise_after": {
+          "samples": 58,
+          "mean_speed_m_s": 21.392352052272432
+        },
+        "park": {
+          "samples": 57,
+          "mean_speed_m_s": 0.6207650316829622
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Controlled flat-map proxy, not a real city/twisty route.",
+    "One ETK configuration; road compound constants remain hypotheses.",
+    "No physical-wheel feel or full AC calibration measured."
+  ]
+}

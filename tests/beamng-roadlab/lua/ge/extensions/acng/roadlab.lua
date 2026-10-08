@@ -3,7 +3,7 @@ local M={}
 local phase,elapsed,t,sim,sampling,control=0,0,0,0,0,0
 local sets={
   {name='stock',enabled=false},
-  {name='current',enabled=true},
+  {name='current',enabled=true,profile='sport'},
   {name='road_candidate',enabled=true,heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,
     nodeToCore=0.001,coreToNodes=0.001,nodeToSurface=0,friction=0.03,flashFriction=0,strain=0,heatAffectsPressure=true}},
 }
@@ -12,6 +12,10 @@ local stages={{name='idle',duration=10},{name='cruise',duration=40,speed=22,stee
   {name='cruise_after',duration=30,speed=22,steer=0},{name='park',duration=30}}
 local result={schema_version=1,test='FR001 controlled road-speed thermal proxy',completed=false,
   model='etkc',config='kc6_360_M',sets={},checks={},events={}}
+if rawget(_G,'ACNG_ROAD_ONLY') then
+  sets={{name='road_final',enabled=true,profile='road'}}
+  result.test='FR001b final Road preset, controlled road-speed proxy'
+end
 local index,stage,cur=0,0,nil
 local helper=[[
 function acngRoadSample()
@@ -73,6 +77,7 @@ local function onUpdate(dr,ds)
     local set=sets[index]
     if set.enabled then
       extensions.acng_core.setEnabled(true)
+      if set.profile then extensions.acng_core.setTireProfile(set.profile) end
       extensions.acng_core.setFeature('tire_wear',false)
       extensions.acng_core.setFeature('tire_temperature',true)
     end

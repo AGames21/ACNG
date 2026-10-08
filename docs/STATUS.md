@@ -9,6 +9,15 @@ Remaining: pits, blankets/start temperature, reliable track grip research; deepe
 
 # ACNG status
 
+Current checkpoint (2026-10-08): freeroam-first Road/Sport presets implemented;
+GUI002/FR002 passed 27 native app, vehicle/reset and puncture/broken-wheel checks.
+FR001 measured gentler thermal settings; FR001b final Road driving repeat completed:
+33.87 C peak surface / 0.29 psi peak pressure rise in the short moderate proxy.
+129 offline Python checks and Node suites passed. Road grip constants are a
+provisional usability preset, not measured AC/real-compound calibration. GitHub
+private repository creation is user-authorized but awaiting GitHub CLI login;
+see docs/PUBLISHING.md. Earlier dated status below is historical.
+
 Updated:2026-10-07 (America/Chicago). M1 independent/default-OFF mod foundation validated; M2 telemetry/oracle active. No physics tuning.
 
 Working: passive BeamNG UDP and AC existing shared memory, original analysis/plot/quality reports, isolated deployment/launch/backups, master lifecycle/reload/reset identity, Obsidian handoff, Universal Modder/REA/Ghidra toolchain smoke. All production physics writes remain0.

@@ -7,6 +7,13 @@ Add **ACNG** in UI Apps. The master starts OFF. First ON selects tire heat and w
 
 FFB applies to a bound force-feedback wheel, not keyboard/gamepad steering. Pressure currently follows the temperature feature; there is no independent pressure toggle. The original individual apps remain available but are unnecessary for operating the new control panel.
 
+Advanced > Tires now selects **Road** (default) or **Sport (previous)**. Road uses
+gentler heat/core coupling, a small cold-grip penalty and a lower full-grip window.
+Sport retains the previous setup. Changing the preset keeps current temperatures
+and tread; reset for a fresh comparison. The selection is saved. These are
+experimental presets, not automatic detection of a vehicle's real tire compound.
+See FR001-thermal-proxy.md for measured heat changes and calibration limits.
+
 ## Priorities
 1. Tune native tire heat/cooling/pressure against city driving, cruising and winding roads. Current thermal calibration is limited and pressure rise needs work.
 2. Expand stock-car coverage and verify reset/switch lifecycle, punctures, bent suspension and detached wheels.

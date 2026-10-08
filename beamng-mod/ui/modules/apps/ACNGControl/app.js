@@ -2,6 +2,7 @@
   'use strict';
   var FEATURES=['tire_temperature','tire_wear','ffb','abs','tc'];
   function command(action,status,key,value){
+    if(action==='profile' && (value==='road'||value==='sport'))return "extensions.acng_core.setTireProfile('"+value+"')";
     if(action==='master') return 'extensions.acng_core.setControlEnabled('+(!status.enabled)+')';
     if(action==='feature' && FEATURES.indexOf(key)>=0) return "extensions.acng_core.setFeature('"+key+"', "+(value===true)+')';
     if(action==='assist' && ['abs','tc'].indexOf(key)>=0){
@@ -45,6 +46,8 @@
         <div ng-if="p.advanced"><small>Choose effects here. They only run while the master is ON.</small>
           <nav class="tabs"><button aria-label="ACNG tires tab" ng-click="p.tab='tires'" ng-class="{on:p.tab==='tires'}">Tires</button><button aria-label="ACNG assists tab" ng-click="p.tab='assists'" ng-class="{on:p.tab==='assists'}">Assists</button><button aria-label="ACNG steering tab" ng-click="p.tab='steering'" ng-class="{on:p.tab==='steering'}">Wheel</button><button aria-label="ACNG diagnostics tab" ng-click="p.tab='diagnostics'" ng-class="{on:p.tab==='diagnostics'}">Debug</button></nav>
           <fieldset ng-if="p.tab==='tires'"><legend>TIRES</legend>
+            <div class="row"><label>Tire preset</label><select aria-label="ACNG tire preset" ng-model="p.profile" ng-change="p.send('profile',null,p.profile)" ng-disabled="p.busy"><option value="road">Road</option><option value="sport">Sport (previous)</option></select></div>
+            <small>Road uses gentler warm-up and cold grip. Presets are experimental; switching keeps current heat and wear.</small>
             <div class="row"><label for="acng-heat">Temperature &amp; grip</label><input id="acng-heat" aria-label="ACNG tire temperature" type="checkbox" ng-model="p.heat" ng-change="p.send('feature','tire_temperature',p.heat)" ng-disabled="p.busy"></div>
             <small>Cold / warm grip and heat-driven pressure. No separate pressure switch yet.</small>
             <div class="row"><label for="acng-wear">Tire wear</label><input id="acng-wear" aria-label="ACNG tire wear" type="checkbox" ng-model="p.wear" ng-change="p.send('feature','tire_wear',p.wear)" ng-disabled="p.busy"></div>
@@ -66,7 +69,7 @@
       </section>`,link:function(scope){
         var alive=true,latest=null,sentAt=0;var p=scope.p={advanced:false,tab:'tires',busy:false,view:view(null)};
         function render(s){
-          latest=s;p.view=view(s);if(!s)return;
+          latest=s;p.view=view(s);if(!s)return;p.profile=s.tire_profile||'road';
           var f=s.features||{},v=s.ffb_settings||{};p.heat=f.tire_temperature===true;p.wear=f.tire_wear===true;p.ffb=f.ffb===true;p.telemetry=s.telemetry_enabled===true;
           p.assists=[{key:'abs',label:'ABS',value:f.abs?String(s.assist_levels.abs):'factory'},{key:'tc',label:'Traction control',value:f.tc?String(s.assist_levels.tc):'factory'}];
           p.filter=typeof v.filter==='number'?String(Math.round(v.filter*100)):'stock';

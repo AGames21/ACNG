@@ -39,6 +39,18 @@ M.HOT_RANGE_C = 40
 M.GRIP_STEP = 0.002
 local GRIP_INTERVAL_S = 0.1
 
+-- Road is a gentler engineering preset, not a measured real-compound model.
+-- Sport preserves the previous T007 setup for comparisons and optional track use.
+local profile = 'sport'
+local PROFILES = {
+  road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,
+    heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.001,
+      coreToNodes=0.001,nodeToSurface=0,friction=0.03,flashFriction=0,strain=0,heatAffectsPressure=true}},
+  sport={low=75,high=105,cold=0.85,hot=0.85,coldRange=60,hotRange=40,
+    heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.005,
+      coreToNodes=0.005,nodeToSurface=0,friction=0.06,flashFriction=0,strain=0,heatAffectsPressure=true}}
+}
+
 -- Wear. Each tire's tread starts at 1 (new) and is worn down by the slip energy BeamNG
 -- reports per wheel every frame (wheels.wheels[cid].slipEnergy, the same slip work the
 -- tire sounds use), so sliding, spinning and locking wear a tire and rolling does not.
@@ -248,7 +260,7 @@ local function snapshot()
       grip=round(applied[wd.wheelID] or targetGrip(wd, c), 0.001),
       tread=parts.wear and round(tread[wd.wheelID], 0.001) or nil}
   end)
-  return {schema_version=1, mode=active and 'on' or 'off', heat=parts.heat, wear=parts.wear,
+  return {schema_version=1, mode=active and 'on' or 'off', heat=parts.heat, wear=parts.wear, profile=profile,
     window_low_c=parts.heat and M.WINDOW_LOW_C or nil, window_high_c=parts.heat and M.WINDOW_HIGH_C or nil,
     wear_rate=parts.wear and M.WEAR_RATE or nil, tires=tires}
 end
@@ -292,8 +304,21 @@ end
 
 -- Choose the parts that run (heat window, wear). Tread carries over; only a reset or a
 -- reload gives fresh tires. With neither part on, acng_core unloads the extension.
-local function configure(heat, wear)
+local function setProfile(name)
+  local p=PROFILES[name]
+  if not p then return false end
+  profile=name
+  M.HEAT={};for k,value in pairs(p.heat) do M.HEAT[k]=value end
+  M.WINDOW_LOW_C,M.WINDOW_HIGH_C=p.low,p.high
+  M.COLD_GRIP,M.HOT_GRIP=p.cold,p.hot
+  M.COLD_RANGE_C,M.HOT_RANGE_C=p.coldRange,p.hotRange
+  if active then applyAcng() end
+  return true
+end
+
+local function configure(heat, wear, name)
   parts = {heat=heat == true, wear=wear == true}
+  if name then setProfile(name) end
   if active then applyAcng() end
   log('I', 'ACNG', 'TIRES_PARTS heat=' .. tostring(parts.heat) .. ' wear=' .. tostring(parts.wear))
   send()
@@ -324,6 +349,7 @@ M.wearGrip = wearGrip
 M.wearHeatMult = wearHeatMult
 M.wearState = wearState
 M.configure = configure
+M.setProfile = setProfile
 M.setWearRate = setWearRate
 M.snapshot = snapshot
 M.getSnapshot = snapshot

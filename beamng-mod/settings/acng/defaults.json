@@ -2,6 +2,7 @@
   "schema_version": 1,
   "enabled": false,
   "developer_mode": false,
+  "tire_profile": "road",
   "features": {
     "tire_dynamics": false,
     "tire_temperature": false,

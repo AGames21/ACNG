@@ -23,3 +23,11 @@ User preference (2026-10-07): keep Astra Medium to conserve credits. Use Capsule
 Background-use constraint (2026-10-07): the user is playing Roblox and watching Chrome. User explicitly released the gameplay interruption constraint in this chat and requested continued work. Isolated BeamNG experiments are authorized again; do not interact with unrelated Roblox/Chrome apps. Preserve Claude's assists work; saved-lap archive work is separate.
 
 User direction (2026-10-07): FREEROAM FIRST. Single ACNG master/Advanced app is primary. Track/AI racing work is deferred; no automatic opponent spawning or driving. Read Obsidian ACNG/Freeroam Plan and Track Later. Prioritize road-appropriate thermal/pressure calibration, broader vehicle/damage validation and physical FFB. Car-mod capability was discussed only; do not start a car without a request. See docs/FREEROAM.md and GUI001 evidence.
+
+2026-10-08: Road/Sport presets and GUI002/FR002 compatibility passed; FR001/FR001b
+record short road-speed thermal effects, not AC or real-compound calibration.
+Stock ETK/Bolide/pickup reset/switch plus ETK puncture/wheel-break checked natively.
+User authorized a private GitHub repository and push; CLI login is required first.
+See docs/PUBLISHING.md and tools/publication_audit.py. No force-push or public
+visibility change authorized. Respect the parked road playtest handoff; do not
+take controls while the user drives. Physical FFB still requires a real wheel.

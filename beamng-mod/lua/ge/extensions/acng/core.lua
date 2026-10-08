@@ -18,7 +18,7 @@ local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, f
 -- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
 -- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
-local TIRES_CONFIGURE = "if extensions.isExtensionLoaded('acng_tires') then extensions.acng_tires.configure(%s,%s) end"
+local TIRES_CONFIGURE = "if extensions.isExtensionLoaded('acng_tires') then extensions.acng_tires.configure(%s,%s,%q) end"
 local TIRES_UNLOAD = "extensions.unload('acng_tires')"
 local tiresId
 local tiresParts
@@ -92,7 +92,7 @@ local function tiresWanted()
   return config and config.enabled and (feature('tire_temperature') or feature('tire_wear'))
 end
 local function tiresConfigure()
-  return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')))
+  return string.format(TIRES_CONFIGURE, tostring(feature('tire_temperature')), tostring(feature('tire_wear')), config.tire_profile or 'road')
 end
 local function assistsWanted()
   return config and config.enabled and (feature('abs') or feature('tc'))
@@ -177,7 +177,9 @@ local function onExtensionLoaded()
   end
   -- Runtime overrides are deliberately limited to known, passive settings.
   local saved = jsonReadFile('/settings/acng/runtime.json')
+  config.tire_profile='road'
   if saved and saved.schema_version == 1 then
+    if saved.tire_profile=='sport' then config.tire_profile='sport' end
     config.control_panel_initialized=saved.control_panel_initialized==true
     config.enabled = saved.enabled == true
     config.developer_mode = saved.developer_mode == true
@@ -211,6 +213,11 @@ local function setEnabled(value)
   return config.enabled
 end
 -- Only implemented features can be switched; reserved flags stay off.
+local function setTireProfile(name)
+  if not config or (name~='road' and name~='sport') then return false end
+  config.tire_profile=name;changed();pollTime=0.25
+  return true
+end
 local function setFeature(name, value)
   if not config or not IMPLEMENTED[name] then return false end
   config.features = config.features or {}
@@ -378,7 +385,7 @@ local function getStatus()
   for _, name in ipairs(FFB_NAMES) do ffb[name] = ffbSetting(name) end
   return {schema_version=1, enabled=config and config.enabled or false,
     control_panel_initialized=config and config.control_panel_initialized==true or false,
-    settings_error=settingsError, settings_pending=settingsDirty,
+    settings_error=settingsError, settings_pending=settingsDirty, tire_profile=config and config.tire_profile or 'road',
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
@@ -398,6 +405,7 @@ M.setControlEnabled = setControlEnabled
 M.saveSettings = saveSettings
 M.setTelemetryEnabled = setTelemetryEnabled
 M.setFeature = setFeature
+M.setTireProfile = setTireProfile
 M.setAssistLevel = setAssistLevel
 M.setFFBSetting = setFFBSetting
 M.setCarGain = setCarGain

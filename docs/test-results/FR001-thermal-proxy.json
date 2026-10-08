@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "test": "FR001 controlled road-speed thermal proxy",
+  "completed": true,
+  "checks": {
+    "final_master_off": true,
+    "final_no_physics_writes": true,
+    "startup_off": true
+  },
+  "summary": [
+    {
+      "name": "stock",
+      "samples": 279,
+      "tires": {
+        "FL": {
+          "peak_surface_c": 14.997827148438,
+          "peak_core_c": 14.997827148438,
+          "pressure_rise_psi": 0.2708942461640014,
+          "last_surface_c": 14.997827148438
+        },
+        "FR": {
+          "peak_surface_c": 14.997827148438,
+          "peak_core_c": 14.997827148438,
+          "pressure_rise_psi": 0.3025804607759994,
+          "last_surface_c": 14.997827148438
+        },
+        "RL": {
+          "peak_surface_c": 14.997857666016,
+          "peak_core_c": 14.997857666016,
+          "pressure_rise_psi": 0.18648227921600125,
+          "last_surface_c": 14.997857666016
+        },
+        "RR": {
+          "peak_surface_c": 14.997857666016,
+          "peak_core_c": 14.997857666016,
+          "pressure_rise_psi": 0.17798397390900078,
+          "last_surface_c": 14.997857666016
+        }
+      },
+      "stages": {
+        "idle": {
+          "samples": 19,
+          "mean_speed_m_s": 0.00015435209361011168
+        },
+        "cruise": {
+          "samples": 80,
+          "mean_speed_m_s": 20.055792755067095
+        },
+        "corner": {
+          "samples": 60,
+          "mean_speed_m_s": 14.941684035639984
+        },
+        "cruise_after": {
+          "samples": 60,
+          "mean_speed_m_s": 21.360447539092
+        },
+        "park": {
+          "samples": 60,
+          "mean_speed_m_s": 0.6491922014190173
+        }
+      }
+    },
+    {
+      "name": "current",
+      "samples": 279,
+      "tires": {
+        "FL": {
+          "peak_surface_c": 51.220300292969,
+          "peak_core_c": 19.332055664063,
+          "pressure_rise_psi": 0.6042952275189997,
+          "last_surface_c": 29.118981933594
+        },
+        "FR": {
+          "peak_surface_c": 50.120172119141,
+          "peak_core_c": 18.903985595703,
+          "pressure_rise_psi": 0.540397036472001,
+          "last_surface_c": 28.655694580078
+        },
+        "RL": {
+          "peak_surface_c": 48.666101074219,
+          "peak_core_c": 19.233148193359,
+          "pressure_rise_psi": 0.6366386444079986,
+          "last_surface_c": 20.683251953125
+        },
+        "RR": {
+          "peak_surface_c": 51.747979736328,
+          "peak_core_c": 18.655053710938,
+          "pressure_rise_psi": 0.5356198557840024,
+          "last_surface_c": 20.539605712891
+        }
+      },
+      "stages": {
+        "idle": {
+          "samples": 20,
+          "mean_speed_m_s": 0.0001204217601468236
+        },
+        "cruise": {
+          "samples": 79,
+          "mean_speed_m_s": 20.253062786077678
+        },
+        "corner": {
+          "samples": 60,
+          "mean_speed_m_s": 14.878341337743901
+        },
+        "cruise_after": {
+          "samples": 60,
+          "mean_speed_m_s": 21.43839464396025
+        },
+        "park": {
+          "samples": 60,
+          "mean_speed_m_s": 0.8068495026389698
+        }
+      }
+    },
+    {
+      "name": "road_candidate",
+      "samples": 279,
+      "tires": {
+        "FL": {
+          "peak_surface_c": 31.348443603516,
+          "peak_core_c": 15.476190185547,
+          "pressure_rise_psi": 0.2270248610649972,
+          "last_surface_c": 21.990258789063
+        },
+        "FR": {
+          "peak_surface_c": 30.579614257813,
+          "peak_core_c": 15.417016601563,
+          "pressure_rise_psi": 0.2699288386809968,
+          "last_surface_c": 21.633996582031
+        },
+        "RL": {
+          "peak_surface_c": 31.747369384766,
+          "peak_core_c": 15.569207763672,
+          "pressure_rise_psi": 0.16842054767100123,
+          "last_surface_c": 17.680749511719
+        },
+        "RR": {
+          "peak_surface_c": 33.226220703125,
+          "peak_core_c": 15.482720947266,
+          "pressure_rise_psi": 0.2452180330650009,
+          "last_surface_c": 17.383905029297
+        }
+      },
+      "stages": {
+        "idle": {
+          "samples": 20,
+          "mean_speed_m_s": 0.0001482376200767889
+        },
+        "cruise": {
+          "samples": 79,
+          "mean_speed_m_s": 20.119845136366582
+        },
+        "corner": {
+          "samples": 60,
+          "mean_speed_m_s": 14.919199752521349
+        },
+        "cruise_after": {
+          "samples": 60,
+          "mean_speed_m_s": 21.41989516392065
+        },
+        "park": {
+          "samples": 60,
+          "mean_speed_m_s": 0.7627798812049597
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Controlled flat-map proxy, not a real city/twisty route.",
+    "One ETK configuration; road compound constants remain hypotheses.",
+    "No physical-wheel feel or full AC calibration measured."
+  ]
+}

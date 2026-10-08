@@ -1,0 +1,253 @@
+{
+  "test": "GUI002 road preset and FR002 vehicle damage lifecycle",
+  "completed": true,
+  "checks": {
+    "bolide_reset_fresh_tread": true,
+    "bolide_road_heat_and_wear_attached": true,
+    "etkc_reset_fresh_tread": true,
+    "etkc_road_heat_and_wear_attached": true,
+    "master_off_does_not_repair_damage": true,
+    "master_off_unloads_all_effects_and_stream": true,
+    "master_on_keeps_custom_choices": true,
+    "native_broken_wheel_survives_acng": true,
+    "native_puncture_survives_acng": true,
+    "native_reload_preferences_master_off": true,
+    "native_reload_road_preset": true,
+    "native_reset_repairs_puncture": true,
+    "no_physics_modules_left_active": true,
+    "pickup_reset_fresh_tread": true,
+    "pickup_road_heat_and_wear_attached": true,
+    "preferences_saved": true,
+    "puncture_pressure_remains_low": true,
+    "real_abs_selector": true,
+    "real_advanced_wear_switch": true,
+    "real_factory_restore_selector": true,
+    "real_ffb_strength_slider": true,
+    "real_ffb_switch": true,
+    "real_master_click_native_heat_and_wear": true,
+    "real_road_preset_selector": true,
+    "real_sport_preset_selector": true,
+    "real_telemetry_switch": true,
+    "startup_off": true
+  },
+  "vehicles": {
+    "bolide": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 24.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 24.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 24,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 24,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        }
+      ]
+    },
+    "etkc": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 26.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 26.5,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 28.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 28.4,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        }
+      ]
+    },
+    "pickup": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 28.7,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          },
+          {
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        }
+      ]
+    }
+  },
+  "schema_version": 1,
+  "build": "BeamNG 0.39.4"
+}

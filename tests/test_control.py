@@ -19,6 +19,13 @@ class ControlContracts(unittest.TestCase):
         self.assertTrue(s['features']['tire_temperature']);self.assertTrue(s['features']['tire_wear'])
         self.assertFalse(s['features']['abs']);self.assertFalse(s['features']['tc']);self.assertFalse(s['features']['ffb'])
 
+    def test_tire_profile_default_validation_and_saved_selection(self):
+        self.assertEqual(self.core.getStatus()['tire_profile'], 'road')
+        self.assertFalse(self.core.setTireProfile('slick; injected()'))
+        self.assertTrue(self.core.setTireProfile('sport'))
+        self.core.saveSettings();self.core.onExtensionLoaded()
+        self.assertEqual(self.core.getStatus()['tire_profile'], 'sport')
+
     def test_off_stops_developer_stream_and_preserves_choices(self):
         self.core.setControlEnabled(True);self.core.setTelemetryEnabled(True);self.core.setControlEnabled(False)
         s=self.core.getStatus();self.assertFalse(s['enabled']);self.assertFalse(s['telemetry_enabled']);self.assertTrue(s['features']['tire_wear'])

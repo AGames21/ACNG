@@ -1,6 +1,6 @@
 -- Stationary control/UI test, no AI spawning or driving inputs.
 local M={};local real,sim,co=0,0,nil;local response
-local result={test='GUI001 freeroam control panel',completed=false,checks={}}
+local result={test='GUI002 road preset and FR002 vehicle damage lifecycle',completed=false,checks={},vehicles={}}
 local function save() jsonWriteFile('/acng-control-test.json',result,true) end
 local function check(k,x) result.checks[k]=x==true;save();if not x then error(k) end end
 local function waitFor(f,t) local start=real;while not f() do if real-start>(t or 12) then error('wait timeout') end;coroutine.yield() end end
@@ -16,7 +16,7 @@ local function change(label,value)
 end
 local function probe()
   local v=be:getPlayerVehicle(0)
-  if v then v:queueLuaCommand([[local s={tires=extensions.isExtensionLoaded('acng_tires'),ffb=extensions.isExtensionLoaded('acng_ffb'),assists=extensions.isExtensionLoaded('acng_assists'),telemetry=false};if extensions.isExtensionLoaded('acng_telemetry') then s.telemetry=extensions.acng_telemetry.getStatus().active end;if s.tires then s.state=extensions.acng_tires.getSnapshot() end;obj:queueGameEngineLua(string.format('extensions.acng_controllab.receive(%q)',jsonEncode(s)))]]) end
+  if v then v:queueLuaCommand([[local s={id=obj:getID(),tires=extensions.isExtensionLoaded('acng_tires'),ffb=extensions.isExtensionLoaded('acng_ffb'),assists=extensions.isExtensionLoaded('acng_assists'),telemetry=false,wheels={}};for _,wd in pairs(wheels.wheels or {}) do s.wheels[#s.wheels+1]={name=wd.name,deflated=wd.isTireDeflated==true or wd.isTireDeflated==1,broken=wd.isBroken==true or wd.isBroken==1} end;if extensions.isExtensionLoaded('acng_telemetry') then s.telemetry=extensions.acng_telemetry.getStatus().active end;if s.tires then s.state=extensions.acng_tires.getSnapshot() end;obj:queueGameEngineLua(string.format('extensions.acng_controllab.receive(%q)',jsonEncode(s)))]]) end
   return response
 end
 local function run()
@@ -37,6 +37,10 @@ local function run()
   click('ACNG tire wear');waitFor(function() return not status().features.tire_wear end)
   waitFor(function() local r=probe();return r and r.state and r.state.heat and not r.state.wear end)
   check('real_advanced_wear_switch',true)
+  change('ACNG tire preset','sport');waitFor(function() local r=probe();return r and r.state and r.state.profile=='sport' end)
+  check('real_sport_preset_selector',status().tire_profile=='sport')
+  change('ACNG tire preset','road');waitFor(function() local r=probe();return r and r.state and r.state.profile=='road' end)
+  check('real_road_preset_selector',status().tire_profile=='road')
   click('ACNG steering tab');delay(1)
   click('ACNG force feedback');waitFor(function() local r=probe();return status().features.ffb and r and r.ffb end)
   check('real_ffb_switch',true)
@@ -59,7 +63,43 @@ local function run()
   extensions.unload('acng_core');extensions.load('acng_core');setExtensionUnloadMode('acng_core','manual');delay(1)
   local s=status()
   check('native_reload_preferences_master_off',not s.enabled and not s.telemetry_enabled and s.features.tire_temperature and not s.features.tire_wear and s.features.ffb and s.ffb_settings.gain==1.5)
+  check('native_reload_road_preset',s.tire_profile=='road')
   extensions.acng_core.setFeature('ffb',false);extensions.acng_core.setFFBSetting('gain',1)
+  -- Stationary native compatibility: no traffic or automatic driving.
+  local function tireReady()
+    local v=be:getPlayerVehicle(0);local r=probe()
+    return v and r and r.id==v:getID() and r.tires and r.state and r.state.profile=='road' and r.state.heat and r.state.wear
+  end
+  extensions.acng_core.setFeature('tire_wear',true)
+  extensions.acng_core.setControlEnabled(true)
+  for _,model in ipairs({'etkc','bolide','pickup'}) do
+    response=nil
+    core_vehicles.replaceVehicle(model,model=='etkc' and {config='vehicles/etkc/kc6_360_M.pc'} or {})
+    delay(8);waitFor(tireReady,25)
+    result.vehicles[model]={state=response.state,wheels=response.wheels}
+    check(model..'_road_heat_and_wear_attached',#response.state.tires>=4)
+    be:getPlayerVehicle(0):queueLuaCommand('obj:requestReset(RESET_PHYSICS)');delay(2);waitFor(tireReady)
+    local fresh=true;for _,wheel in ipairs(response.state.tires) do fresh=fresh and wheel.tread==1 end
+    check(model..'_reset_fresh_tread',fresh)
+  end
+  core_vehicles.replaceVehicle('etkc',{config='vehicles/etkc/kc6_360_M.pc'});response=nil;delay(8);waitFor(tireReady)
+  local v=be:getPlayerVehicle(0)
+  v:queueLuaCommand([[for _,wd in pairs(wheels.wheels) do if wd.name=='FL' then beamstate.deflateTire(wd.cid) end end]])
+  waitFor(function() local r=probe();if not r then return false end;for _,w in ipairs(r.wheels) do if w.name=='FL' and w.deflated then return true end end;return false end)
+  check('native_puncture_survives_acng',true)
+  waitFor(function() local r=probe();if not r or not r.state then return false end;for _,w in ipairs(r.state.tires) do if w.name=='FL' then return type(w.psi)=='number' and w.psi<5 end end;return false end)
+  check('puncture_pressure_remains_low',true)
+  v:queueLuaCommand('obj:requestReset(RESET_PHYSICS)');delay(2)
+  waitFor(function() local r=probe();if not r then return false end;for _,w in ipairs(r.wheels) do if w.deflated or w.broken then return false end end;return r.state~=nil end)
+  check('native_reset_repairs_puncture',true)
+  v:queueLuaCommand("beamstate.breakBreakGroup('wheel_FL')")
+  waitFor(function() local r=probe();if not r then return false end;for _,w in ipairs(r.wheels) do if w.name=='FL' and w.broken then return true end end;return false end)
+  check('native_broken_wheel_survives_acng',true)
+  extensions.acng_core.setControlEnabled(false);delay(1)
+  waitFor(function() local r=probe();if not r or r.tires then return false end;for _,w in ipairs(r.wheels) do if w.name=='FL' and w.broken then return true end end;return false end)
+  check('master_off_does_not_repair_damage',true)
+  v:queueLuaCommand('obj:requestReset(RESET_PHYSICS)');delay(3)
+  check('no_physics_modules_left_active',status().physics_writes==0)
   extensions.acng_core.setFeature('tire_wear',true);extensions.acng_core.setControlEnabled(false);extensions.acng_core.saveSettings()
   click('Show advanced ACNG settings');delay(1)
   screenshot.takeScreenShot();delay(1)

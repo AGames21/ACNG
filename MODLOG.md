@@ -55,3 +55,11 @@ Added `acng_ffb` (vehicle), FFB settings in `acng_core` (gain, min_force, filter
 
 ## Native race prototype / solo default
 User reported AI collisions; automatic test stopped. Native BeamNG AI only; zero opponents by default. RW001 partial: seven native checks, completion/damage checks pending. 118 Python tests pass.
+# 2026-10-08 - Road tire preset and compatibility
+
+Added Road/Sport selection to the unified control app. Road has gentler heat and
+core coupling, 35-75 C window and minimum 98% cold grip; Sport preserves T007.
+Presets retain existing heat/tread and save with preferences; master stays OFF at
+startup. Road grip constants remain experimental. FR001 controlled thermal proxy,
+GUI002/FR002 native selectors, three vehicle/reset checks and ETK damage checks.
+GitHub publication audit added; CLI authentication remains user-required.

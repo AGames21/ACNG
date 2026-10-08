@@ -64,6 +64,27 @@ class TireContracts(unittest.TestCase):
         self.assertEqual(thermal[9:], [500, 600, True])
         self.assertEqual(list(self.mod.stockCurve(fr).values())[0], 300)
 
+    def test_road_preset_switch_retains_wear_and_restores_stock(self):
+        self.mod.onExtensionLoaded()
+        self.mod.configure(True, True, 'road')
+        self.assertEqual(self.mod.snapshot().profile, 'road')
+        self.assertEqual(self.mod.WINDOW_LOW_C, 35)
+        self.assertEqual(self.mod.WINDOW_HIGH_C, 75)
+        self.assertAlmostEqual(self.mod.gripAt(15), 0.98)
+        self.assertEqual(self.mod.gripAt(50), 1)
+        self.assertEqual(self.mod.HEAT.friction, 0.03)
+        self.g.wheels.wheels[0].slipEnergy = 1e6
+        self.mod.updateGFX(0.1)
+        worn=self.mod.wearState()[1].tread
+        self.assertTrue(self.mod.setProfile('sport'))
+        self.assertEqual(self.mod.wearState()[1].tread, worn)
+        self.assertEqual(self.mod.HEAT.friction, 0.06)
+        self.assertFalse(self.mod.setProfile('invalid'))
+        self.g.calls=self.lua.eval('{}')
+        self.mod.onExtensionUnloaded()
+        thermal={c[0]:c[2] for c in self.calls() if c[1]=='thermal'}
+        self.assertEqual(thermal[0], [0,0.4,20,0,0,0,0,0,0,1e18,1e19,False])
+
     def test_load_applies_acng_only_to_tires_and_unload_restores_stock(self):
         self.mod.onExtensionLoaded()
         loaded = self.calls()
@@ -327,12 +348,12 @@ class CoreTireFeature(unittest.TestCase):
     @staticmethod
     def load_cmd(vid, heat=True, wear=False):
         return (f"{vid}:extensions.load('acng_tires'); if extensions.isExtensionLoaded('acng_tires') "
-                f"then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()}) end")
+                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"road") end')
 
     @staticmethod
     def configure_cmd(vid, heat, wear):
         return (f"{vid}:if extensions.isExtensionLoaded('acng_tires') "
-                f"then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()}) end")
+                f'then extensions.acng_tires.configure({str(heat).lower()},{str(wear).lower()},"road") end')
 
     def load(self):
         mod = self.lua.execute(CORE.read_text())
