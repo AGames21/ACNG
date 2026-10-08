@@ -1,6 +1,8 @@
 """Summarise a T007 tire heat balance sweep (tests/beamng-tirecool) per HEAT set.
 
-Usage: python scripts/analyze_tirecool.py <acng-tirecool-test.json> [out.json]
+Also reads FR001c (tests/beamng-roadheat) output, whose sets name a core preset.
+
+Usage: python scripts/analyze_tirecool.py <acng-tirecool-test.json or acng-roadheat-test.json> [out.json]
 """
 import json
 import sys
@@ -32,7 +34,7 @@ def summarise(s):
     park = [x for x in samples if x['phase'] == 'idle' and x is not samples[0]]
     end = drive[-1]['w'][hot]
     out = {
-        'name': s['name'], 'heat': s['heat'],
+        'name': s['name'], 'heat': s.get('heat'), 'profile': drive[-1].get('profile'),
         'applied_friction': drive[-1].get('friction'),
         'hot_tire': hot,
         'cycles': per,

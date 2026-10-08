@@ -21,3 +21,7 @@ See FR001-thermal-proxy.md for measured heat changes and calibration limits.
 4. Consider roadside tire service and an optional small tire-status view. Research native brake thermals before adding another model.
 
 Race weekends, grids, track grip, sectors/session rules and race pits are deferred; existing timers/saved laps remain optional. AC comparative handling research is still needed.
+
+## Progress (2026-10-08)
+- Priority 1: FR001c shows Road settles under sustained limit driving (50 C corner peaks, +1.7 psi; Sport +8.5 psi). A real-road playtest is still wanted.
+- Priority 2: FR002b covers six more stock models through crash, puncture, lost wheel, master OFF/ON and reset (110/110). Bent toe/camber is not measured.

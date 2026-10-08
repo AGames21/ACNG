@@ -1,0 +1,382 @@
+{
+ "schema_version": 1,
+ "test": "FR002b stock vehicle damage coverage",
+ "completed": true,
+ "checks": {
+  "barstow.completed": true,
+  "barstow.core_attaches_tires": true,
+  "barstow.crash_native_damage": true,
+  "barstow.crash_tires_still_running": true,
+  "barstow.damaged_tires_still_running": true,
+  "barstow.drive_moved": true,
+  "barstow.drive_tires_finite": true,
+  "barstow.native_puncture_or_break_present": true,
+  "barstow.obstacle_spawned": true,
+  "barstow.off_keeps_damage": true,
+  "barstow.off_unloads": true,
+  "barstow.on_reattaches_to_wreck": true,
+  "barstow.reset_fresh_tread": true,
+  "barstow.reset_repairs_native": true,
+  "barstow.spawn_all_tires_tracked": true,
+  "barstow.spawn_finite": true,
+  "barstow.spawn_tires_road": true,
+  "barstow.wreck_drive_tires_finite": true,
+  "covet.completed": true,
+  "covet.core_attaches_tires": true,
+  "covet.crash_native_damage": true,
+  "covet.crash_tires_still_running": true,
+  "covet.damaged_tires_still_running": true,
+  "covet.drive_moved": true,
+  "covet.drive_tires_finite": true,
+  "covet.native_puncture_or_break_present": true,
+  "covet.obstacle_spawned": true,
+  "covet.off_keeps_damage": true,
+  "covet.off_unloads": true,
+  "covet.on_reattaches_to_wreck": true,
+  "covet.reset_fresh_tread": true,
+  "covet.reset_repairs_native": true,
+  "covet.spawn_all_tires_tracked": true,
+  "covet.spawn_finite": true,
+  "covet.spawn_tires_road": true,
+  "covet.wreck_drive_tires_finite": true,
+  "final_off": true,
+  "pigeon.completed": true,
+  "pigeon.core_attaches_tires": true,
+  "pigeon.crash_native_damage": true,
+  "pigeon.crash_tires_still_running": true,
+  "pigeon.damaged_tires_still_running": true,
+  "pigeon.drive_moved": true,
+  "pigeon.drive_tires_finite": true,
+  "pigeon.native_puncture_or_break_present": true,
+  "pigeon.obstacle_spawned": true,
+  "pigeon.off_keeps_damage": true,
+  "pigeon.off_unloads": true,
+  "pigeon.on_reattaches_to_wreck": true,
+  "pigeon.reset_fresh_tread": true,
+  "pigeon.reset_repairs_native": true,
+  "pigeon.spawn_all_tires_tracked": true,
+  "pigeon.spawn_finite": true,
+  "pigeon.spawn_tires_road": true,
+  "pigeon.wreck_drive_tires_finite": true,
+  "startup_off": true,
+  "sunburst2.completed": true,
+  "sunburst2.core_attaches_tires": true,
+  "sunburst2.crash_native_damage": true,
+  "sunburst2.crash_tires_still_running": true,
+  "sunburst2.damaged_tires_still_running": true,
+  "sunburst2.drive_moved": true,
+  "sunburst2.drive_tires_finite": true,
+  "sunburst2.native_puncture_or_break_present": true,
+  "sunburst2.obstacle_spawned": true,
+  "sunburst2.off_keeps_damage": true,
+  "sunburst2.off_unloads": true,
+  "sunburst2.on_reattaches_to_wreck": true,
+  "sunburst2.reset_fresh_tread": true,
+  "sunburst2.reset_repairs_native": true,
+  "sunburst2.spawn_all_tires_tracked": true,
+  "sunburst2.spawn_finite": true,
+  "sunburst2.spawn_tires_road": true,
+  "sunburst2.wreck_drive_tires_finite": true,
+  "us_semi.completed": true,
+  "us_semi.core_attaches_tires": true,
+  "us_semi.crash_native_damage": true,
+  "us_semi.crash_tires_still_running": true,
+  "us_semi.damaged_tires_still_running": true,
+  "us_semi.drive_moved": true,
+  "us_semi.drive_tires_finite": true,
+  "us_semi.native_puncture_or_break_present": true,
+  "us_semi.obstacle_spawned": true,
+  "us_semi.off_keeps_damage": true,
+  "us_semi.off_unloads": true,
+  "us_semi.on_reattaches_to_wreck": true,
+  "us_semi.reset_fresh_tread": true,
+  "us_semi.reset_repairs_native": true,
+  "us_semi.spawn_all_tires_tracked": true,
+  "us_semi.spawn_finite": true,
+  "us_semi.spawn_tires_road": true,
+  "us_semi.wreck_drive_tires_finite": true,
+  "van.completed": true,
+  "van.core_attaches_tires": true,
+  "van.crash_native_damage": true,
+  "van.crash_tires_still_running": true,
+  "van.damaged_tires_still_running": true,
+  "van.drive_moved": true,
+  "van.drive_tires_finite": true,
+  "van.native_puncture_or_break_present": true,
+  "van.obstacle_spawned": true,
+  "van.off_keeps_damage": true,
+  "van.off_unloads": true,
+  "van.on_reattaches_to_wreck": true,
+  "van.reset_fresh_tread": true,
+  "van.reset_repairs_native": true,
+  "van.spawn_all_tires_tracked": true,
+  "van.spawn_finite": true,
+  "van.spawn_tires_road": true,
+  "van.wreck_drive_tires_finite": true
+ },
+ "vehicles": [
+  {
+   "model": "covet",
+   "native_tires": 4,
+   "acng_tires": 4,
+   "drive_peak_m_s": 21.24,
+   "crash_peak_m_s": 16.23,
+   "wreck_peak_m_s": 0.31,
+   "damage_native": {
+    "pre_crash": 0,
+    "post_crash": 15902.4,
+    "damaged": 16921.0,
+    "master_off": 16929.5,
+    "reset": 0
+   },
+   "wheels_damaged": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "FL": 19.9,
+    "FR": 27.7,
+    "RL": 15.3,
+    "RR": 15.4
+   },
+   "tread_min_wrecked": 0.995,
+   "grip_min_wrecked": 0.98
+  },
+  {
+   "model": "barstow",
+   "native_tires": 4,
+   "acng_tires": 4,
+   "drive_peak_m_s": 24.14,
+   "crash_peak_m_s": 18.13,
+   "wreck_peak_m_s": 2.38,
+   "damage_native": {
+    "pre_crash": 0,
+    "post_crash": 17410.1,
+    "damaged": 18411.0,
+    "master_off": 18411.1,
+    "reset": 0
+   },
+   "wheels_damaged": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "FL": 18,
+    "FR": 19,
+    "RL": 39,
+    "RR": 43
+   },
+   "tread_min_wrecked": 0.988,
+   "grip_min_wrecked": 0.982
+  },
+  {
+   "model": "sunburst2",
+   "native_tires": 4,
+   "acng_tires": 4,
+   "drive_peak_m_s": 35.7,
+   "crash_peak_m_s": 23.43,
+   "wreck_peak_m_s": 3.68,
+   "damage_native": {
+    "pre_crash": 0,
+    "post_crash": 42700.5,
+    "damaged": 43700.5,
+    "master_off": 43700.5,
+    "reset": 0
+   },
+   "wheels_damaged": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "FL": 31.5,
+    "FR": 29.7,
+    "RL": 31.8,
+    "RR": 26.6
+   },
+   "tread_min_wrecked": 0.993,
+   "grip_min_wrecked": 0.989
+  },
+  {
+   "model": "pigeon",
+   "native_tires": 3,
+   "acng_tires": 3,
+   "drive_peak_m_s": 14.85,
+   "crash_peak_m_s": 13.19,
+   "wreck_peak_m_s": 1.05,
+   "damage_native": {
+    "pre_crash": 0,
+    "post_crash": 9483.0,
+    "damaged": 10483.3,
+    "master_off": 10483.3,
+    "reset": 0
+   },
+   "wheels_damaged": {
+    "broken": [
+     "F"
+    ],
+    "deflated": [
+     "F"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "F"
+    ],
+    "deflated": [
+     "F"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "F": 15.1,
+    "RL": 18.3,
+    "RR": 16.5
+   },
+   "tread_min_wrecked": 0.999,
+   "grip_min_wrecked": 0.98
+  },
+  {
+   "model": "van",
+   "native_tires": 4,
+   "acng_tires": 4,
+   "drive_peak_m_s": 20.83,
+   "crash_peak_m_s": 16.4,
+   "wreck_peak_m_s": 6.54,
+   "damage_native": {
+    "pre_crash": 0,
+    "post_crash": 17509.8,
+    "damaged": 18509.8,
+    "master_off": 18509.8,
+    "reset": 0
+   },
+   "wheels_damaged": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "FL": 15.8,
+    "FR": 16.3,
+    "RL": 23.2,
+    "RR": 27.2
+   },
+   "tread_min_wrecked": 0.98,
+   "grip_min_wrecked": 0.98
+  },
+  {
+   "model": "us_semi",
+   "native_tires": 10,
+   "acng_tires": 10,
+   "drive_peak_m_s": 9.66,
+   "crash_peak_m_s": 10.14,
+   "wreck_peak_m_s": 1.82,
+   "damage_native": {
+    "pre_crash": 0.8,
+    "post_crash": 3219.6,
+    "damaged": 4219.6,
+    "master_off": 4288.3,
+    "reset": 0.7
+   },
+   "wheels_damaged": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_master_off": {
+    "broken": [
+     "FL"
+    ],
+    "deflated": [
+     "FL"
+    ]
+   },
+   "wheels_after_reset": {
+    "broken": [],
+    "deflated": []
+   },
+   "temps_post_crash_c": {
+    "FL": 15.1,
+    "FR": 30.4,
+    "R1L": 21.6,
+    "R1LL": 21.2,
+    "R1R": 22.6,
+    "R1RR": 20.7,
+    "R2L": 20.3,
+    "R2LL": 21.2,
+    "R2R": 23.1,
+    "R2RR": 22.6
+   },
+   "tread_min_wrecked": 0.994,
+   "grip_min_wrecked": 0.98
+  }
+ ]
+}

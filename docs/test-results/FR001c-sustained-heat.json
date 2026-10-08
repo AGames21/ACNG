@@ -1,0 +1,612 @@
+{
+ "schema_version": 1,
+ "test": "FR001c sustained tire heat and pressure, OFF/Road/Sport",
+ "cycle": {
+  "brake_to_m_s": 12,
+  "corner_s": 20,
+  "corner_speed_m_s": 10,
+  "corner_steer": 0.5,
+  "cycles": 16,
+  "park_s": 60,
+  "straight_s": 15,
+  "straight_speed_m_s": 38
+ },
+ "checks": {
+  "core_reports_tires_off": true,
+  "default_master_off": true,
+  "default_profile_road": true,
+  "default_tires_off": true
+ },
+ "completed": true,
+ "summary": [
+  {
+   "name": "OFF",
+   "heat": null,
+   "profile": null,
+   "applied_friction": null,
+   "hot_tire": "RL",
+   "cycles": [
+    {
+     "cycle": 1,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 2,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.4
+    },
+    {
+     "cycle": 3,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.9
+    },
+    {
+     "cycle": 4,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.5
+    },
+    {
+     "cycle": 5,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 6,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.4
+    },
+    {
+     "cycle": 7,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.9
+    },
+    {
+     "cycle": 8,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 29.5
+    },
+    {
+     "cycle": 9,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 10,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.5
+    },
+    {
+     "cycle": 11,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 12,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 30.7
+    },
+    {
+     "cycle": 13,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.5
+    },
+    {
+     "cycle": 14,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.4
+    },
+    {
+     "cycle": 15,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0,
+     "straight_start_c": 15.0,
+     "straight_end_c": 15.0,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 16,
+     "corner_peak_c": 15.0,
+     "core_end_c": 15.0
+    }
+   ],
+   "peak_c": 15.0,
+   "last_two_cycles_mean_hot_c": 15.0,
+   "last_two_cycles_mean_all_c": 15.0,
+   "peak_climb_last_cycle_k": 0.0,
+   "straight_drop_mean_k": 0.0,
+   "core_end_c": 15.0,
+   "psi_rise_hot": 0.2,
+   "park_start_c": 15.0,
+   "park_end_c": 15.0,
+   "park_core_end_c": 15.0,
+   "core_profile": "road",
+   "core_physics_writes": 0,
+   "sample_count": 649,
+   "per_wheel": {
+    "FL": {
+     "peak_surface_c": 15.0,
+     "max_psi_rise": 0.36,
+     "end_core_c": 15.0,
+     "park_end_surface_c": 15.0,
+     "park_end_core_c": 15.0
+    },
+    "FR": {
+     "peak_surface_c": 15.0,
+     "max_psi_rise": 0.15,
+     "end_core_c": 15.0,
+     "park_end_surface_c": 15.0,
+     "park_end_core_c": 15.0
+    },
+    "RL": {
+     "peak_surface_c": 15.0,
+     "max_psi_rise": 0.27,
+     "end_core_c": 15.0,
+     "park_end_surface_c": 15.0,
+     "park_end_core_c": 15.0
+    },
+    "RR": {
+     "peak_surface_c": 15.0,
+     "max_psi_rise": 0.13,
+     "end_core_c": 15.0,
+     "park_end_surface_c": 15.0,
+     "park_end_core_c": 15.0
+    }
+   }
+  },
+  {
+   "name": "road",
+   "heat": null,
+   "profile": "road",
+   "applied_friction": 0.03,
+   "hot_tire": "FL",
+   "cycles": [
+    {
+     "cycle": 1,
+     "corner_peak_c": 43.3,
+     "core_end_c": 15.6,
+     "straight_start_c": 44.5,
+     "straight_end_c": 24.3,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 2,
+     "corner_peak_c": 50.0,
+     "core_end_c": 16.4,
+     "straight_start_c": 50.8,
+     "straight_end_c": 25.7,
+     "straight_mean_speed_m_s": 31.2
+    },
+    {
+     "cycle": 3,
+     "corner_peak_c": 50.0,
+     "core_end_c": 17.3,
+     "straight_start_c": 51.7,
+     "straight_end_c": 26.1,
+     "straight_mean_speed_m_s": 30.6
+    },
+    {
+     "cycle": 4,
+     "corner_peak_c": 49.8,
+     "core_end_c": 18.1,
+     "straight_start_c": 50.4,
+     "straight_end_c": 26.5,
+     "straight_mean_speed_m_s": 29.6
+    },
+    {
+     "cycle": 5,
+     "corner_peak_c": 50.1,
+     "core_end_c": 18.9,
+     "straight_start_c": 50.5,
+     "straight_end_c": 25.7,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 6,
+     "corner_peak_c": 50.0,
+     "core_end_c": 19.7,
+     "straight_start_c": 50.9,
+     "straight_end_c": 25.9,
+     "straight_mean_speed_m_s": 30.5
+    },
+    {
+     "cycle": 7,
+     "corner_peak_c": 49.9,
+     "core_end_c": 20.4,
+     "straight_start_c": 51.2,
+     "straight_end_c": 26.1,
+     "straight_mean_speed_m_s": 30.2
+    },
+    {
+     "cycle": 8,
+     "corner_peak_c": 49.9,
+     "core_end_c": 21.1,
+     "straight_start_c": 51.3,
+     "straight_end_c": 26.2,
+     "straight_mean_speed_m_s": 30.4
+    },
+    {
+     "cycle": 9,
+     "corner_peak_c": 50.3,
+     "core_end_c": 21.8,
+     "straight_start_c": 50.4,
+     "straight_end_c": 25.6,
+     "straight_mean_speed_m_s": 31.3
+    },
+    {
+     "cycle": 10,
+     "corner_peak_c": 50.1,
+     "core_end_c": 22.5,
+     "straight_start_c": 50.6,
+     "straight_end_c": 25.8,
+     "straight_mean_speed_m_s": 30.8
+    },
+    {
+     "cycle": 11,
+     "corner_peak_c": 50.0,
+     "core_end_c": 23.1,
+     "straight_start_c": 51.1,
+     "straight_end_c": 26.0,
+     "straight_mean_speed_m_s": 30.5
+    },
+    {
+     "cycle": 12,
+     "corner_peak_c": 49.8,
+     "core_end_c": 23.7,
+     "straight_start_c": 51.5,
+     "straight_end_c": 26.2,
+     "straight_mean_speed_m_s": 30.4
+    },
+    {
+     "cycle": 13,
+     "corner_peak_c": 50.4,
+     "core_end_c": 24.3,
+     "straight_start_c": 50.4,
+     "straight_end_c": 25.4,
+     "straight_mean_speed_m_s": 32.1
+    },
+    {
+     "cycle": 14,
+     "corner_peak_c": 50.1,
+     "core_end_c": 24.9,
+     "straight_start_c": 50.9,
+     "straight_end_c": 25.7,
+     "straight_mean_speed_m_s": 31.5
+    },
+    {
+     "cycle": 15,
+     "corner_peak_c": 50.0,
+     "core_end_c": 25.4,
+     "straight_start_c": 51.3,
+     "straight_end_c": 26.0,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 16,
+     "corner_peak_c": 49.8,
+     "core_end_c": 25.7
+    }
+   ],
+   "peak_c": 51.7,
+   "last_two_cycles_mean_hot_c": 40.7,
+   "last_two_cycles_mean_all_c": 29.1,
+   "peak_climb_last_cycle_k": -0.2,
+   "straight_drop_mean_k": 25.0,
+   "core_end_c": 25.7,
+   "psi_rise_hot": 1.7,
+   "park_start_c": 49.8,
+   "park_end_c": 21.9,
+   "park_core_end_c": 26.3,
+   "core_profile": "road",
+   "core_physics_writes": 1,
+   "sample_count": 650,
+   "per_wheel": {
+    "FL": {
+     "peak_surface_c": 51.7,
+     "max_psi_rise": 1.71,
+     "end_core_c": 25.7,
+     "park_end_surface_c": 22.3,
+     "park_end_core_c": 26.3
+    },
+    "FR": {
+     "peak_surface_c": 26.2,
+     "max_psi_rise": 0.62,
+     "end_core_c": 18.9,
+     "park_end_surface_c": 18.1,
+     "park_end_core_c": 19.1
+    },
+    "RL": {
+     "peak_surface_c": 40.5,
+     "max_psi_rise": 0.98,
+     "end_core_c": 21.2,
+     "park_end_surface_c": 18.2,
+     "park_end_core_c": 21.3
+    },
+    "RR": {
+     "peak_surface_c": 38.9,
+     "max_psi_rise": 0.57,
+     "end_core_c": 19.1,
+     "park_end_surface_c": 17.0,
+     "park_end_core_c": 19.2
+    }
+   }
+  },
+  {
+   "name": "sport",
+   "heat": null,
+   "profile": "sport",
+   "applied_friction": 0.06,
+   "hot_tire": "FL",
+   "cycles": [
+    {
+     "cycle": 1,
+     "corner_peak_c": 72.4,
+     "core_end_c": 20.3,
+     "straight_start_c": 74.8,
+     "straight_end_c": 32.8,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 2,
+     "corner_peak_c": 87.0,
+     "core_end_c": 27.9,
+     "straight_start_c": 88.7,
+     "straight_end_c": 36.3,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 3,
+     "corner_peak_c": 89.6,
+     "core_end_c": 34.9,
+     "straight_start_c": 90.8,
+     "straight_end_c": 37.4,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 4,
+     "corner_peak_c": 101.4,
+     "core_end_c": 41.9,
+     "straight_start_c": 100.6,
+     "straight_end_c": 39.3,
+     "straight_mean_speed_m_s": 32.6
+    },
+    {
+     "cycle": 5,
+     "corner_peak_c": 102.2,
+     "core_end_c": 48.0,
+     "straight_start_c": 102.9,
+     "straight_end_c": 40.4,
+     "straight_mean_speed_m_s": 32.0
+    },
+    {
+     "cycle": 6,
+     "corner_peak_c": 102.4,
+     "core_end_c": 53.2,
+     "straight_start_c": 104.6,
+     "straight_end_c": 41.4,
+     "straight_mean_speed_m_s": 31.5
+    },
+    {
+     "cycle": 7,
+     "corner_peak_c": 103.5,
+     "core_end_c": 57.7,
+     "straight_start_c": 104.3,
+     "straight_end_c": 42.8,
+     "straight_mean_speed_m_s": 31.0
+    },
+    {
+     "cycle": 8,
+     "corner_peak_c": 104.9,
+     "core_end_c": 61.6,
+     "straight_start_c": 104.8,
+     "straight_end_c": 41.3,
+     "straight_mean_speed_m_s": 32.2
+    },
+    {
+     "cycle": 9,
+     "corner_peak_c": 104.6,
+     "core_end_c": 64.8,
+     "straight_start_c": 106.1,
+     "straight_end_c": 42.2,
+     "straight_mean_speed_m_s": 31.6
+    },
+    {
+     "cycle": 10,
+     "corner_peak_c": 103.1,
+     "core_end_c": 67.2,
+     "straight_start_c": 105.0,
+     "straight_end_c": 42.7,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 11,
+     "corner_peak_c": 104.8,
+     "core_end_c": 69.4,
+     "straight_start_c": 104.1,
+     "straight_end_c": 41.4,
+     "straight_mean_speed_m_s": 32.4
+    },
+    {
+     "cycle": 12,
+     "corner_peak_c": 103.7,
+     "core_end_c": 71.1,
+     "straight_start_c": 104.8,
+     "straight_end_c": 42.0,
+     "straight_mean_speed_m_s": 31.8
+    },
+    {
+     "cycle": 13,
+     "corner_peak_c": 103.6,
+     "core_end_c": 72.5,
+     "straight_start_c": 105.4,
+     "straight_end_c": 42.9,
+     "straight_mean_speed_m_s": 31.1
+    },
+    {
+     "cycle": 14,
+     "corner_peak_c": 104.9,
+     "core_end_c": 73.8,
+     "straight_start_c": 104.0,
+     "straight_end_c": 41.6,
+     "straight_mean_speed_m_s": 32.4
+    },
+    {
+     "cycle": 15,
+     "corner_peak_c": 104.8,
+     "core_end_c": 74.9,
+     "straight_start_c": 105.9,
+     "straight_end_c": 42.5,
+     "straight_mean_speed_m_s": 31.8
+    },
+    {
+     "cycle": 16,
+     "corner_peak_c": 104.2,
+     "core_end_c": 76.4
+    }
+   ],
+   "peak_c": 106.1,
+   "last_two_cycles_mean_hot_c": 84.5,
+   "last_two_cycles_mean_all_c": 56.1,
+   "peak_climb_last_cycle_k": -0.6,
+   "straight_drop_mean_k": 61.3,
+   "core_end_c": 76.4,
+   "psi_rise_hot": 8.5,
+   "park_start_c": 104.2,
+   "park_end_c": 34.6,
+   "park_core_end_c": 72.5,
+   "core_profile": "sport",
+   "core_physics_writes": 1,
+   "sample_count": 653,
+   "per_wheel": {
+    "FL": {
+     "peak_surface_c": 106.1,
+     "max_psi_rise": 8.45,
+     "end_core_c": 76.4,
+     "park_end_surface_c": 35.9,
+     "park_end_core_c": 73.1
+    },
+    "FR": {
+     "peak_surface_c": 66.9,
+     "max_psi_rise": 4.11,
+     "end_core_c": 46.1,
+     "park_end_surface_c": 25.0,
+     "park_end_core_c": 43.9
+    },
+    "RL": {
+     "peak_surface_c": 62.9,
+     "max_psi_rise": 4.52,
+     "end_core_c": 49.2,
+     "park_end_surface_c": 25.7,
+     "park_end_core_c": 46.6
+    },
+    "RR": {
+     "peak_surface_c": 60.9,
+     "max_psi_rise": 2.54,
+     "end_core_c": 34.5,
+     "park_end_surface_c": 21.0,
+     "park_end_core_c": 32.9
+    }
+   }
+  }
+ ],
+ "events": [
+  {
+   "name": "enabled",
+   "sim_time_s": 8.0425003920682
+  },
+  {
+   "name": "OFF_select",
+   "sim_time_s": 10.043000503909
+  },
+  {
+   "name": "OFF_reset",
+   "sim_time_s": 13.046500671189
+  },
+  {
+   "name": "OFF_drive",
+   "sim_time_s": 17.049500911031
+  },
+  {
+   "name": "OFF_park",
+   "sim_time_s": 596.89203217532
+  },
+  {
+   "name": "road_select",
+   "sim_time_s": 659.89703633543
+  },
+  {
+   "name": "road_reset",
+   "sim_time_s": 662.9005365218
+  },
+  {
+   "name": "road_drive",
+   "sim_time_s": 666.90403678035
+  },
+  {
+   "name": "road_park",
+   "sim_time_s": 1246.9035660038
+  },
+  {
+   "name": "sport_select",
+   "sim_time_s": 1309.9120695535
+  },
+  {
+   "name": "sport_reset",
+   "sim_time_s": 1312.9125697245
+  },
+  {
+   "name": "sport_drive",
+   "sim_time_s": 1316.9145699469
+  },
+  {
+   "name": "sport_park",
+   "sim_time_s": 1897.9136001053
+  },
+  {
+   "name": "complete",
+   "sim_time_s": 1962.9246039428
+  }
+ ]
+}

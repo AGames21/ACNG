@@ -69,3 +69,6 @@ Added guarded session-local service box, timed native refueling and intact-tire 
 
 ## 2026-10-08 - P001 pit service live (Claude)
 P001 (Codex) and P001a stopped at the first vehicle probe: `code..';local r=...'` with an empty command starts the chunk with `;`, a LuaJIT syntax error, so the probe never replied. Joined with a newline; added stage tracking and a click log to the harness. P001b 13/13 on a fresh isolated profile. No production code changed.
+
+## 2026-10-08 - FR001c sustained heat and FR002b stock damage (Claude)
+New isolated harnesses `tests/beamng-roadheat` (RoadHeat) and `tests/beamng-stocklab` (StockLab), registered in scripts/launch-lab.ps1. `scripts/analyze_tirecool.py` now also reads RoadHeat output. FR001c: Road +1.7 psi and flat 50 C corner peaks over 16 limit cycles; Sport +8.5 psi; native-only +0.4 psi. FR002b: 110/110 across six stock models including a 3-wheeler and a 10-tire semi. No production code changed.

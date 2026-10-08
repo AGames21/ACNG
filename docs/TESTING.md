@@ -33,3 +33,5 @@ AC clean route candidate: `ac-offline-smoke.py --mode keyboard --start grid --tr
 These are planned, not completed. Existing GUI001 validates native DOM command/state and settings lifecycle, not driving feel or new tire calibration.
 
 P001 prepared: `-Experiment PitLab` in fresh `ACNG-pit-001/current`, normal game closed. Tests actual Advanced Pits controls, stationary box, native fuel refill and ACNG tread refresh, actual puncture rejection/preservation and master OFF unload. Raw result `/acng-pit-test.json` in isolated user profile. This harness has not yet run; 140 offline Python/Lua contracts and six existing Node suites pass. Never distribute test harness or extracted AC meshes.
+
+FR001c done (2026-10-08): `-Experiment RoadHeat`, 16 T007 cycles each for native-only, Road and Sport through the real core preset switch; Road +1.7 psi, Sport +8.5 psi. FR002b done: `-Experiment StockLab`, six stock models crash, puncture, lost wheel, master OFF/ON and reset, 110/110. Real roads, toe/camber after a crash and the physical-wheel FR003 remain open.
