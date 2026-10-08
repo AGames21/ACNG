@@ -33,3 +33,6 @@ AC capture opens existing shared-memory pages read-only. `scripts/ac-offline-smo
 ## Persistent knowledge
 
 Obsidian's existing registered/open vault contains `ACNG/ACNG Dashboard.md` (original Home renamed during setup), Current Status, Roadmap, Architecture, Decisions, Problems, focused research, vehicle notes, benchmark interpretations and dated sessions. It is authoritative for engineering reasoning/status/knowledge. Repository docs mirror critical guidance; source/config/tests/raw data/build artifacts remain in the repository/local ignored storage. Read both memory and actual Git/runtime state before resuming. Preserve and back up existing notes before changes; never auto-overwrite user additions or unrelated vault content.
+
+## Freeroam control panel
+ACNGControl is the primary settings UI. core.setControlEnabled manages initial heat/wear selection and full panel OFF including passive streaming; original baseline APIs retain independent telemetry control. Choices are separate from effective master state. Preferences debounce at 0.5 seconds (5 seconds on failure), back up the previous JSON and use native atomic writes. Persisted master/capture stay OFF. Steering remains optional; stock suspension/traffic/AI are authoritative. Track prototype is excluded from the freeroam release.

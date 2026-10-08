@@ -1,6 +1,8 @@
 -- ACNG control plane. Physics features stay off unless the master and the feature are ON.
 local M = {}
 local config
+local settingsDirty, settingsTime, settingsError = false, 0, nil
+local function changed() settingsDirty,settingsTime=true,0 end
 local attachedId
 local attachedCaptureId
 local captureSerial = 0
@@ -148,6 +150,25 @@ local function stopAll()
   stopAssists()
   stopFFB()
 end
+local function saveSettings()
+  if not config or type(jsonWriteFile)~='function' or not FS then return false end
+  local ok,err=pcall(function()
+    FS:directoryCreate('/settings/acng/')
+    local previous=jsonReadFile('/settings/acng/runtime.json')
+    if type(previous)=='table' then assert(jsonWriteFile('/settings/acng/runtime.previous.json',previous,true,nil,true)==true) end
+    local saved=deepcopy(config)
+    -- Remember choices, never start a fresh game with effects/logging active.
+    saved.enabled=false;saved.telemetry.enabled=false
+    assert(jsonWriteFile('/settings/acng/runtime.json',saved,true,nil,true)==true)
+    local check=jsonReadFile('/settings/acng/runtime.json')
+    assert(type(check)=='table' and check.schema_version==1 and check.enabled==false)
+  end)
+  if ok then settingsError=nil;settingsDirty=false else
+    if not settingsError then log('W','ACNG','Preference save failed: '..tostring(err)) end
+    settingsError='Preferences could not be saved'
+  end
+  return ok
+end
 local function onExtensionLoaded()
   config = defaults()
   if not config then
@@ -157,6 +178,7 @@ local function onExtensionLoaded()
   -- Runtime overrides are deliberately limited to known, passive settings.
   local saved = jsonReadFile('/settings/acng/runtime.json')
   if saved and saved.schema_version == 1 then
+    config.control_panel_initialized=saved.control_panel_initialized==true
     config.enabled = saved.enabled == true
     config.developer_mode = saved.developer_mode == true
     if saved.telemetry then config.telemetry.enabled = saved.telemetry.enabled == true end
@@ -185,6 +207,7 @@ local function setEnabled(value)
   if not config.enabled then stopWeekend() end
   if not config.enabled then stopPerf(); stopTires(); stopAssists(); stopFFB() else pollTime = 0.25 end
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
+  changed()
   return config.enabled
 end
 -- Only implemented features can be switched; reserved flags stay off.
@@ -192,6 +215,8 @@ local function setFeature(name, value)
   if not config or not IMPLEMENTED[name] then return false end
   config.features = config.features or {}
   config.features[name] = value == true
+  if name~='race_sessions' then config.control_panel_initialized=true end
+  changed()
   if name == 'race_sessions' and not config.features[name] then stopWeekend() end
   if not tiresWanted() then stopTires() else pollTime = 0.25 end
   if not assistsWanted() then stopAssists() else pollTime = 0.25 end
@@ -205,6 +230,7 @@ local function setAssistLevel(name, value)
   if type(value) ~= 'number' or value ~= math.floor(value) or value < 0 or value > 3 then return false end
   config.assist_levels = config.assist_levels or {}
   config.assist_levels[name] = value
+  changed()
   pollTime = 0.25
   log('I', 'ACNG', 'ASSIST ' .. name .. '_level=' .. value)
   return value
@@ -217,6 +243,7 @@ local function setFFBSetting(name, value)
   elseif not validFFB(name, value) then return false end
   config.ffb_settings = config.ffb_settings or {}
   config.ffb_settings[name] = value
+  changed()
   pollTime = 0.25
   log('I', 'ACNG', 'FFB ' .. name .. '=' .. tostring(value))
   return value == nil and 'stock' or value
@@ -230,15 +257,31 @@ local function setCarGain(model, value)
   config.ffb_settings = config.ffb_settings or {}
   config.ffb_settings.car_gain = config.ffb_settings.car_gain or {}
   config.ffb_settings.car_gain[model] = value
+  changed()
   pollTime = 0.25
   log('I', 'ACNG', 'FFB car_gain ' .. model .. '=' .. value)
   return value
 end
 local function setTelemetryEnabled(value)
   config.telemetry.enabled = value == true
+  changed()
   if not config.telemetry.enabled then stopVehicle() end
 end
+local function setControlEnabled(value)
+  if not config then return false end
+  if value==true and not config.control_panel_initialized then
+    local picked=feature('tire_temperature') or feature('tire_wear') or feature('abs') or feature('tc') or feature('ffb')
+    if not picked then config.features.tire_temperature=true;config.features.tire_wear=true end
+    config.control_panel_initialized=true
+  end
+  if value~=true then setTelemetryEnabled(false) end
+  return setEnabled(value)
+end
 local function onUpdate(dtReal)
+  if settingsDirty then
+    settingsTime=settingsTime+dtReal
+    if settingsTime>=(settingsError and 5 or 0.5) then settingsTime=0;saveSettings() end
+  end
   if not config or not (config.enabled or config.telemetry.enabled) then return end
   pollTime = pollTime + dtReal
   if pollTime < 0.25 then return end
@@ -334,6 +377,8 @@ local function getStatus()
   local ffb = {car_model=model, car_gain=carGain(model)}
   for _, name in ipairs(FFB_NAMES) do ffb[name] = ffbSetting(name) end
   return {schema_version=1, enabled=config and config.enabled or false,
+    control_panel_initialized=config and config.control_panel_initialized==true or false,
+    settings_error=settingsError, settings_pending=settingsDirty,
     telemetry_enabled=config and config.telemetry.enabled or false,
     attached_vehicle_id=attachedId, attached_capture_id=attachedCaptureId,
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
@@ -344,11 +389,13 @@ local function getStatus()
     implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc', 'ffb'}, physics_writes=physicsWrites()}
 end
 M.onExtensionLoaded = onExtensionLoaded
-M.onExtensionUnloaded = stopAll
+M.onExtensionUnloaded = function() if settingsDirty then saveSettings() end;stopAll() end
 M.onClientEndMission = stopAll
 M.onUpdate = onUpdate
 M.onVehicleSpawned = onVehicleSpawned
 M.setEnabled = setEnabled
+M.setControlEnabled = setControlEnabled
+M.saveSettings = saveSettings
 M.setTelemetryEnabled = setTelemetryEnabled
 M.setFeature = setFeature
 M.setAssistLevel = setAssistLevel

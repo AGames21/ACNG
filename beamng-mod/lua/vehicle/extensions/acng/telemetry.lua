@@ -84,6 +84,7 @@ local function onReset()
 end
 M.start = start
 M.stop = stop
+M.getStatus = function() return {active=udp~=nil,sequence=seq} end
 M.updateGFX = updateGFX
 M.onReset = onReset
 M.onExtensionUnloaded = stop

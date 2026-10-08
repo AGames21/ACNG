@@ -1,3 +1,7 @@
+## Current checkpoint ? freeroam priority
+New single ACNG control app: master ON/OFF, Advanced tabs for tires/assists/FFB/diagnostics. First ON selects heat/wear, keeps factory assists and FFB optional; custom selections survive OFF/ON. Atomic backed-up preferences; new game starts OFF; panel OFF stops streaming too. GUI001 12/12 native checks; 124 Python tests and Node suites pass. Game left at West Coast USA, master OFF, no AI or automatic driving.
+Next: road-driving heat/pressure calibration, more vehicle/reset/damage coverage and physical-wheel FFB feedback. Track work deferred in Obsidian Freeroam Plan / Track Later. No car mod started.
+
 # ACNG engineering journal
 
 2026-10-06: user authorized independent BeamNG mod setup and autonomous evidence-driven work. Inspected Steam manifests, tool versions and local Lua APIs. AC still installing to second Steam library. BeamNG existing user profile has BeamMP, so test using isolated profile. Chosen route: Game Engine/Vehicle Lua extensions with no stock overrides. Universal Modder CLI installed locally and KB/scan executed; generic native hook suggestion rejected in favor of verified host extension APIs. Authored first control plane, passive telemetry reader, collector and analyzer. Runtime status is recorded separately in docs/test-results.

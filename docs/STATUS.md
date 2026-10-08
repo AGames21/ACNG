@@ -1,3 +1,7 @@
+## Current checkpoint ? freeroam priority
+New single ACNG control app: master ON/OFF, Advanced tabs for tires/assists/FFB/diagnostics. First ON selects heat/wear, keeps factory assists and FFB optional; custom selections survive OFF/ON. Atomic backed-up preferences; new game starts OFF; panel OFF stops streaming too. GUI001 12/12 native checks; 124 Python tests and Node suites pass. Game left at West Coast USA, master OFF, no AI or automatic driving.
+Next: road-driving heat/pressure calibration, more vehicle/reset/damage coverage and physical-wheel FFB feedback. Track work deferred in Obsidian Freeroam Plan / Track Later. No car mod started.
+
 ## Current checkpoint ? 2026-10-07
 Working with native evidence: tire heat/grip, heat-driven pressure, wear, ABS/TC, FFB controls (virtual wheel only), HUD/performance/lap/sector timing and saved best laps. Suspension, structure and damage remain native BeamNG.
 Race Weekend is a prototype: seven early native checks passed, stopped by user request/report of AI collisions before completion and damage checks. Native BeamNG AI only, zero opponents now default. No AC AI replacement wanted.

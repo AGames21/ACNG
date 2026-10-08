@@ -1,0 +1,56 @@
+{
+  "checks": {
+    "master_off_unloads_all_effects_and_stream": true,
+    "master_on_keeps_custom_choices": true,
+    "native_reload_preferences_master_off": true,
+    "preferences_saved": true,
+    "real_abs_selector": true,
+    "real_advanced_wear_switch": true,
+    "real_factory_restore_selector": true,
+    "real_ffb_strength_slider": true,
+    "real_ffb_switch": true,
+    "real_master_click_native_heat_and_wear": true,
+    "real_telemetry_switch": true,
+    "startup_off": true
+  },
+  "completed": true,
+  "layout": "/settings/ui_apps/layouts/acng_freeroam.uilayout.json",
+  "ready": true,
+  "status": {
+    "assist_levels": {
+      "abs": 0,
+      "tc": 2
+    },
+    "control_panel_initialized": true,
+    "enabled": false,
+    "features": {
+      "abs": false,
+      "ffb": false,
+      "race_sessions": false,
+      "tc": false,
+      "tire_temperature": true,
+      "tire_wear": true
+    },
+    "ffb_settings": {
+      "car_gain": 1,
+      "car_model": "etkc",
+      "gain": 1,
+      "kerb": 0.3,
+      "min_force": 0,
+      "road": 0.5,
+      "slip": 0.3
+    },
+    "implemented_physics_features": [
+      "tire_temperature",
+      "tire_wear",
+      "abs",
+      "tc",
+      "ffb"
+    ],
+    "physics_writes": 0,
+    "schema_version": 1,
+    "settings_pending": false,
+    "telemetry_enabled": false
+  },
+  "test": "GUI001 freeroam control panel"
+}
