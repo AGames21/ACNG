@@ -4,7 +4,8 @@
   function command(action,status,key,value){
     if(action==='profile' && (value==='road'||value==='sport'))return "extensions.acng_core.setTireProfile('"+value+"')";
     if(action==='master') return 'extensions.acng_core.setControlEnabled('+(!status.enabled)+')';
-    if(action==='feature' && FEATURES.indexOf(key)>=0) return "extensions.acng_core.setFeature('"+key+"', "+(value===true)+')';
+    if(action==='pit' && ['mark','cancel','service'].indexOf(key)>=0)return "extensions.acng_core.pitCommand('"+key+"', "+(value && value.refuel===true)+", "+(value && value.tread===true)+")";
+    if(action==='feature' && (FEATURES.indexOf(key)>=0||key==='pits')) return "extensions.acng_core.setFeature('"+key+"', "+(value===true)+')';
     if(action==='assist' && ['abs','tc'].indexOf(key)>=0){
       if(value==='factory') return "extensions.acng_core.setFeature('"+key+"', false)";
       var n=Number(value);if(!Number.isInteger(n)||n<0||n>3)return null;
@@ -44,7 +45,7 @@
         <small ng-if="p.view.first">First ON enables tire heat and wear. Steering and assists are optional.</small>
         <button class="advanced" ng-click="p.advanced=!p.advanced" ng-attr-aria-expanded="{{p.advanced}}" aria-label="Show advanced ACNG settings">{{p.advanced?'Hide advanced ↑':'Advanced ↓'}}</button>
         <div ng-if="p.advanced"><small>Choose effects here. They only run while the master is ON.</small>
-          <nav class="tabs"><button aria-label="ACNG tires tab" ng-click="p.tab='tires'" ng-class="{on:p.tab==='tires'}">Tires</button><button aria-label="ACNG assists tab" ng-click="p.tab='assists'" ng-class="{on:p.tab==='assists'}">Assists</button><button aria-label="ACNG steering tab" ng-click="p.tab='steering'" ng-class="{on:p.tab==='steering'}">Wheel</button><button aria-label="ACNG diagnostics tab" ng-click="p.tab='diagnostics'" ng-class="{on:p.tab==='diagnostics'}">Debug</button></nav>
+          <nav class="tabs"><button aria-label="ACNG tires tab" ng-click="p.tab='tires'" ng-class="{on:p.tab==='tires'}">Tires</button><button aria-label="ACNG assists tab" ng-click="p.tab='assists'" ng-class="{on:p.tab==='assists'}">Assists</button><button aria-label="ACNG steering tab" ng-click="p.tab='steering'" ng-class="{on:p.tab==='steering'}">Wheel</button><button aria-label="ACNG pits tab" ng-click="p.tab='pits'" ng-class="{on:p.tab==='pits'}">Pits</button><button aria-label="ACNG diagnostics tab" ng-click="p.tab='diagnostics'" ng-class="{on:p.tab==='diagnostics'}">Debug</button></nav>
           <fieldset ng-if="p.tab==='tires'"><legend>TIRES</legend>
             <div class="row"><label>Tire preset</label><select aria-label="ACNG tire preset" ng-model="p.profile" ng-change="p.send('profile',null,p.profile)" ng-disabled="p.busy"><option value="road">Road</option><option value="sport">Sport (previous)</option></select></div>
             <small>Road uses gentler warm-up and cold grip. Presets are experimental; switching keeps current heat and wear.</small>
@@ -63,14 +64,25 @@
             <div ng-if="p.ffb"><div class="row" ng-repeat="r in p.sliders track by r.key"><label>{{r.label}}</label><input type="range" min="0" max="{{r.max}}" step="{{r.step}}" ng-model="r.value" ng-model-options="{updateOn:'change'}" ng-change="p.send('ffb',r.key,r.value)" ng-disabled="p.busy" aria-label="ACNG {{r.label}}"><span class="value">{{r.value}}%</span></div>
             <div class="row"><label>Filter</label><select aria-label="ACNG FFB filter" ng-model="p.filter" ng-change="p.send('ffb','filter',p.filter)" ng-disabled="p.busy"><option ng-repeat="r in p.filterOptions" value="{{r}}">{{r==='stock'?'Stock':r+'%'}}</option></select></div></div>
           </fieldset>
+          <fieldset ng-if="p.tab==='pits'"><legend>PIT SERVICES</legend>
+            <div class="row"><label for="acng-pits">Enable pit services</label><input id="acng-pits" type="checkbox" ng-model="p.pits" ng-change="p.send('feature','pits',p.pits)" ng-disabled="p.busy" aria-label="ACNG pit services"></div>
+            <small>Park in a pit garage and mark your box. Box clears on vehicle reset/switch. No AI spawned.</small>
+            <div ng-if="p.pits && p.view.on"><div class="row"><button aria-label="ACNG mark pit box" ng-click="p.send('pit','mark')" ng-disabled="p.busy || p.pit.servicing">Mark box here</button><span>{{p.pit.in_box?'Inside box':'Outside box'}}</span></div>
+              <div class="row"><label>Refuel (20 s)</label><input type="checkbox" ng-model="p.refuel" aria-label="ACNG pit refuel"></div>
+              <div class="row"><label>Fresh ACNG tread (8 s)</label><input type="checkbox" ng-model="p.newTread" aria-label="ACNG pit fresh tread"></div>
+              <small>Tread service requires intact tires and ACNG wear ON. Heat, punctures and crash damage stay unchanged. Leaking tanks cannot refuel.</small>
+              <div class="row"><button aria-label="ACNG start pit service" ng-click="p.send('pit','service',{refuel:p.refuel,tread:p.newTread})" ng-disabled="p.busy || !p.pit.in_box || !p.pit.stopped || p.pit.servicing">Start service</button><button aria-label="ACNG cancel pit service" ng-click="p.send('pit','cancel')" ng-disabled="!p.pit.servicing">Cancel</button></div>
+              <div role="status">{{p.pit.message || 'Waiting for vehicle'}} <span ng-if="p.pit.servicing">{{p.pit.remaining_s | number:1}} s</span></div>
+            </div>
+          </fieldset>
           <fieldset ng-if="p.tab==='diagnostics'"><legend>DIAGNOSTICS</legend><div class="row"><label for="acng-logging">Telemetry stream</label><input id="acng-logging" aria-label="ACNG telemetry stream" type="checkbox" ng-model="p.telemetry" ng-change="p.send('telemetry',null,p.telemetry)" ng-disabled="!p.view.on || p.busy"></div><small>Requires the local developer collector. Master OFF stops streaming too.</small></fieldset>
         </div>
         <div class="footer">Native BeamNG suspension, damage and AI. Choices saved; startup stays OFF.</div>
       </section>`,link:function(scope){
-        var alive=true,latest=null,sentAt=0;var p=scope.p={advanced:false,tab:'tires',busy:false,view:view(null)};
+        var alive=true,latest=null,sentAt=0;var p=scope.p={advanced:false,tab:'tires',busy:false,refuel:true,newTread:false,pit:{},view:view(null)};
         function render(s){
           latest=s;p.view=view(s);if(!s)return;p.profile=s.tire_profile||'road';
-          var f=s.features||{},v=s.ffb_settings||{};p.heat=f.tire_temperature===true;p.wear=f.tire_wear===true;p.ffb=f.ffb===true;p.telemetry=s.telemetry_enabled===true;
+          var f=s.features||{},v=s.ffb_settings||{};p.heat=f.tire_temperature===true;p.wear=f.tire_wear===true;p.ffb=f.ffb===true;p.pits=f.pits===true;p.telemetry=s.telemetry_enabled===true;
           p.assists=[{key:'abs',label:'ABS',value:f.abs?String(s.assist_levels.abs):'factory'},{key:'tc',label:'Traction control',value:f.tc?String(s.assist_levels.tc):'factory'}];
           p.filter=typeof v.filter==='number'?String(Math.round(v.filter*100)):'stock';
           p.filterOptions=['stock'];for(var i=0;i<=100;i+=5)p.filterOptions.push(String(i));if(p.filterOptions.indexOf(p.filter)<0)p.filterOptions.push(p.filter);
@@ -83,6 +95,7 @@
         };
         var poll=$interval(function(){if(p.busy&&Date.now()-sentAt>3000){p.busy=false;p.error='No response — check the game Lua log';}if(!p.busy)refresh();},1000);
         scope.$on('ACNGFFB',function(_,s){if(alive)scope.$evalAsync(function(){p.wheel=s&&s.mode==='on'?s.wheel===true:null;p.clip=s&&Number.isFinite(s.clip)?Math.round(s.clip*100):0;});});
+        scope.$on('ACNGPit',function(_,s){if(alive)scope.$evalAsync(function(){p.pit=s||{};});});
         scope.$on('$destroy',function(){alive=false;$interval.cancel(poll);});refresh();
       }};
   }]);

@@ -31,3 +31,5 @@ AC clean route candidate: `ac-offline-smoke.py --mode keyboard --start grid --tr
 - FR002: reset and switch among stock drivetrain types while chosen features stay enabled; test punctures, bent suspension and missing wheels. OFF must restore saved native coefficients/assists and stop streams without repairing damage.
 - FR003: physical-wheel road/understeer/curb runs with clipping observations. Keep native physical steering as the main force source; no physical-wheel success claimed from virtual-wheel tests.
 These are planned, not completed. Existing GUI001 validates native DOM command/state and settings lifecycle, not driving feel or new tire calibration.
+
+P001 prepared: `-Experiment PitLab` in fresh `ACNG-pit-001/current`, normal game closed. Tests actual Advanced Pits controls, stationary box, native fuel refill and ACNG tread refresh, actual puncture rejection/preservation and master OFF unload. Raw result `/acng-pit-test.json` in isolated user profile. This harness has not yet run; 140 offline Python/Lua contracts and six existing Node suites pass. Never distribute test harness or extracted AC meshes.

@@ -14,7 +14,7 @@ local APPS_LOAD = "extensions.load('acng_perf'); extensions.load('acng_laps')"
 local APPS_UNLOAD = "extensions.unload('acng_perf'); extensions.unload('acng_laps')"
 -- Physics features that are implemented and lab-validated. Each loads into the player
 -- vehicle while the master and its own flag are ON; unloading restores stock values.
-local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, ffb=true, race_sessions=true}
+local IMPLEMENTED = {tire_temperature=true, tire_wear=true, abs=true, tc=true, ffb=true, race_sessions=true, pits=true}
 -- tire_temperature and tire_wear share the acng_tires vehicle extension; configure()
 -- tells it which parts run, and is sent again whenever either flag changes.
 local TIRES_LOAD = "extensions.load('acng_tires')"
@@ -142,8 +142,26 @@ end
 local function stopWeekend()
   if extensions and extensions.isExtensionLoaded('acng_weekend') then extensions.acng_weekend.cancel() end
 end
+local pitsId
+local function stopPits()
+  if pitsId then
+    local veh=be:getObjectByID(pitsId)
+    if veh then veh:queueLuaCommand("extensions.unload('acng_pits')") end
+  end
+  pitsId=nil
+end
+local function pitCommand(action,refuel,tread)
+  if not config or not config.enabled or not feature('pits') then return false end
+  local veh=be:getPlayerVehicle(0)
+  if not veh or veh:getID()~=pitsId then return false end
+  local commands={mark='markHere()',cancel='cancel()',service=string.format('request(%s,%s)',tostring(refuel==true),tostring(tread==true))}
+  if not commands[action] then return false end
+  veh:queueLuaCommand("if extensions.isExtensionLoaded('acng_pits') then extensions.acng_pits."..commands[action].." end")
+  return true
+end
 local function stopAll()
   stopWeekend()
+  stopPits()
   stopVehicle()
   stopPerf()
   stopTires()
@@ -207,7 +225,7 @@ end
 local function setEnabled(value)
   config.enabled = value == true
   if not config.enabled then stopWeekend() end
-  if not config.enabled then stopPerf(); stopTires(); stopAssists(); stopFFB() else pollTime = 0.25 end
+  if not config.enabled then stopPits(); stopPerf(); stopTires(); stopAssists(); stopFFB() else pollTime = 0.25 end
   log('I', 'ACNG', 'MASTER=' .. tostring(config.enabled) .. ' physics_writes=' .. physicsWrites())
   changed()
   return config.enabled
@@ -225,6 +243,7 @@ local function setFeature(name, value)
   if name~='race_sessions' then config.control_panel_initialized=true end
   changed()
   if name == 'race_sessions' and not config.features[name] then stopWeekend() end
+  if not feature('pits') then stopPits() end
   if not tiresWanted() then stopTires() else pollTime = 0.25 end
   if not assistsWanted() then stopAssists() else pollTime = 0.25 end
   if not ffbWanted() then stopFFB() else pollTime = 0.25 end
@@ -342,6 +361,13 @@ local function onUpdate(dtReal)
       ffbParts = parts
     end
   end
+  if feature('pits') and config.enabled and id~=pitsId then
+    stopPits()
+    if veh then
+      veh:queueLuaCommand("extensions.load('acng_pits'); extensions.acng_pits.configure(true)")
+      pitsId=id
+    end
+  end
   if not config.telemetry.enabled then return end
   if id ~= attachedId then
     stopVehicle()
@@ -374,6 +400,7 @@ local function onVehicleSpawned(id)
     assistsId, assistsParts = nil, nil
     pollTime = 0.25
   end
+  if id == pitsId then pitsId=nil;pollTime=0.25 end
   if id == ffbId then
     ffbId, ffbParts = nil, nil
     pollTime = 0.25
@@ -391,7 +418,7 @@ local function getStatus()
     performance_timer_vehicle_id=perfId, lap_timer_vehicle_id=perfId,
     tires_vehicle_id=tiresId, assists_vehicle_id=assistsId, ffb_vehicle_id=ffbId,
     features={tire_temperature=feature('tire_temperature'), tire_wear=feature('tire_wear'),
-      abs=feature('abs'), tc=feature('tc'), ffb=feature('ffb'), race_sessions=feature('race_sessions')},
+      abs=feature('abs'), tc=feature('tc'), ffb=feature('ffb'), race_sessions=feature('race_sessions'), pits=feature('pits')},
     assist_levels={abs=assistLevel('abs'), tc=assistLevel('tc')}, ffb_settings=ffb,
     implemented_physics_features={'tire_temperature', 'tire_wear', 'abs', 'tc', 'ffb'}, physics_writes=physicsWrites()}
 end
@@ -400,6 +427,8 @@ M.onExtensionUnloaded = function() if settingsDirty then saveSettings() end;stop
 M.onClientEndMission = stopAll
 M.onUpdate = onUpdate
 M.onVehicleSpawned = onVehicleSpawned
+-- Cancel service promptly when the player leaves a vehicle, including same-frame completion.
+M.onVehicleSwitched = function() stopPits();pollTime=0.25 end
 M.setEnabled = setEnabled
 M.setControlEnabled = setControlEnabled
 M.saveSettings = saveSettings
@@ -409,5 +438,6 @@ M.setTireProfile = setTireProfile
 M.setAssistLevel = setAssistLevel
 M.setFFBSetting = setFFBSetting
 M.setCarGain = setCarGain
+M.pitCommand = pitCommand
 M.getStatus = getStatus
 return M

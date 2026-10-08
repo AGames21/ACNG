@@ -6,4 +6,7 @@ assert.equal(c.command('telemetry',{enabled:false},null,true),null);
 assert.equal(c.command('profile',s,null,'invalid'),null);
 assert.equal(c.command('profile',s,null,'road'),"extensions.acng_core.setTireProfile('road')");
 const commands=[c.command('master',s),c.command('master',{enabled:false}),c.command('feature',s,'tire_wear',false),c.command('assist',s,'abs','0'),c.command('assist',s,'tc','factory'),c.command('ffb',s,'gain',125),c.command('ffb',s,'filter','stock'),c.command('ffb',s,'road',0),c.command('telemetry',s,null,false)];
+assert.equal(c.command('pit',s,'malicious()',{}),null);
+assert.equal(c.command('pit',s,'service',{refuel:true,tread:false}),"extensions.acng_core.pitCommand('service', true, false)");
+commands.push(c.command('feature',s,'pits',true),c.command('pit',s,'mark',{}),c.command('pit',s,'service',{refuel:true,tread:true}),c.command('pit',s,'cancel',{}));
 process.stdout.write(JSON.stringify(commands));

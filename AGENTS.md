@@ -39,3 +39,5 @@ Preserve existing mods, controls, saves and UI apps; use recorded backups and
 verified ZIP. See docs/NORMAL-INSTALL.md and ignored .local/normal-install.json.
 Retire the one-shot normalsetup harness after success. Future experiments remain
 isolated unless specifically authorized; do not automate the user's ongoing drive.
+
+2026-10-08 optional track request: user now explicitly requests Spa/pits and an AC car investigation, superseding deferral for this optional workflow. Keep freeroam defaults/native AI. See docs/SPA-AND-PITS.md: pit prototype is offline-tested only; P001 must pass before normal-profile update. No map/car assets exported or distributed. Author Spa checkout needs user-provided contact information; no transmission authorized. Preserve normal gameplay while waiting for safe isolated-test access.

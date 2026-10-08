@@ -52,4 +52,21 @@ class ControlContracts(unittest.TestCase):
         self.l.execute('guihooks={trigger=function() end}')
         for cmd in commands:self.l.execute('guihooks.trigger("onBNGAPICallback",1,'+cmd+')')
 
+    def test_pits_follow_vehicle_and_master_off_unloads(self):
+        self.l.execute('''commands={};car={getID=function() return 42 end,
+          queueLuaCommand=function(self,s) commands[#commands+1]=s end};
+          be.getPlayerVehicle=function() return car end;be.getObjectByID=function() return car end''')
+        self.assertFalse(self.core.pitCommand('mark',True,True))
+        self.core.setControlEnabled(True);self.core.setFeature('pits',True)
+        self.core.onUpdate(0.3)
+        self.assertTrue(self.core.pitCommand('mark',False,False))
+        self.assertFalse(self.core.pitCommand('injected()',True,True))
+        self.core.onVehicleSwitched()
+        self.assertFalse(self.core.pitCommand('service',True,True))
+        self.core.onUpdate(0.3)
+        self.assertTrue(self.core.pitCommand('mark',False,False))
+        self.core.setControlEnabled(False)
+        self.assertIn("extensions.unload('acng_pits')",list(self.l.globals().commands.values()))
+        self.assertFalse(self.core.pitCommand('service',True,True))
+
 if __name__=='__main__':unittest.main()

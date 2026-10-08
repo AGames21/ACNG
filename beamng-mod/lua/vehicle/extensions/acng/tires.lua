@@ -338,6 +338,27 @@ local function onExtensionUnloaded()
   guihooks.trigger('ACNGTires', {schema_version=1, mode='off'})
 end
 
+-- Pit service changes only ACNG tread accounting, never native damage or temperature.
+local function canServiceTread()
+  if not active or not parts.wear then return false,'Enable ACNG tire wear first' end
+  local count=0
+  for _,wd in pairs(v.data.wheels or {}) do
+    if hasTire(wd) then
+      local runtime=wheels and wheels.wheels and wheels.wheels[wd.cid]
+      if not runtime or runtime.isBroken or runtime.isTireDeflated or not obj:getWheel(wd.wheelID) then
+        return false,'Damaged or unavailable wheel: tread service refused'
+      end
+      count=count+1
+    end
+  end
+  return count>0,count>0 and nil or 'No supported tires'
+end
+local function serviceTread()
+  if not canServiceTread() then return false end
+  freshTires();updateGrip();return true
+end
+M.canServiceTread=canServiceTread
+M.serviceTread=serviceTread
 M.stockThermal = stockThermal
 M.stockCurve = stockCurve
 M.acngThermal = acngThermal

@@ -15,3 +15,6 @@ Each milestone requires source tests, real-game evidence, stock/OFF restoration 
 
 ## Freeroam-first priority (2026-10-07)
 Unified ACNG master/Advanced app is complete with GUI001 evidence. Next milestone is road-driving calibration and compatibility, not race systems. Test stock-versus-ACNG cold/warm tires in city stops, cruising and winding-road runs; tune pressure rise using recorded data. Then expand vehicle reset/switch/puncture/bent-geometry coverage and physical-wheel FFB. Optional roadside service and compounds follow reliable road behavior. Track work stays deferred in Obsidian Track Later.
+
+## Optional Spa workflow requested 2026-10-08
+Acquire author-distributed Spa 2026 separately; native 0.39.4 load/collision check; P001 pit service validation; garage location and map overlay polish; normal-profile deployment after native success. Later: pit limiter, visual marked box, fuel targeting, tire compound selection/blankets and session rules. AC BMW 1M geometry feasibility established, but full original JBeam conversion is a separate major milestone. Freeroam remains primary.

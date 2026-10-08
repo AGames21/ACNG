@@ -122,3 +122,7 @@ and whether it also happens with master OFF. Remove personal paths from log exce
 Offline/single-player modding only. No proprietary code, extracted models, textures,
 sounds or binaries belong here. Unofficial and unaffiliated with BeamNG or Assetto
 Corsa. No open-source license has been selected yet.
+
+### Optional Spa and pit development
+
+An opt-in pit-service prototype adds timed refueling and intact-tire ACNG tread refresh to Advanced > Pits. It is **offline-tested, awaiting native validation**, and is not yet installed in the normal player profile. Spa stays a separate author-distributed map; no track or car assets are bundled. The installed AC BMW 1M geometry format was successfully inventoried, but no driveable conversion exists yet. See [Spa and pit development](docs/SPA-AND-PITS.md).
