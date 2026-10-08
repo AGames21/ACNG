@@ -1,0 +1,72 @@
+{
+ "schema": "acng.labresult/1",
+ "test": "P002 Spa pit lane",
+ "date": "2026-10-08",
+ "beamng": "0.39.4",
+ "profile": "fresh isolated lab profile (ACNG-spa-001)",
+ "map": "user-downloaded Spa 2026 (not redistributed)",
+ "completed": true,
+ "checks": {
+  "box_marked_in_spa_pit_lane": true,
+  "car_at_pit_spawn": true,
+  "car_resting_on_ground": true,
+  "fuel_filled": true,
+  "master_off_unloads": true,
+  "panel_enables_pit_service": true,
+  "pit_lane_creep_moved": true,
+  "pit_lane_creep_no_crash": true,
+  "pit_lane_tires_finite": true,
+  "pit_spawn_present": true,
+  "road_tires_on_spa": true,
+  "service_countdown": true,
+  "service_finished": true,
+  "spa_level_found": true,
+  "spa_loaded": true,
+  "spa_start_requested": true,
+  "startup_off": true,
+  "tread_fresh": true
+ },
+ "level": "Gheo_Spa_2026",
+ "mission": "/levels/gheo_spa_2026/main.level.json",
+ "load_s": 8.96,
+ "pit_spawn": {
+  "x": 58.047714233398,
+  "y": -681.96661376953,
+  "z": 142.76638793945
+ },
+ "spawn_pos": {
+  "x": 58.022338867188,
+  "y": -681.91339111328,
+  "z": 142.84419250488
+ },
+ "creep": {
+  "damage_before": 0,
+  "distance_m": 10.804,
+  "fps": 166.252,
+  "peak_m_s": 2.388
+ },
+ "damage_after_creep": 0,
+ "fuel_before_l": {
+  "mainTank": 5.0
+ },
+ "fuel_after_l": {
+  "mainTank": 50.0
+ },
+ "tread_after": [
+  1,
+  1,
+  1,
+  1
+ ],
+ "service_message": "Service complete; damage and tire heat preserved",
+ "clicks": [
+  "Toggle ACNG master=disabled",
+  "Show advanced ACNG settings=true",
+  "ACNG pits tab=true",
+  "ACNG pit services=disabled",
+  "ACNG pit fresh tread=true",
+  "ACNG pits tab=true",
+  "ACNG mark pit box=disabled",
+  "ACNG start pit service=disabled"
+ ]
+}

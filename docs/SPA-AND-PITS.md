@@ -57,8 +57,17 @@ also require the map download and a live load.
 The author-linked [Spa 2026 download](https://buymeacoffee.com/gheolei/e/570029)
 is free, but its zero-price checkout requires the user's name and email. No
 contact details were transmitted, no purchase was made and no map downloaded.
-User handoff is pending. The author permits download/use, while prohibiting
+The user downloaded it themselves on 2026-10-08. The author permits download/use, while prohibiting
 reuploads/map editing without permission; never include this map in ACNG's ZIP.
+
+## P002 on Spa (passed 2026-10-08)
+
+The user's Spa zip was hash-checked, loaded only into a fresh isolated lab with
+`-ExtraMod`, and P002 passed 18 of 18 (`docs/test-results/P002-spa-pit-lane.md`).
+That covered the pit spawn, Road tires on Spa, a short pit-lane creep, the full pit
+service in Spa's pit lane and master OFF. The same zip was then copied unchanged
+into the user's normal `mods/` folder. Nothing was overwritten. Full pit-lane
+driving is a user playtest.
 
 ## AC BMW 1M feasibility evidence
 
@@ -77,3 +86,7 @@ formats, drivetrain/suspension, interior/LOD alignment, crash and performance
 checks remain. Any extracted assets must stay outside this repository and its
 packages. The inspected Blender add-on's header/layout did not match this local
 file; do not call its empty fallback output a successful conversion.
+
+Update 2026-10-08: a drivable personal conversion now exists. See
+`docs/AC-CAR-CONVERSION.md` and C001. The AC skin sits on the stock ETK K-Series
+JBeam, so damage, suspension and powertrain are BeamNG's own.

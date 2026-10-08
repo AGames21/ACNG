@@ -1,0 +1,267 @@
+{
+ "schema": "acng.labresult/1",
+ "test": "C001 AC car conversion",
+ "date": "2026-10-08",
+ "beamng": "0.39.4",
+ "run": "third (after texture fixes)",
+ "profile": "fresh isolated lab profile (ACNG-car-003)",
+ "vehicle": "acng_bmw1m personal local build (not distributed)",
+ "completed": true,
+ "checks": {
+  "ac_meshes_bound": true,
+  "all_tires_tracked": true,
+  "car_at_rest": true,
+  "core_attaches_tires": true,
+  "crash_native_damage": true,
+  "crash_tires_still_running": true,
+  "damaged_tires_still_running": true,
+  "drive_moved": true,
+  "drive_no_self_damage": true,
+  "drive_tires_finite": true,
+  "etk_skin_removed": true,
+  "final_off": true,
+  "model_loaded": true,
+  "native_puncture_or_break_present": true,
+  "obstacle_spawned": true,
+  "off_keeps_damage": true,
+  "off_unloads": true,
+  "on_reattaches_to_wreck": true,
+  "reset_fresh_tread": true,
+  "reset_keeps_ac_meshes": true,
+  "reset_repairs_native": true,
+  "spawn_undamaged": true,
+  "startup_off": true,
+  "tires_road": true
+ },
+ "ac_meshes": [
+  "acng_bmw1m_body",
+  "acng_bmw1m_lights_F",
+  "acng_bmw1m_lights_R",
+  "acng_bmw1m_door_R",
+  "acng_bmw1m_door_L",
+  "acng_bmw1m_hood",
+  "acng_bmw1m_trunk",
+  "acng_bmw1m_bumper_F",
+  "acng_bmw1m_bumper_R",
+  "acng_bmw1m_steer",
+  "acng_bmw1m_interior"
+ ],
+ "drive_peak_m_s": 35.54,
+ "crash_peak_m_s": 21.65,
+ "wreck_peak_m_s": 0.65,
+ "damaged_flags": {
+  "broken": true,
+  "deflated": true
+ },
+ "probes": [
+  {
+   "label": "spawn",
+   "damage": 0,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": null,
+   "profile": null,
+   "tread_min": null,
+   "finite": true,
+   "tires": false,
+   "broken": [],
+   "deflated": []
+  },
+  {
+   "label": "acng_on",
+   "damage": 0,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 1,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": []
+  },
+  {
+   "label": "driven",
+   "damage": 0,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.993,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": []
+  },
+  {
+   "label": "pre_crash",
+   "damage": 0,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 1,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": []
+  },
+  {
+   "label": "post_crash",
+   "damage": 41293.7421875,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.992,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": []
+  },
+  {
+   "label": "puncture",
+   "damage": 41297.25390625,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.992,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "break",
+   "damage": 42297.25390625,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.992,
+   "finite": true,
+   "tires": true,
+   "broken": [
+    "RL"
+   ],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "damaged",
+   "damage": 42297.42578125,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.992,
+   "finite": true,
+   "tires": true,
+   "broken": [
+    "RL"
+   ],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "wreck_driven",
+   "damage": 42297.4296875,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 0.992,
+   "finite": true,
+   "tires": true,
+   "broken": [
+    "RL"
+   ],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "master_off",
+   "damage": 42297.4296875,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": null,
+   "profile": null,
+   "tread_min": null,
+   "finite": true,
+   "tires": false,
+   "broken": [
+    "RL"
+   ],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "master_on_wrecked",
+   "damage": 42297.4296875,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 1,
+   "finite": true,
+   "tires": true,
+   "broken": [
+    "RL"
+   ],
+   "deflated": [
+    "FL"
+   ]
+  },
+  {
+   "label": "reset",
+   "damage": 0,
+   "ac_meshes_n": 11,
+   "etk_skin": 0,
+   "flexbodies": 70,
+   "native_tires": 4,
+   "acng_tires": 4,
+   "profile": "road",
+   "tread_min": 1,
+   "finite": true,
+   "tires": true,
+   "broken": [],
+   "deflated": []
+  }
+ ],
+ "log_errors": {
+  "run1": 453,
+  "run3": 12,
+  "run3_car_material_errors": 0,
+  "note": "run3 left one 8x8 opacity texture cooking notice and unrelated screenshot/level messages"
+ },
+ "earlier_runs": "run1 and run2 also passed 24/24; run1 exposed unsupported DDS formats, run2 exposed BeamNG misreading equal-size deflate entries"
+}

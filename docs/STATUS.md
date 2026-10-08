@@ -9,6 +9,14 @@ Remaining: pits, blankets/start temperature, reliable track grip research; deepe
 
 # ACNG status
 
+Spa and AC car (2026-10-08, Claude): P002 passed 18/18 on the user's own Spa 2026
+download in an isolated lab (pit-spawn load 9 s, pit-lane creep, full P001 pit
+service, master OFF unload). Spa then installed in the normal profile's mods folder
+(copy only). Personal BMW 1M conversion: AC meshes on the stock ETK K-Series
+physics, built outside the repo (docs/AC-CAR-CONVERSION.md). C001 lab: spawn,
+drive, crash, puncture, lost wheel, master OFF/ON and reset all passed natively
+(docs/test-results/C001-ac-car.md). Not distributed; handling is ETK, not the 1M.
+
 Normal-profile install (2026-10-08): user authorized the verified freeroam ZIP in
 their usual BeamNG profile. N001 passed 8/8 native checks on their default Barstow.
 Existing eight UI apps, mod active flags and input maps preserved; settings/saves/

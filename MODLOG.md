@@ -72,3 +72,6 @@ P001 (Codex) and P001a stopped at the first vehicle probe: `code..';local r=...'
 
 ## 2026-10-08 - FR001c sustained heat and FR002b stock damage (Claude)
 New isolated harnesses `tests/beamng-roadheat` (RoadHeat) and `tests/beamng-stocklab` (StockLab), registered in scripts/launch-lab.ps1. `scripts/analyze_tirecool.py` now also reads RoadHeat output. FR001c: Road +1.7 psi and flat 50 C corner peaks over 16 limit cycles; Sport +8.5 psi; native-only +0.4 psi. FR002b: 110/110 across six stock models including a 3-wheeler and a 10-tire semi. No production code changed.
+
+## 2026-10-08 - P002 Spa pit lane and personal BMW 1M conversion (Claude)
+`scripts/launch-lab.ps1`: `-ExtraMod` path join fixed (the missing backslash hid the map); `CarLab` added. New `tests/beamng-spalab` (P002, 18/18 on Spa) and `tests/beamng-carlab` (C001). New original converters `converters/kn5_model.py`, `jbeam_io.py`, `export_kn5.py`, `build_ac_car.py`: AC BMW 1M skin bound as flexbodies to the stock ETK K-Series damage groups, output refused inside the repo. Uncompressed AC DDS converted to PNG and incompressible zip entries stored, after C001 showed BeamNG rejecting both. `tests/test_ac_car_converters.py` uses synthetic data only. No ACNG runtime code changed.
