@@ -1,4 +1,15 @@
-# Latest checkpoint - 2026-10-09: 1M sound EQ and nose binding built, native test pending
+# Latest checkpoint - 2026-10-09 (late): C011 1M brakes, plate, torque and sound installed
+
+Brake discs sat off centre because moved meshes stayed where they were authored; every
+kept flexbody now shifts with its nodes (also exhaust, fuel tank, heatshield, wings).
+Native drilled discs and red calipers, a native BeamNG plate, and no text naming the
+source game. Torque now follows the AC 1M curve within 1.8 % (250.5 kW, 504 Nm); mass
++2.3 %. Sound: idle pitch fixed (650 rpm), interior layer -8 dB, off-throttle less
+muted. CarLab ACNG-car-025 50/50; installed after a backup. 219 Python tests pass.
+See [C011](test-results/C011-1m-brakes-plate-torque-sound.md). Still open: the player's
+sound verdict, a 250 km/h limiter, turbo/blow-off samples.
+
+# Previous checkpoint - 2026-10-09: 1M sound EQ and nose binding built, native test pending
 
 Sound: the AC 1M recordings were healthy, but the donor ETK child parts add EQ on
 top of the engine's values with `$+` keys. The turbo intake adds +4 dB at the firing

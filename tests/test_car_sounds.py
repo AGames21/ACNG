@@ -49,9 +49,10 @@ class SoundContracts(unittest.TestCase):
 
     def test_blends_put_idle_under_off_and_on_load_lists(self):
         b = s.blends({n: None for n, _, _ in self.SAMPLES})
-        self.assertEqual(b['engine'], [[(800, '1m_idle'), (4000, '1m_off_4000')],
-                                       [(800, '1m_idle'), (4000, '1m_on_4000')]])
-        self.assertEqual(b['exhaust'][1], [(800, 'ext_1m_idle'), (2500, 'ext1m_on_2500')])
+        self.assertEqual(b['engine'], [[(650, '1m_idle'), (4000, '1m_off_4000')],
+                                       [(650, '1m_idle'), (4000, '1m_on_4000')]])
+        self.assertEqual(b['exhaust'][1], [(650, 'ext_1m_idle'), (2500, 'ext1m_on_2500')])
+        self.assertEqual(s.IDLE_RPM, 650)  # measured recording rpm, matches the engine idleRPM
 
     def test_write_and_apply_point_engine_at_build_local_blends(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -71,6 +72,7 @@ class SoundContracts(unittest.TestCase):
         self.assertEqual(engine['soundConfig']['sampleFolder'], 'vehicles/acng_test/sounds/')
         self.assertEqual((engine['soundConfig']['mainGain'], engine['soundConfig']['eqHighGain']), (-7, 0))
         self.assertEqual(engine['soundConfigExhaust']['sampleName'], 'acng_1m_exhaust')
+        self.assertEqual(engine['soundConfigExhaust']['offLoadGain'], s.OFF_LOAD_GAIN)
 
     def test_base_eq_cancels_child_part_eq_so_the_final_eq_is_flat(self):
         donors = {'intake_turbo': {'soundConfig': {'$+eqFundamentalGain': 4, '$+eqLowGain': 2, '$+mainGain': 1.5},
@@ -89,7 +91,9 @@ class SoundContracts(unittest.TestCase):
                                                     for n, d in donors.items() if n != 'not_fitted')
                 self.assertEqual(final, 0, (section, key))
         self.assertEqual((engine['soundConfig']['mainGain'], engine['soundConfigExhaust']['mainGain']),
-                         (-7 + s.LEVEL_MATCH_DB, -3 + s.LEVEL_MATCH_DB))
+                         (-7 + s.LEVEL_MATCH_DB + s.TRIM_DB['soundConfig'], -3 + s.LEVEL_MATCH_DB))
+        # The exterior recording leads; the interior one is a quiet layer, not a second engine.
+        self.assertLessEqual(s.TRIM_DB['soundConfig'], s.TRIM_DB['soundConfigExhaust'] - 6)
 
     def test_clicking_loop_gets_a_crossfaded_seam_and_clean_loops_stay_untouched(self):
         rate, period = 1000, 50

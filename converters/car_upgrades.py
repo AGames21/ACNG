@@ -336,14 +336,29 @@ def prop_rest_x(name, frame):
     return -frame.get('rest_x', STEER_REST_X if name == 'steer' else 0)
 
 
+# Pre-turbo torque (Nm) that lands on the AC ui_car.json curve once the native ETK turbo's gain
+# is applied. C011 measured that gain in game per rpm (getTorqueData: net = base x turbo coef -
+# friction); this table is target / gain. Targets: 300 @1000, 392 @1500, flat 500 from 2000 to
+# 4000, 480/441/415 @4500/5000/5500, 357 @6500, 322 @7000. 6000 rpm uses 398 Nm, the real
+# car's 250 kW, not AC's 406 Nm (255 kW).
+BASE_TORQUE = ((1000, 263.3), (1500, 268.2), (2000, 354.6), (2500, 378.3), (3000, 384.7), (3500, 381.4),
+               (4000, 385.7), (4500, 372.4), (5000, 347.1), (5500, 338.2), (6000, 333.1), (6500, 318.0),
+               (7000, 290.4))
+TAIL_SCALE = 0.9368  # donor rows past 7000 rpm, continuous with the 7000 rpm point
+
+
 def spec_parts(stock):
     """Clone local donor parts; original numeric targets, native powertrain retained."""
     engine = copy.deepcopy(stock['etk_engine_i6_3.0'])
     engine['information'] = {'name': 'BMW 1M target 3.0L I6 (experimental)', 'authors': 'ACNG local build'}
-    # Net curve calibrated in the local native engine: ~249 kW, ~507 Nm peak.
-    # This is a fixed peak-torque approximation, not a timed BMW overboost controller.
-    engine['mainEngine']['torque'] = [[rpm, round(torque*(1.0735 if 1000<=rpm<=4500 else 0.9215 if rpm>=5000 else 0.95), 4)] if isinstance(rpm, (int, float))
-                                     else [rpm, torque] for rpm, torque in engine['mainEngine']['torque']]
+    # Native idle region and over-rev tail scaled; 1000-7000 rpm replaced by BASE_TORQUE.
+    # The 500 Nm plateau is AC's (and the real overboost); there is no timed overboost controller.
+    rows = engine['mainEngine']['torque']
+    engine['mainEngine']['torque'] = (
+        [r for r in rows if not isinstance(r[0], (int, float))] +
+        [[rpm, round(nm*0.95, 4)] for rpm, nm in rows if isinstance(rpm, (int, float)) and rpm < BASE_TORQUE[0][0]] +
+        [list(r) for r in BASE_TORQUE] +
+        [[rpm, round(nm*TAIL_SCALE, 4)] for rpm, nm in rows if isinstance(rpm, (int, float)) and rpm > BASE_TORQUE[-1][0]])
     transmission = copy.deepcopy(stock['etk_transmission_6M_sport'])
     transmission['information'] = {'name': 'BMW 1M 6-speed manual', 'authors': 'ACNG local build'}
     transmission['gearbox']['gearRatios'] = GEAR_RATIOS[:]

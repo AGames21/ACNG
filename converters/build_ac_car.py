@@ -124,7 +124,66 @@ def _move_point(row, header, kx, ky, kz):
     return row
 
 
-def transform_part(name, part, local_slot_types, common_centroids):
+def group_centroids(files):
+    """Mean (y, z) of each node group in the untransformed etkc parts."""
+    sums = {}
+    for data in files.values():
+        for part in data.values():
+            rows = part.get('nodes', []) if isinstance(part, dict) else []
+            if not rows or not isinstance(rows[0], list):
+                continue
+            header, groups = rows[0], []
+            for row in rows[1:]:
+                if isinstance(row, dict):
+                    groups = row.get('group', groups)
+                    continue
+                own = row[-1].get('group', groups) if isinstance(row[-1], dict) else groups
+                y, z = row[header.index('posY')], row[header.index('posZ')]
+                if not isinstance(y, (int, float)) or not isinstance(z, (int, float)):
+                    continue
+                for g in [own] if isinstance(own, str) else own:
+                    t = sums.setdefault(g, [0.0, 0.0, 0])
+                    t[0] += y; t[1] += z; t[2] += 1
+    return {g: (t[0]/t[2], t[1]/t[2]) for g, t in sums.items() if t[2] and g}
+
+
+def _move_flexbody(row, header, centroids):
+    """Keep a kept mesh on its moved nodes.
+
+    Flexbodies render where they were authored and only bind to nodes, so a mesh left at the
+    ETK spot sat 31 mm (front) / 52 mm (rear) off the 1M axles: brake discs bound to the wheel
+    nodes spun off-centre, wobbling like they were bolted to the rim (C010 playtest). The mesh
+    shifts by how far the transform moves the spot where it sits: its node groups' centre. Only
+    a mesh with no local node groups (wheel-bound brakes, authored at the origin) is located by
+    its `pos`. Most `pos` values are small offsets (exhaust -0.11 m), not locations.
+    """
+    row = list(row)
+    opts = dict(row[-1]) if isinstance(row[-1], dict) else {}
+    pos = dict(opts['pos']) if isinstance(opts.get('pos'), dict) else None
+    groups = row[header.index('[group]:')] if '[group]:' in header and header.index('[group]:') < len(row) else []
+    found = [centroids[g] for g in ([groups] if isinstance(groups, str) else groups or []) if g in centroids]
+    if found:
+        cy, cz = sum(c[0] for c in found)/len(found), sum(c[1] for c in found)/len(found)
+    elif pos and all(isinstance(pos.get(k), (int, float)) for k in ('y', 'z')):
+        cy, cz = pos['y'], pos['z']
+    else:
+        return row
+    dy, dz = tf_y(cy) - cy, tf_z(cz) - cz
+    if abs(dy) < 0.002 and abs(dz) < 0.002:
+        return row
+    pos = pos or {'x': 0, 'y': 0, 'z': 0}
+    for k, d in (('y', dy), ('z', dz)):
+        if isinstance(pos.get(k), (int, float)):
+            pos[k] = round(pos[k] + d, 5)
+    opts['pos'] = pos
+    if isinstance(row[-1], dict):
+        row[-1] = opts
+    else:
+        row += [[]] * (3 - len(row)) + [opts]  # mesh, groups, nonFlexMaterials, options
+    return row
+
+
+def transform_part(name, part, local_slot_types, common_centroids, group_centres=None):
     part = dict(part)
     report = {'stripped': []}
     if 'nodes' in part:
@@ -137,7 +196,7 @@ def transform_part(name, part, local_slot_types, common_centroids):
         if strip_visible(mesh):
             report['stripped'].append(mesh)
             return None
-        return row
+        return _move_flexbody(row, header, group_centres or {})
 
     def prop(row, header):
         mesh = row[header.index('mesh')]
@@ -283,13 +342,13 @@ def build(ac_car, beamng, out_root, skin):
                         slot_defaults.add(row[3])
         centroids = common_centroids(common_zip, slot_defaults)
         report['common_centroids'] = centroids
-        stripped = []
+        stripped, centres = [], group_centroids(files)
         for fname, data in files.items():
             for pname in list(data):
-                data[pname], r = transform_part(pname, data[pname], local_types, centroids)
+                data[pname], r = transform_part(pname, data[pname], local_types, centroids, centres)
                 stripped += r['stripped']
                 if pname == 'etkc':
-                    data[pname]['information'] = {'authors': 'local AC conversion (personal use)',
+                    data[pname]['information'] = {'authors': 'ACNG local build (personal use)',
                                                   'name': 'BMW 1M (local)'}
         pc = json.loads(z.read(f'vehicles/etkc/{BASE_CONFIG}.pc'))
         clouds = flexbody_clouds(files, pc)
@@ -338,8 +397,9 @@ def build(ac_car, beamng, out_root, skin):
         (vdir / 'etkc_base.materials.json').write_bytes(z.read('vehicles/etkc/main.materials.json'))
 
     pc['model'] = VEHICLE
-    for slot in ('etkc_licenseplate_R', 'etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
-        pc['parts'][slot] = ''
+    for slot in ('etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
+        pc['parts'][slot] = ''  # ETK badges; the AC skin carries the BMW ones
+    pc['parts']['etkc_licenseplate_R'] = 'acng_1m_licenseplate_R'
     pc=car_details.wheel_config(pc)
     old_pc=copy.deepcopy(pc)
     (vdir / 'acng_etk_baseline.pc').write_text(json.dumps(old_pc,indent=2),encoding='ascii')
@@ -349,7 +409,8 @@ def build(ac_car, beamng, out_root, skin):
             if name.endswith('.jbeam') and '/etk' in name.lower():
                 try: stock.update(jbeam_io.loads(common.read(name).decode('utf-8','replace')))
                 except ValueError: pass
-    stock['etkc_fueltank']=next(data['etkc_fueltank'] for data in files.values() if 'etkc_fueltank' in data)
+    for name in ('etkc_fueltank', 'etkc_brake_F_tt', 'etkc_brake_R_tt'):  # transformed local parts
+        stock[name]=next(data[name] for data in files.values() if name in data)
     parts=car_upgrades.spec_parts(stock)
     pc=car_upgrades.spec_config(pc)
     bank = ac_car / 'sfx' / (ac_car.name + '.bank')
@@ -361,13 +422,16 @@ def build(ac_car, beamng, out_root, skin):
         report['sound_eq_offsets'] = offsets
         car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE), offsets)
     parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
+    parts.update(car_details.plate_part())
+    parts.update(car_details.brake_parts(stock))
+    pc['parts'].update(etkc_brake_F='acng_1m_brake_F', etkc_brake_R='acng_1m_brake_R')
     (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
     (vdir / f'{CONFIG}.pc').write_text(json.dumps(pc, indent=2), encoding='ascii')
     (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')
 
     paints = ac_paints(ac_car)
     default_paint = paint_label(skin)
-    info = {'Author': 'Local conversion of the user\'s own Assetto Corsa car (personal use only)',
+    info = {'Author': 'ACNG local build (personal use only)',
             'Brand': 'BMW', 'Body Style': 'Coupe', 'Country': 'Germany', 'Name': 'BMW 1M (local)',
             'Type': 'Car', 'Years': {'min': 2011, 'max': 2012}, 'default_pc': CONFIG,
             'defaultPaintName1': default_paint if default_paint in paints else next(iter(paints), ''),

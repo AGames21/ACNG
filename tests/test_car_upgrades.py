@@ -224,6 +224,20 @@ class UpgradeContracts(unittest.TestCase):
         self.assertEqual(parts['acng_1m_fueltank']['mainTank']['fuelCapacity'],53)
         self.assertEqual(parts['acng_1m_fueltank']['variables'][1][4],47.7)
 
+    def test_torque_curve_keeps_idle_and_tail_and_uses_the_ac_shape(self):
+        stock={'etk_engine_i6_3.0':{'mainEngine':{'torque':[['rpm','torque'],[0,0],[700,200],[3000,300],[8000,200]]}},
+               'etk_transmission_6M_sport':{'gearbox':{'gearRatios':[0,1]}},
+               'etkc_fueltank':{'mainTank':{},'variables':[]}}
+        rows=u.spec_parts(stock)['acng_1m_engine']['mainEngine']['torque']
+        self.assertEqual(rows[:3],[['rpm','torque'],[0,0],[700,190.0]])
+        self.assertEqual(rows[-1],[8000,round(200*u.TAIL_SCALE,4)])
+        rpms=[r[0] for r in rows[1:]]
+        self.assertEqual(rpms,sorted(rpms))
+        # Flat plateau and fall-off follow AC: base 2000-4000 within 9 %, 6000 below 4000.
+        base=dict(u.BASE_TORQUE)
+        self.assertLess(max(base[r] for r in (2500,3000,3500,4000))/base[2500],1.03)
+        self.assertLess(base[6000],base[4000])
+
 
     def test_paints_use_vanilla_presets_and_clean_labels(self):
         import tempfile

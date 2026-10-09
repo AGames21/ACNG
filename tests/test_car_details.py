@@ -90,5 +90,35 @@ class DetailContracts(unittest.TestCase):
         self.assertEqual(model['meshes'][0]['uvs'],[(0,0),(1,0),(0,1)])
         self.assertEqual(mesh['uvs'][0],(.62,-1))
 
+    def test_native_eu_plate_replaces_the_branded_ac_plate(self):
+        part = d.plate_part()['acng_1m_licenseplate_R']
+        self.assertEqual(part['slotType'], 'etkc_licenseplate_R')
+        mesh, groups, _, opts = part['flexbodies'][1]
+        self.assertTrue(mesh.startswith('licenseplate-'))  # native BeamNG plate mesh
+        self.assertEqual(groups, ['etkc_trunk'])
+        self.assertEqual(opts['rot']['z'], 180)  # faces rearward
+        self.assertEqual(export_kn5.route(dict(self.mesh(['ROOT']), name='Plate_LODA'), {'test': {'shader': 'ksPerPixel'}}), export_kn5.SKIP)
+
+    def test_brakes_are_1m_sized_drilled_discs_with_single_piston_calipers(self):
+        def donor(disc):
+            opts = lambda: {'pos': {'x': .76, 'y': -1.326, 'z': .351}, 'scale': {'x': 1.3, 'y': 1.14, 'z': 1.14},
+                            'rot': {'x': 180, 'y': 0, 'z': 0}}
+            return {'flexbodies': [['mesh', '[group]:', 'nonFlexMaterials'], [disc, ['wheel_FL'], [], opts()],
+                                   ['brake_caliper_6pot_blue', ['etkc_hub_F'], [], opts()], ['brake_hub_5l', ['wheel_FL'], [], opts()]],
+                    'pressureWheels': [['name'], {'brakeDiameter': 0.37}, {'brakeTorque': 3000}]}
+        stock = {'etkc_brake_F_tt': donor('brake_disc_plain'), 'etkc_brake_R_tt': donor('brake_disc_drilled')}
+        parts = d.brake_parts(stock)
+        for axle, size, scale in (('F', 0.36, 1.10), ('R', 0.35, 1.06)):
+            p = parts['acng_1m_brake_'+axle]
+            rows = {r[0]: r[-1] for r in p['flexbodies'][1:]}
+            self.assertEqual(set(rows), {'brake_disc_drilled', 'brake_caliper_standard_red', 'brake_hub_5l'})
+            self.assertEqual(rows['brake_disc_drilled']['scale']['y'], scale)
+            self.assertEqual(rows['brake_disc_drilled']['pos'], {'x': .76, 'y': -1.326, 'z': .351})  # kept centred
+            self.assertIn({'brakeDiameter': size}, p['pressureWheels'])
+            self.assertIn({'brakeTorque': 3000}, p['pressureWheels'])
+        self.assertEqual(parts['acng_1m_brake_F']['flexbodies'][1][-1]['rot']['y'], 180)  # plain -> drilled
+        self.assertEqual(parts['acng_1m_brake_R']['flexbodies'][1][-1]['rot']['y'], 0)
+        self.assertEqual(stock['etkc_brake_F_tt']['flexbodies'][1][0], 'brake_disc_plain')  # donor untouched
+
 
 if __name__ == '__main__': unittest.main()

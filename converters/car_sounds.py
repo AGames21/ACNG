@@ -9,8 +9,17 @@ import math
 import struct
 
 RATES = {1: 8000, 2: 11000, 3: 11025, 4: 16000, 5: 22050, 6: 24000, 7: 32000, 8: 44100, 9: 48000}
-IDLE_RPM = 800
+# Measured, not named: the idle loops' firing-frequency envelopes put them at 630-675 rpm (I6 fires
+# three times per rev). Tagging them 800 played the idle 19 % flat at the 650 rpm engine idle.
+IDLE_RPM = 650
 # AC 1M bank sample names: the interior set drives the engine node, the exterior set the exhaust.
+# Both are full-car recordings, so at equal level the car played two engines from two positions
+# (C010 playtest: "weird and artificial"). The exterior set leads; the interior set stays as a
+# quiet cabin/mechanical layer.
+TRIM_DB = {'soundConfig': -8, 'soundConfigExhaust': 0}
+# The AC off-throttle loops already sit 3.5-4.5 dB under the on-throttle ones; the donor's
+# offLoadGain 0.5 cut a further 6 dB on top, so lifting off dropped the sound away.
+OFF_LOAD_GAIN = 0.75
 SETS = {
     'engine': {'idle': '1m_idle', 'prefix_on': '1m_on_', 'prefix_off': '1m_off_'},
     'exhaust': {'idle': 'ext_1m_idle', 'prefix_on': 'ext1m_on_', 'prefix_off': 'ext1m_off_'},
@@ -117,7 +126,8 @@ def write(bank, vdir, vehicle):
                  'samples': [[[folder + f'{n}.wav', rpm] for rpm, n in rows] for rows in lists]}
         names[key] = f'acng_1m_{key}'
         (sdir / f'{names[key]}.sfxBlend2D.json').write_text(json.dumps(blend, indent=1), encoding='ascii')
-    return {key: {'sampleFolder': folder, 'sampleName': name, **FLAT_EQ} for key, name in names.items()}
+    return {key: {'sampleFolder': folder, 'sampleName': name, 'offLoadGain': OFF_LOAD_GAIN, **FLAT_EQ}
+            for key, name in names.items()}
 
 
 def donor_offsets(parts, chosen):
@@ -144,5 +154,5 @@ def apply(engine, updates, offsets=None):
             config.update(updates[key])
             if offsets is not None:
                 config.update({k: -v for k, v in offsets.get(section, {}).items() if v})
-                config['mainGain'] = config.get('mainGain', 0) + LEVEL_MATCH_DB
+                config['mainGain'] = config.get('mainGain', 0) + LEVEL_MATCH_DB + TRIM_DB[section]
     return engine

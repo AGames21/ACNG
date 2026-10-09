@@ -163,6 +163,38 @@ class Builder(unittest.TestCase):
         self.assertFalse(build_ac_car.strip_visible('etkc_lowerarm_F'))
         self.assertTrue(build_ac_car.strip_visible('etkc_tubs'))  # poked out of the 1M arch
 
+    def test_kept_meshes_follow_their_moved_nodes(self):
+        files = {'f': {'p': {'nodes': [['id', 'posX', 'posY', 'posZ'], {'group': 'ex'}, ['a', 0, 1.4, 0.3],
+                                       ['b', 0, 1.6, 0.3, {'group': ['ex', 'tip']}], {'group': ''}, ['c', 0, 9, 9]]}}}
+        c = build_ac_car.group_centroids(files)
+        self.assertEqual(c['ex'], (1.5, 0.3))
+        self.assertEqual(c['tip'], (1.6, 0.3))
+        header = ['mesh', '[group]:', 'nonFlexMaterials']
+        dy = build_ac_car.tf_y(1.5) - 1.5
+        # In-place mesh with a small offset: shift by how far its nodes moved, not tf(offset).
+        row = build_ac_car._move_flexbody(['exhaust', ['ex'], [], {'pos': {'x': 0, 'y': -0.11, 'z': 0.03}}], header, c)
+        self.assertAlmostEqual(row[-1]['pos']['y'], -0.11 + dy, places=4)
+        self.assertEqual(row[-1]['pos']['z'], 0.03)
+        row = build_ac_car._move_flexbody(['tank', ['ex']], header, c)  # unplaced: gains a pos
+        self.assertAlmostEqual(row[3]['pos']['y'], dy, places=4)
+        # Wheel-bound brake disc authored at the origin: its pos is its location (C010 off-centre discs).
+        row = build_ac_car._move_flexbody(['disc', ['wheel_FL'], [], {'pos': {'x': .76, 'y': -1.295, 'z': .351}}], header, c)
+        self.assertAlmostEqual(row[-1]['pos']['y'], build_ac_car.tf_y(-1.295), places=4)
+        self.assertEqual(build_ac_car._move_flexbody(['x', ['unknown']], header, c), ['x', ['unknown']])
+
+    def test_debrand_fills_the_box_from_its_edges(self):
+        import io
+        from PIL import Image
+        im = Image.new('RGB', (10, 4), (0, 0, 0))
+        for y in range(4):
+            im.putpixel((9, y), (90, 90, 90))
+            for x in range(3, 7):
+                im.putpixel((x, y), (255, 255, 255))  # the "logo"
+        buf = io.BytesIO(); im.save(buf, 'PNG')
+        out = Image.open(io.BytesIO(export_kn5._debrand(buf.getvalue(), [(0.3, 0, 0.7, 1)])))
+        self.assertEqual(out.getpixel((5, 1)), (0, 0, 0))  # dark on both sides -> dark
+        self.assertNotIn((255, 255, 255), [out.getpixel((x, 2)) for x in range(10)])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -122,3 +122,52 @@ def wheel_config(pc):
     # Native hub offsets plus bindings +/-0.51 front, +/-0.50 rear match AC pivots.
     pc.setdefault('vars', {}).update({'$trackwidth_'+a: t for a, t in TRACK.items()})
     return pc
+
+
+# The AC plate mesh printed "ASSETTO CORSA". A native BeamNG EU plate takes its place, so the
+# game draws the player's own plate text. Centre and 10.5 degree lean are the AC plate's; 0.86
+# scales the 520 mm plate to the 446 mm recess in the 1M trunk lid.
+PLATE = {'pos': {'x': 0.0, 'y': 2.156, 'z': 0.804}, 'rot': {'x': 11, 'y': 0, 'z': 180},
+         'scale': {'x': 0.86, 'y': 0.86, 'z': 0.86}}
+
+
+def plate_part():
+    return {'acng_1m_licenseplate_R': {
+        'information': {'name': 'BMW 1M rear license plate (EU)', 'authors': 'ACNG local build'},
+        'slotType': 'etkc_licenseplate_R',
+        'licenseplateFormat': '52-11',
+        'flexbodies': [['mesh', '[group]:', 'nonFlexMaterials'],
+                       ['licenseplate-52-11-r2', ['etkc_trunk'], [], copy.deepcopy(PLATE)]],
+    }}
+
+
+# Real 1M brakes (E92 M3 set): cross-drilled discs, 360 mm front / 350 mm rear, single-piston
+# floating calipers; the AC car paints them red. Native BeamNG meshes on the ETK sport-brake
+# physics: (donor, disc diameter, disc scale, caliper scale). Native scales run ~3.03 per metre
+# of disc (race rear: 1.06 for 350 mm) and the single-piston caliper ~0.88 of its disc.
+BRAKES = {'F': ('etkc_brake_F_tt', 0.36, 1.10, 0.97), 'R': ('etkc_brake_R_tt', 0.35, 1.06, 0.93)}
+
+
+def brake_parts(stock):
+    """1M brakes cloned from the (already node-transformed) ETK sport brakes."""
+    result = {}
+    for axle, (donor, diameter, disc, caliper) in BRAKES.items():
+        part = copy.deepcopy(stock[donor])
+        part['information'] = {'name': 'BMW 1M drilled disc brakes ('+axle+')', 'authors': 'ACNG local build'}
+        for row in part['flexbodies'][1:]:
+            if not isinstance(row, list):
+                continue
+            opts = row[-1]
+            if 'disc' in row[0]:
+                if row[0] != 'brake_disc_drilled':  # drilled vanes face the other way
+                    opts['rot'] = dict(opts['rot'], y=(opts['rot'].get('y', 0)+180) % 360)
+                row[0] = 'brake_disc_drilled'
+                opts['scale'] = dict(opts['scale'], y=disc, z=disc)
+            elif 'caliper' in row[0]:
+                row[0] = 'brake_caliper_standard_red'
+                opts['scale'] = dict(opts['scale'], y=caliper, z=caliper)
+        part['pressureWheels'] = [{'brakeDiameter': diameter} if isinstance(r, dict) and 'brakeDiameter' in r else r
+                                  for r in part['pressureWheels']]
+        result['acng_1m_brake_'+axle] = part
+    return result
+

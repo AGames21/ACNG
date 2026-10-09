@@ -35,23 +35,25 @@ def verify_local_build(package, test_file):
     package, test_file = Path(package).resolve(), Path(test_file).resolve()
     proof = json.loads(test_file.read_text(encoding='utf-8'))
     version = proof.get('test', '').split(' ', 1)[0]
-    if not proof.get('completed') or proof.get('error') or version not in {'C002', 'C003', 'C004', 'C006', 'C007', 'C008', 'C009', 'C010'}:
-        raise RuntimeError('A completed C002/C003/C004/C006/C007/C008/C009/C010 native run is required')
+    if not proof.get('completed') or proof.get('error') or version not in {'C002', 'C003', 'C004', 'C006', 'C007', 'C008', 'C009', 'C010', 'C011'}:
+        raise RuntimeError('A completed C002/C003/C004/C006/C007/C008/C009/C010/C011 native run is required')
     checks = proof.get('checks', {})
     required = {'spawn_undamaged', 'drive_no_self_damage', 'reset_repairs_native',
                 'four_animated_controls', 'native_prop_meshes_created', 'native_shifter_moves'}
-    if version in {'C003', 'C004', 'C006', 'C007', 'C008', 'C009', 'C010'}:
+    if version in {'C003', 'C004', 'C006', 'C007', 'C008', 'C009', 'C010', 'C011'}:
         required.update({'four_native_gauges', 'three_native_mirrors',
                          'three_native_mirror_cameras', 'four_bmw_rim_meshes',
                          'gauges_receive_native_engine_signals', 'speed_gauge_receives_native_motion'})
-    if version in {'C004', 'C006', 'C007', 'C008', 'C009', 'C010'}:
+    if version in {'C004', 'C006', 'C007', 'C008', 'C009', 'C010', 'C011'}:
         required.update({'lamp_glow_registered', 'lowbeam_and_brake_signals', 'interior_steady_at_idle',
                          'interior_steady_while_driving', 'tires_auto_compound',
                          'unladen_mass_within_three_percent'})
-    if version in {'C008', 'C009', 'C010'}:
+    if version in {'C008', 'C009', 'C010', 'C011'}:
         required.add('crash_isolation_groups_found')
-    if version in {'C009', 'C010'}:
+    if version in {'C009', 'C010', 'C011'}:
         required.update({'tires_centred_on_ac_wheels', 'front_wheels_steer_right'})
+    if version == 'C011':
+        required.update({'torque_curve_matches_ac', 'ac_engine_sound_loaded'})
     if not required.issubset(checks) or not all(value is True for value in checks.values()):
         raise RuntimeError('Native validation is incomplete or failed')
     lab_copy = test_file.parent / 'mods' / package.name

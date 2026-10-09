@@ -7,7 +7,7 @@ local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
 local MODEL='acng_bmw1m'
-local result={test='C010 1M declared wheel track, fender liner, crash isolation, steering direction',completed=false,checks={},probes={},shots={}}
+local result={test='C011 1M centred brakes, native plate, AC torque curve, sound balance',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -34,7 +34,12 @@ for id,n in pairs(v.data.nodes or {}) do if tostring(n.name):find('^acng_bmw1m')
  local p=obj:getNodePosition(n.cid or id);r.new_nodes[#r.new_nodes+1]={name=n.name,cid=n.cid or id,x=p.x,y=p.y,z=p.z,mass=obj:getNodeMass(n.cid or id)}
 end end
 local e=powertrain.getDevice('mainEngine');local gb=powertrain.getDevice('gearbox');local diff=powertrain.getDevice('differential_R')
-if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r.specs.peak_hp=d.maxPower;r.specs.peak_nm=d.maxTorque end end
+if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r.specs.peak_hp=d.maxPower;r.specs.peak_nm=d.maxTorque
+  -- Full-boost curve (highest priority: Turbo over NA), indexed rpm+1 by getTorqueData.
+  local best;for _,c in pairs(d.curves or {}) do if not best or c.priority>best.priority then best=c end end
+  if best then r.specs.curve_name=best.name;r.specs.curve={}
+   for rpm=1000,7000,500 do local nm=best.torque[rpm+1];if nm then r.specs.curve[#r.specs.curve+1]={rpm,nm} end end end end
+ r.specs.idle_rpm=e.idleRPM;r.specs.max_rpm=e.maxRPM end
 if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
 local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
 r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^acng_bmw1m_') then r.glow=r.glow+1 end end
@@ -256,6 +261,13 @@ local function run()
   check('unladen_mass_within_three_percent',math.abs(r.mass_kg-1495)/1495<0.03)
   check('power_and_torque_target',math.abs((r.specs.peak_hp or 0)*0.745699872-250)<5 and math.abs((r.specs.peak_nm or 0)-500)<12)
   check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
+  -- AC ui_car.json torque curve (Nm, crank): flat 500 to 4000, 406 at 6000 (~255 kW).
+  local AC={[2000]=500,[2500]=500,[3000]=500,[3500]=500,[4000]=500,[4500]=480,[5000]=441,[5500]=415,[6000]=406,[6500]=357}
+  local worst,at=nil,nil
+  for _,p in ipairs(r.specs.curve or {}) do local ref=AC[p[1]]
+    if ref then local err=math.abs(p[2]-ref)/ref;if not worst or err>worst then worst,at=err,p[1] end end end
+  result.torque_curve={curve=r.specs.curve,name=r.specs.curve_name,worst_error=worst,worst_rpm=at,idle_rpm=r.specs.idle_rpm,max_rpm=r.specs.max_rpm}
+  check('torque_curve_matches_ac',worst~=nil and worst<0.05)
   check('verified_first_and_sixth_ratios',r.specs.ratios and math.abs((r.specs.ratios['1'] or r.specs.ratios[1] or 0)-4.11)<0.001 and math.abs((r.specs.ratios['6'] or r.specs.ratios[6] or 0)-0.846)<0.001)
   check('verified_final_drive',math.abs((r.specs.final_drive or 0)-3.154)<0.001)
   -- Optional C005 benchmark. Existing 45 C004 regression checks remain intact.
@@ -285,6 +297,12 @@ local function run()
   localShot('wheelwell_RR',{-2.7,2.3,0.5},{-1.35,0.82,0.1})
   localShot('rear_track',{-6,0,0.45},{0,0,0.4})
   localShot('fuel_door_RR',{0.2,1.9,0.9},{-1.4,0.8,0.5})
+  -- Brake discs must sit centred in the rims (C010: off-centre discs looked bolted to the wheel).
+  localShot('brake_FL',{1.6,-1.75,0.15},{1.33,-0.7,0.08})
+  localShot('brake_FR',{1.6,1.75,0.15},{1.33,0.7,0.08})
+  localShot('brake_RL',{-1.1,-1.75,0.15},{-1.35,-0.7,0.08})
+  localShot('brake_RR',{-1.1,1.75,0.15},{-1.35,0.7,0.08})
+  localShot('plate_rear',{-4.0,0.3,0.75},{-2.15,0,0.45})
   -- Realistic gearbox: in arcade mode a held brake at rest selects reverse instead.
   vcmd(STOP..";electrics.setLightsState(1)");delay(2)
   r=probe('lights_on')

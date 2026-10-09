@@ -121,7 +121,9 @@ def route(mesh, materials):
         return mesh['acng_group']
     if 'COCKPIT_HR' in parents or 'CINTURE_OFF' in parents:
         return 'cabin'
-    if name in ('Plate_LODA', 'brake_light_2'):
+    if name == 'Plate_LODA':
+        return SKIP  # printed "ASSETTO CORSA"; the native BeamNG plate replaces it
+    if name == 'brake_light_2':
         return 'trunk'
     front = _center_y(mesh) > 0
     if mesh['material'] in HEADLIGHT_MATERIALS or name.startswith('front_light'):
@@ -267,6 +269,30 @@ def _png(dds_bytes):
     has_alpha = im.mode in ('RGBA', 'LA', 'PA') or 'transparency' in im.info
     buf = io.BytesIO()
     im.convert('RGBA' if has_alpha else 'RGB').save(buf, 'PNG')
+    return buf.getvalue()
+
+
+# Source-game branding painted into textures: (texture, [(x0, y0, x1, y1) in 0..1]). The AC logo
+# sat on the idle iDrive screen; each box is refilled row by row from the pixels either side.
+DEBRAND = {'INT_display.DDS': [(0.725, 0.815, 0.855, 0.925)]}
+
+
+def _debrand(dds_bytes, boxes):
+    from PIL import Image
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    im = im.convert('RGBA' if im.mode in ('RGBA', 'LA', 'PA') or 'transparency' in im.info else 'RGB')
+    px, (w, h) = im.load(), im.size
+    for fx0, fy0, fx1, fy1 in boxes:
+        x0, y0, x1, y1 = int(fx0*w), int(fy0*h), int(fx1*w), int(fy1*h)
+        left, right = max(x0-1, 0), min(x1, w-1)
+        for y in range(y0, y1):
+            a, b = px[left, y], px[right, y]
+            for x in range(x0, x1):
+                t = (x-left)/max(right-left, 1)
+                px[x, y] = tuple(round(a[k]+(b[k]-a[k])*t) for k in range(len(a)))
+    buf = io.BytesIO()
+    im.save(buf, 'PNG')
     return buf.getvalue()
 
 
@@ -511,7 +537,11 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             if t and t not in written and t in model['textures']:
                 data = model['textures'][t]
                 rel = _texture_file(t)
-                if not dds_native(data):
+                if t in DEBRAND:
+                    rel = rel.rsplit('.', 1)[0] + '.png'
+                    data = _debrand(data, DEBRAND[t])
+                    converted.append(t)
+                elif not dds_native(data):
                     rel = rel.rsplit('.', 1)[0] + '.png'
                     data = _png(data)
                     converted.append(t)

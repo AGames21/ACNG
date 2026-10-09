@@ -1,3 +1,11 @@
+## 2026-10-09 - C011 1M centred brakes, native plate, AC torque, sound balance (installed)
+
+Kept flexbodies shift by the node move at their group centroid (brakes, exhaust, tank,
+heatshield, wings). Native drilled discs and calipers (360/350 mm), native plate, neutral
+author strings, badge slots empty, display logo filled. Base torque rebuilt so the net
+curve follows AC (worst 1.8 %). Idle samples tagged 650 rpm, interior set -8 dB,
+offLoadGain 0.75. CarLab ACNG-car-025 50/50; 219 tests pass. Installed.
+
 ## 2026-10-09 - 1M sound EQ cancel, loop seam, nose binding (built, native test pending)
 
 Child-part `$+` sound EQ (turbo intake, I6 exhaust) is summed and cancelled in the
