@@ -54,8 +54,7 @@ class UpgradeContracts(unittest.TestCase):
 
     def test_cosmetic_mounts_are_damped_not_ringing(self):
         import math
-        for kg,spring,damp in ((u.SEAT_NODE_KG,u.SEAT_SPRING,u.SEAT_DAMP),
-                               (u.PROP_NODE_KG,u.PROP_SPRING,u.PROP_DAMP)):
+        for kg,spring,damp in ((u.PROP_NODE_KG,u.PROP_SPRING,u.PROP_DAMP),):
             ratio=damp/(2*math.sqrt(spring*kg))
             self.assertGreater(ratio,.08)   # old cages were ~2%: visible wobble
             self.assertLess(.0005*math.sqrt(10*spring/kg),1)  # explicit step stays stable
@@ -80,12 +79,53 @@ class UpgradeContracts(unittest.TestCase):
         self.assertNotIn('$acngBodyMassScale',new['vars'])
         self.assertEqual(u.GEAR_RATIOS,[-3.727,0,4.110,2.315,1.542,1.179,1.000,.846])
 
-    def test_seat_cages_have_independent_groups_and_breakable_beams(self):
-        model,frames=u.prepare_model({'meshes':[self.mesh()]},.016)
-        part={};u.add_seat_cages(part,model,.016,'test_')
-        groups={r['group'] for r in part['nodes'] if isinstance(r,dict) and r.get('group')}
-        self.assertEqual(groups,{'test_seat_L','test_seat_R'})
-        self.assertEqual(len([r for r in part['nodes'] if isinstance(r,list) and len(r)==4]),17)
+    def piece(self,material,lo,hi):
+        # BeamNG-frame box -> AC positions (x, z-lift, -y)
+        pts=[(x,z-.016,-y) for x in (lo[0],hi[0]) for y in (lo[1],hi[1]) for z in (lo[2],hi[2])]
+        return {'material':material,'positions':pts}
+
+    def test_only_seat_shells_ride_the_native_seat_nodes(self):
+        # Measured 1M pieces: seat back, then the sill trim, belt and rear-panel fabric that
+        # used to be classed as seat and jiggled on cosmetic cages.
+        self.assertEqual(u.interior_group(self.piece('INT_Skin',(.09,.2,.4),(.64,.55,1.01)),.016),'seat_L')
+        self.assertEqual(u.interior_group(self.piece('INT_Skin',(-.64,.2,.4),(-.09,.55,1.01)),.016),'seat_R')
+        for material,lo,hi in (('INT_Plaastica_NERA',(.64,-.58,.38),(.75,.55,1.03)),
+                               ('LIVREA',(.7,-.71,.31),(.86,.61,1.1)),
+                               ('INT_CintureSicurezza',(.61,.48,.3),(.67,.66,1.1)),
+                               ('INT_Velluto',(.62,.64,.79),(.66,1.02,.93))):
+            self.assertEqual(u.interior_group(self.piece(material,lo,hi),.016),'cabin',material)
+        self.assertFalse(hasattr(u,'add_seat_cages'))
+        self.assertEqual(build_ac_car.FLEXBODIES['seat_L'],('etkc_seat_FL',['etkc_floor','etkc_seat_FL']))
+
+    def test_steering_frame_uses_the_ac_column_node(self):
+        # 1M STEER_HR: column tilted 22 degrees, pointing forward and down toward the rack.
+        c,s=0.9271838665008545,0.37460657954216003
+        model={'nodes':[{'name':'STEER_HR','world':[[1,0,0,0],[0,c,s,0],[0,-s,c,0],[.36,.86,.28,1]]}],
+               'meshes':[dict(self.mesh(),path=['ROOT','COCKPIT_HR','STEER_HR','w'])]}
+        _,frames=u.prepare_model(model,.016)
+        frame=frames['steer']
+        self.assertEqual(frame['pivot'],[.36,-.28,.86+.016])
+        axis=frame['axes'][2]
+        self.assertLess(axis[1],-.9)  # forward
+        self.assertLess(axis[2],-.3)  # and down, not up as the old fixed frame assumed
+        self.assertAlmostEqual(frame['rest_x'],112.0,delta=.1)
+        part={};u.add_prop(part,'steer',frame,'t_')
+        self.assertAlmostEqual(part['props'][1][-1]['baseRotationGlobal']['x'],-112.0,delta=.1)
+        # without the node, the old fixed frame still works
+        _,frames=u.prepare_model({'meshes':model['meshes']},.016)
+        self.assertEqual(u.prop_rest_x('steer',frames['steer']),-70)
+
+    def test_fender_triangles_leave_the_body_shell(self):
+        def tri(x,y,z):  # one BeamNG-frame triangle as AC positions
+            return [(x,z-.016,-y),(x,z-.016+.01,-y),(x,z-.016,-y-.01)]
+        pos=tri(.8,-1.2,.6)+tri(-.8,-1.2,.6)+tri(.8,1.0,.6)+tri(.3,-1.2,.95)+tri(-.9,2.2,.5)+tri(.9,-1.9,1.2)
+        shell={'name':'shell','path':['ROOT','shell'],'material':'LIVREA','positions':pos,
+               'normals':[(0,1,0)]*len(pos),'uvs':[(0,0)]*len(pos),'indices':list(range(len(pos)))}
+        out=u.split_fenders({'meshes':[shell]},.016,lambda m:True)['meshes']
+        groups={m['name']:(m.get('acng_group'),len(m['indices'])//3) for m in out}
+        self.assertEqual(groups,{'shell_fender_L':('fender_L',1),'shell_fender_R':('fender_R',1),
+                                 'shell_body':(None,4)})
+        self.assertEqual(sum(len(m['indices']) for m in out),len(shell['indices']))
 
     def test_chassis_node_weights_remain_native(self):
         part,_=build_ac_car.transform_part('etkc_body',{'nodes':[['id','posX','posY','posZ'],{'nodeWeight':10},['b',0,0,1]]},set(),{})

@@ -41,27 +41,32 @@ Z_KNEE, Z_SCALE = 0.9, 1.15
 MESH_LIFT = 0.016  # AC ground plane vs ETK node frame, from the wheel-centre fit
 
 # Visible ETK meshes are removed; these mechanical ones stay (seen through wheel wells and in crashes).
+# Not the ETK wheel-well tubs: their edge poked out of the 1M arch as a black lip; AC has its own liners.
 KEEP_PREFIXES = ('etkc_lowerarm', 'etkc_tierod', 'etkc_hub', 'etkc_upperarm', 'etkc_subframe', 'etkc_diff',
                  'etkc_halfshaft', 'etkc_spring', 'etkc_shock', 'etkc_swaybar', 'etkc_strut', 'etkc_steeringbox',
-                 'etkc_underbody', 'etkc_radsupport', 'etkc_heatshield', 'etkc_tubs',
+                 'etkc_underbody', 'etkc_radsupport', 'etkc_heatshield',
                  'etkc_fueltank', 'etkc_radiator', 'etkc_driveshaft', 'etkc_transfercase', 'etkc_exhaust_',
                  'etkc_muffler', 'etkc_catalytic', 'etkc_intercooler')
 
 # AC mesh group -> (ETK part that owns the flexbody, ETK node groups it deforms with).
+# One node group per panel, as vanilla does: spanning several let a vertex follow whichever
+# group was nearest, so crashes stretched and tore the skin between panels.
 FLEXBODIES = {
-    'body': ('etkc_body', ['etkc_body', 'etkc_fender_L', 'etkc_fender_R', 'etkc_trunk', 'etkc_windshield']),
+    'body': ('etkc_body', ['etkc_body']),
+    'fender_L': ('etkc_fender_L', ['etkc_fender_L']),
+    'fender_R': ('etkc_fender_R', ['etkc_fender_R']),
     'lights_F': ('etkc_body', ['etkc_headlight_L', 'etkc_headlight_R']),
     'lights_R': ('etkc_body', ['etkc_taillight_L', 'etkc_taillight_R', 'etkc_trunklight_L', 'etkc_trunklight_R']),
-    'door_L': ('etkc_door_L', ['etkc_door_L', 'etkc_doorpanel_L', 'etkc_mirror_L']),
-    'door_R': ('etkc_door_R', ['etkc_door_R', 'etkc_doorpanel_R', 'etkc_mirror_R']),
+    'door_L': ('etkc_door_L', ['etkc_door_L']),
+    'door_R': ('etkc_door_R', ['etkc_door_R']),
     'hood': ('etkc_hood', ['etkc_hood']),
     'bumper_F': ('etkc_bumper_F', ['etkc_bumper_F']),
     'bumper_R': ('etkc_bumper_R', ['etkc_bumper_R']),
     'trunk': ('etkc_trunk', ['etkc_trunk']),
     'dash': ('etkc_dash', ['etkc_dash']),
-    'cabin': ('etkc_dash', ['etkc_body', 'etkc_floor']),
-    'seat_L': ('etkc_dash', ['acng_bmw1m_seat_L']),
-    'seat_R': ('etkc_dash', ['acng_bmw1m_seat_R']),
+    'cabin': ('etkc_dash', ['etkc_body']),
+    'seat_L': ('etkc_seat_FL', ['etkc_floor', 'etkc_seat_FL']),  # native seat nodes, as vanilla
+    'seat_R': ('etkc_seat_FR', ['etkc_floor', 'etkc_seat_FR']),
     'shifter': ('etkc_shifter_M', ['etkc_shifterknob_M']),
     'shifter_boot': ('etkc_shifter_M', ['etkc_shifterboot_M', 'etkc_shifterbase_M']),
 }
@@ -220,6 +225,8 @@ def build(ac_car, beamng, out_root, skin):
     model = kn5_model.read((ac_car / (ac_car.name + '.kn5')).read_bytes())
     model,gauge_frames,mirror_centers=car_details.prepare(model,MESH_LIFT)
     model,prop_frames=car_upgrades.prepare_model(model,MESH_LIFT)
+    materials={m['name']:m for m in model['materials']}
+    model=car_upgrades.split_fenders(model,MESH_LIFT,lambda m:export_kn5.route(m,materials)=='body')
     prop_frames.update(gauge_frames)
     report = {'mesh': export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT), 'prop_frames': prop_frames}
     groups = report['mesh']['groups']
@@ -265,7 +272,6 @@ def build(ac_car, beamng, out_root, skin):
                     added.append((gname, owner))
         for data in files.values():
             if 'etkc_dash' in data:
-                car_upgrades.add_seat_cages(data['etkc_dash'], model, MESH_LIFT,VEHICLE+'_')
                 for name,frame in prop_frames.items():
                     car_upgrades.add_prop(data['etkc_dash'], name,frame,VEHICLE+'_')
         car_details.add_mirrors(files,mirror_centers,VEHICLE+'_')

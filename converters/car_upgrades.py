@@ -6,9 +6,15 @@ GEAR_RATIOS = [-3.727, 0, 4.110, 2.315, 1.542, 1.179, 1.000, 0.846]
 FINAL_DRIVE = 3.154
 # Light cosmetic mounts: about 15% of critical damping, well inside the 2 kHz step limit.
 # Keep node weights light; heavier mounts pushed the car past the 3% mass target.
-SEAT_NODE_KG, SEAT_SPRING, SEAT_DAMP = 0.3, 60000, 40
 PROP_NODE_KG, PROP_SPRING, PROP_DAMP = 0.15, 40000, 24
-STEER_REST_X = 70  # column frame below is the X rotation of 70 degrees (20 degrees above horizontal)
+STEER_REST_X = 70  # fallback column frame: X rotation of 70 degrees (20 degrees above horizontal)
+# Front seat shells, whole bounding box (BeamNG frame, left side; mirrored for the right).
+# Wider pieces are sill trims, B-pillar plastics, belts and rear-panel fabric: those are cabin.
+SEAT_BOX = ((0.08, 0.66), (-0.25, 0.60), (0.38, 1.05))
+BELT_MATERIALS = {'INT_CintureSicurezza'}
+# Body-shell triangles in front of the doors, outboard and below the hood line, belong to the
+# ETK fender node group (fender nodes: |x| 0.72-0.92, y -1.88..-0.56, z 0.30-0.92).
+FENDER_ZONE = {'y_max': -0.58, 'abs_x_min': 0.6, 'z_max': 0.97}
 PROP_HEADER = ['func', 'mesh', 'idRef:', 'idX:', 'idY:', 'baseRotation', 'rotation',
                'translation', 'min', 'max', 'offset', 'multiplier']
 
@@ -56,7 +62,10 @@ def interior_group(mesh, lift):
     x, y, z = [(low[k]+high[k])/2 for k in range(3)]
     if mesh['material'] == 'INT_Pedali' or (low[0] > 0.2 and high[0] < 0.7 and high[1] < -0.5 and high[2] < 0.54):
         return 'pedal_throttle' if x < 0.37 else 'pedal_brake' if x < 0.52 else 'pedal_clutch'
-    if -0.13 < y < 0.85 and abs(x) > 0.17 and z > 0.46 and high[2] < 1.2:
+    (ax0, ax1), (y0, y1), (z0, z1) = SEAT_BOX
+    inside = (ax0 <= min(abs(low[0]), abs(high[0])) and max(abs(low[0]), abs(high[0])) <= ax1
+              and low[0]*high[0] > 0 and y0 <= low[1] and high[1] <= y1 and z0 <= low[2] and high[2] <= z1)
+    if mesh['material'] not in BELT_MATERIALS and inside and abs(x) > 0.17 and z > 0.46:
         return 'seat_L' if x > 0 else 'seat_R'
     return 'dash' if y < -0.27 and z > 0.57 else 'cabin'
 
@@ -88,48 +97,89 @@ def prepare_model(model, lift):
         points = [(p[0], -p[2], p[1]+lift) for m in selected for p in m['positions']]
         low, high = bounds(points)
         pivot = [(low[k]+high[k])/2 for k in range(3)]
+        frame = {}
         if name == 'steer':
-            angle = math.radians(20)
-            axes = [(1, 0, 0), (0, math.sin(angle), math.cos(angle)),
-                    (0, -math.cos(angle), math.sin(angle))]
+            frame = steer_node_frame(model, lift)
+            if not frame:
+                angle = math.radians(20)
+                axes = [(1, 0, 0), (0, math.sin(angle), math.cos(angle)),
+                        (0, -math.cos(angle), math.sin(angle))]
+                frame = {'pivot': pivot, 'axes': axes}
         else:
             pivot[2] = high[2]+0.025
-            axes = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-        frame = {'pivot': pivot, 'axes': axes}
+            frame = {'pivot': pivot, 'axes': [(1, 0, 0), (0, 1, 0), (0, 0, 1)]}
         frames[name] = frame
         for m in selected:
             m['prop_frame'] = frame
     return dict(model, meshes=meshes), frames
 
 
-def add_seat_cages(part, model, lift, prefix):
-    """Separate deformable seat cages; chassis-mounted, breakable, no collision spoofing."""
-    for group in ('seat_L', 'seat_R'):
-        points = [(p[0], -p[2], p[1]+lift) for m in model['meshes']
-                  if m.get('acng_group') == group for p in m['positions']]
-        if not points:
-            continue
-        low, high = bounds(points)
-        nodes = part.setdefault('nodes', [['id', 'posX', 'posY', 'posZ']])
-        nodes.append({'group': prefix+group, 'nodeWeight': SEAT_NODE_KG, 'collision': False, 'selfCollision': False})
-        ids = []
-        for x in (low[0], high[0]):
-            for y in (low[1], high[1]):
-                for z in (low[2], high[2]):
-                    name = prefix+group+str(len(ids));ids.append(name)
-                    nodes.append([name, round(x, 6), round(y, 6), round(z, 6)])
-        nodes.append({'group': '', 'collision': True, 'selfCollision': True})
-        beams = part.setdefault('beams', [['id1:', 'id2:']])
-        # Cosmetic nodes are light. Avoid chassis-rate stiffness on their many connections:
-        # an over-stiff cage is numerically unstable at BeamNG's physics timestep. The old
-        # 0.3 kg / damp 5 cage rang at ~2% of critical damping, so seats visibly wobbled.
-        beams.append({'beamType':'|NORMAL','beamPrecompression':1,'breakGroup':'','deformGroup':'','beamLongBound':1,'beamShortBound':1,'beamSpring': SEAT_SPRING, 'beamDamp': SEAT_DAMP, 'beamDeform': 2000, 'beamStrength': 50000})
-        for i, a in enumerate(ids):
-            for b in ids[i+1:]:
-                beams.append([a, b])
-        for i in (0, 2, 4, 6):
-            for anchor in ('dsh3', 'f7l', 'f7r'):
-                beams.append([ids[i], anchor])
+def steer_node_frame(model, lift):
+    """Column frame from the AC STEER_HR node, the axis the AC wheel actually turns about.
+
+    The 1M column points forward and 22 degrees down. The old fixed frame pointed 20 degrees
+    up, so steering rotated the wheel about an axis 42 degrees off and it wobbled while turning.
+    """
+    node = next((n for n in model.get('nodes', []) if n.get('name') == 'STEER_HR'), None)
+    if not node:
+        return None
+    world = node['world']
+    axes = []
+    for row in world[:3]:
+        v = (row[0], -row[2], row[1])
+        length = math.sqrt(sum(c*c for c in v))
+        if length < 1e-6:
+            return None
+        axes.append(tuple(c/length for c in v))
+    if abs(axes[0][0]) < 0.999:
+        return None  # only a column tilted about the car's X axis maps to one rest rotation
+    origin = world[3]
+    return {'pivot': [origin[0], -origin[2], origin[1]+lift], 'axes': axes,
+            'rest_x': round(math.degrees(math.atan2(axes[1][2], axes[1][1])), 3)}
+
+
+def _subset(mesh, indices, suffix):
+    unique = sorted(set(indices)); remap = {v: i for i, v in enumerate(unique)}
+    part = dict(mesh, name=mesh['name'] + suffix)
+    part['path'] = mesh['path'][:-1] + [part['name']]
+    for key in ('positions', 'normals', 'uvs'):
+        part[key] = [mesh[key][i] for i in unique]
+    part['indices'] = [remap[i] for i in indices]
+    return part
+
+
+def split_fenders(model, lift, is_body):
+    """Move front-fender triangles of the body shell to their own fender meshes.
+
+    One body flexbody bound to body, fender, trunk and windshield node groups let each vertex
+    follow whichever group was nearest, so crashes stretched and tore the skin between them.
+    Vanilla binds each panel to its own group; this does the same for the 1M fenders.
+    """
+    zone, meshes = FENDER_ZONE, []
+    for mesh in model['meshes']:
+        if not is_body(mesh):
+            meshes.append(mesh); continue
+        pts = [(p[0], -p[2], p[1]+lift) for p in mesh['positions']]
+        low, high = bounds(pts)
+        if not (low[0] < -0.5 and high[0] > 0.5 and high[1]-low[1] > 2.5):
+            meshes.append(mesh); continue  # only full-width shell meshes, not struts or cowls
+        tris = {'': [], 'fender_L': [], 'fender_R': []}
+        ind = mesh['indices']
+        for i in range(0, len(ind), 3):
+            c = [sum(pts[ind[i+k]][j] for k in range(3))/3 for j in range(3)]
+            group = ''
+            if c[1] < zone['y_max'] and abs(c[0]) > zone['abs_x_min'] and c[2] < zone['z_max']:
+                group = 'fender_L' if c[0] > 0 else 'fender_R'
+            tris[group].extend(ind[i:i+3])
+        if not tris['fender_L'] and not tris['fender_R']:
+            meshes.append(mesh); continue
+        for group, inds in tris.items():
+            if inds:
+                part = _subset(mesh, inds, '_' + (group or 'body'))
+                if group:
+                    part['acng_group'] = group
+                meshes.append(part)
+    return dict(model, meshes=meshes)
 
 
 def add_prop(part, name, frame, prefix):

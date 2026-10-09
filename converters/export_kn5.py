@@ -51,8 +51,18 @@ LIGHT_FUNCTIONS = (('front_light', 'headlight'), ('rear_light', 'taillight'),
                    ('brake_light_2', 'chmsl'), ('brake_light', 'brakelight'),
                    ('retro_light', 'reverselight'))
 GLOW_FUNCTIONS = {'headlight': {'lowbeam': 0.49, 'highbeam': 1}, 'taillight': {'lowhighbeam': 0.49},
-                  'brakelight': {'brakelights': 0.49}, 'chmsl': {'brakelights': 100},
+                  'brakelight': {'brakelights': 0.49}, 'chmsl': {'brakelights': 0.49},
                   'reverselight': {'reverse': 1}}
+# Two lit levels, as vanilla etkc_lights_on / _on_intense (15000 / 20000 nits). A tail lamp is
+# dim and a brake lamp several times brighter; the old single level made both look the same.
+# Brake lamps go straight to the intense level, like vanilla etkc_brakelight.
+GLOW_NITS = {'headlight': (15000, 30000), 'taillight': (8000, 8000), 'brakelight': (30000, 30000),
+             'chmsl': (30000, 30000), 'reverselight': (15000, 15000)}
+GLOW_INTENSE_ONLY = {'brakelight', 'chmsl'}
+# Red lenses glow with the AC lens texture's own reflector and bulb pattern instead of a flat
+# colour, so lit lamps show structure like vanilla etkc_lights_g. Floor keeps the lens readable.
+PATTERNED_GLOW = {'taillight', 'brakelight', 'chmsl'}
+PATTERN_FLOOR = 0.25
 GLOW_COLOURS = {'headlight': (255, 248, 235), 'reverselight': (255, 255, 255),
                 'taillight': (255, 18, 8), 'brakelight': (255, 18, 8), 'chmsl': (255, 18, 8)}
 # AC lights its red lenses with low ksDiffuse; BeamNG has no equivalent, so unlit lenses
@@ -332,6 +342,29 @@ def _solid_png(colour):
     return buf.getvalue()
 
 
+def _pattern_png(dds_bytes, colour):
+    """Emissive map from a red lens texture: its brightness detail, stretched, times colour."""
+    from PIL import Image
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    rgb = im.convert('RGB')
+    # AC paints the lens red at R 230-255; the detail is in that band. Non-red pixels (chrome,
+    # clear reverse lens) stay nearly dark.
+    pixels = []
+    raw = rgb.tobytes()
+    for rv, gv, bv in zip(raw[0::3], raw[1::3], raw[2::3]):
+        if rv > 150 and gv < 120 and bv < 120:
+            k = PATTERN_FLOOR + (1 - PATTERN_FLOOR) * min(1.0, max(0.0, (rv - 230) / 25))
+        else:
+            k = 0.05
+        pixels.append(tuple(int(round(c * k)) for c in colour))
+    out = Image.new('RGB', rgb.size)
+    out.putdata(pixels)
+    buf = io.BytesIO()
+    out.save(buf, 'PNG')
+    return buf.getvalue()
+
+
 def _rgb_png(dds_bytes):
     from PIL import Image
     im = Image.open(io.BytesIO(dds_bytes))
@@ -420,18 +453,27 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
         if func:
             key = material_names[m + '@' + func]
             entry.update(name=key, mapTo=key)
-            lit = json.loads(json.dumps(entry))
             colour = GLOW_COLOURS[func]
-            glow_file = 'textures/{}glow_{:02x}{:02x}{:02x}.color.png'.format(prefix, *colour)
-            if not (out / glow_file).exists():
-                (out / glow_file).write_bytes(_solid_png(colour))
-            lit.update(name=key + '_on', mapTo=key + '_on')
-            lit['Stages'][0].update(emissiveFactor=[1, 1, 1], emissiveIntensityNits=15000,
-                                    emissiveMap=f'/vehicles/{vehicle_dir}/{glow_file}')
-            lit['Stages'][0].pop('baseColorFactor', None)
-            mats[key + '_on'] = lit
+            if func in PATTERNED_GLOW and diffuse in model['textures']:
+                glow_file = 'textures/{}glow_{}.color.png'.format(prefix, m.lower())
+                if not (out / glow_file).exists():
+                    (out / glow_file).write_bytes(_pattern_png(model['textures'][diffuse], colour))
+            else:
+                glow_file = 'textures/{}glow_{:02x}{:02x}{:02x}.color.png'.format(prefix, *colour)
+                if not (out / glow_file).exists():
+                    (out / glow_file).write_bytes(_solid_png(colour))
+            levels = {}
+            for suffix, nits in zip(('_on', '_on_intense'), GLOW_NITS[func]):
+                lit = json.loads(json.dumps(entry))
+                lit.update(name=key + suffix, mapTo=key + suffix)
+                lit['Stages'][0].update(emissiveFactor=[1, 1, 1], emissiveIntensityNits=nits,
+                                        emissiveMap=f'/vehicles/{vehicle_dir}/{glow_file}')
+                lit['Stages'][0].pop('baseColorFactor', None)
+                mats[key + suffix] = lit
+                levels[suffix] = key + suffix
+            on = levels['_on_intense'] if func in GLOW_INTENSE_ONLY else levels['_on']
             glow[key] = {'simpleFunction': GLOW_FUNCTIONS[func], 'off': key,
-                         'on': key + '_on', 'on_intense': key + '_on'}
+                         'on': on, 'on_intense': levels['_on_intense']}
         mats[key] = entry
     (out / 'main.materials.json').write_text(json.dumps(mats, indent=1), encoding='ascii')
     report['groups'] = {g.name: {'vertices': len(g.pos), 'triangles': sum(len(t) for t in g.tris.values()),

@@ -73,11 +73,33 @@ class Materials(unittest.TestCase):
         self.assertTrue((out / lit['emissiveMap'][len('/vehicles/v/'):]).is_file())
         self.assertNotIn('emissiveFactor', mats['t_lamp_headlight']['Stages'][0])
 
+    def test_brake_lamps_are_intense_and_tail_lamps_dim(self):
+        _, report, mats = self.export()
+        brake, tail = report['glow']['t_Fanali_POSTERIORI_TS_brakelight'], report['glow']['t_Fanali_POSTERIORI_TS_taillight']
+        self.assertEqual(brake['on'], 't_Fanali_POSTERIORI_TS_brakelight_on_intense')
+        self.assertEqual(brake['on_intense'], brake['on'])
+        self.assertEqual(tail['on'], 't_Fanali_POSTERIORI_TS_taillight_on')
+        nits = lambda key: mats[key]['Stages'][0]['emissiveIntensityNits']
+        self.assertGreaterEqual(nits(brake['on']), 3 * nits(tail['on']))
+        head = report['glow']['t_lamp_headlight']
+        self.assertGreater(nits(head['on_intense']), nits(head['on']))  # high beam brighter
+
+    def test_red_lens_glow_keeps_texture_pattern(self):
+        im = Image.new('RGB', (2, 1))
+        im.putdata([(255, 0, 0), (235, 0, 0)])
+        buf = io.BytesIO()
+        im.save(buf, 'PNG')
+        with Image.open(io.BytesIO(export_kn5._pattern_png(buf.getvalue(), (255, 18, 8)))) as out:
+            bright, dim = out.getpixel((0, 0)), out.getpixel((1, 0))
+        self.assertEqual(bright, (255, 18, 8))
+        self.assertLess(dim[0], bright[0] / 2)
+        self.assertGreater(dim[0], 0)
+
     def test_unlit_red_lenses_are_dimmed(self):
         _, _, mats = self.export()
         self.assertEqual(mats['t_Fanali_POSTERIORI_TS_brakelight']['Stages'][0]['baseColorFactor'],
                          [export_kn5.UNLIT_LENS_FACTOR] * 3 + [1])
-        self.assertNotIn('baseColorFactor', mats['t_Fanali_POSTERIORI_TS_brakelight_on']['Stages'][0])
+        self.assertNotIn('baseColorFactor', mats['t_Fanali_POSTERIORI_TS_brakelight_on_intense']['Stages'][0])
 
     def test_mirror_uses_vanilla_reflective_material(self):
         out, _, mats = self.export()
