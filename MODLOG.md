@@ -1,3 +1,12 @@
+## 2026-10-08 - C005 handling measurement preparation (blocked)
+
+Read Claude's C004 handoff, claimed then released the native lease while the
+normal game remains open. Added optional isolated CarLab acceleration/braking
+repeats, circle/balance/static-axle measurements and an original summary tool.
+191 Python tests and existing Node scripts pass; native benchmark unverified.
+Read AC numeric reference outside Git; no converter or tire/GUI changes. C005
+report contains pending before/after rows. Next: game closed, fresh baseline 017.
+
 ## Current checkpoint ? freeroam priority
 New single ACNG control app: master ON/OFF, Advanced tabs for tires/assists/FFB/diagnostics. First ON selects heat/wear, keeps factory assists and FFB optional; custom selections survive OFF/ON. Atomic backed-up preferences; new game starts OFF; panel OFF stops streaming too. GUI001 12/12 native checks; 124 Python tests and Node suites pass. Game left at West Coast USA, master OFF, no AI or automatic driving.
 Next: road-driving heat/pressure calibration, more vehicle/reset/damage coverage and physical-wheel FFB feedback. Track work deferred in Obsidian Freeroam Plan / Track Later. No car mod started.

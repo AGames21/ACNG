@@ -1,4 +1,15 @@
-# Latest checkpoint - 2026-10-08: 1M fixes, tire limits, compact app
+# Latest checkpoint - 2026-10-08: C005 handling baseline prepared
+
+C005 is blocked by an open normal BeamNG session; it has not been controlled or
+closed. Optional CarLab handling measurements and a rejecting summary tool are
+implemented: five acceleration/braking repeats, steady-circle windows and balance
+proxy. 191 Python tests, all Node scripts and LuaJIT compilation pass. Native
+baseline and tuning remain pending. AC local numeric reference read outside Git;
+mass mismatch (physics 1,570 vs UI 1,495 kg) documented. Tire/GUI/converter behavior
+unchanged. See [C005](test-results/C005-1m-handling-baseline.md). Next: normal game
+closed, fresh CarLab 017 with C004 ZIP, validate benchmark before tuning.
+
+# Previous checkpoint - 2026-10-08: 1M fixes, tire limits, compact app
 
 ## 2026-10-08 (evening) - C004 1M fixes and tire changes installed
 

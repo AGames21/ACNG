@@ -1,13 +1,16 @@
-param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab','ControlLab')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod)
+param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab','ControlLab')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod,[switch]$Handling)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path $PSScriptRoot -Parent
 $paths=Get-Content (Join-Path $repoRoot '.local\paths.json') -Raw | ConvertFrom-Json
 if(Get-Process -Name 'BeamNG.drive.x64' -ErrorAction SilentlyContinue){throw 'Close the running BeamNG instance before starting another experiment.'}
 $labCurrent=[IO.Path]::GetFullPath($(if($LabUser){$LabUser}else{$paths.lab_user}))
 $labParent=Split-Path $labCurrent -Parent
+if($Handling -and $Experiment -ne 'CarLab'){throw 'Handling measurements require CarLab.'}
+if($Handling -and (Test-Path -LiteralPath $labCurrent)){throw 'Handling measurements require a new isolated profile.'}
 if($labCurrent -eq [IO.Path]::GetFullPath($paths.beamng_user)){throw 'Experiment profile must differ from stock user profile.'}
 & python (Join-Path $PSScriptRoot 'deploy.py') --user $labCurrent
 if($LASTEXITCODE -ne 0){throw 'ACNG deployment failed'}
+if($Handling){[IO.File]::WriteAllText((Join-Path $labCurrent 'acng-handling-plan.json'),'{"test":"C005"}',[Text.UTF8Encoding]::new($false))}
 $experimentKey=$Experiment.ToLowerInvariant()
 $testName='beamng-'+$experimentKey
 $modName='acng_'+$experimentKey

@@ -5,6 +5,7 @@
 -- drive and brake, crash into a parked pickup, puncture and break a wheel, master OFF/ON, reset.
 local M={}
 local elapsed,co,response=0,nil,nil
+local simElapsed=0
 local MODEL='acng_bmw1m'
 local result={test='C004 1M lamps glass mirrors and steady interior',completed=false,checks={},probes={},shots={}}
 local stage='start'
@@ -213,6 +214,14 @@ local function run()
   check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
   check('verified_first_and_sixth_ratios',r.specs.ratios and math.abs((r.specs.ratios['1'] or r.specs.ratios[1] or 0)-4.11)<0.001 and math.abs((r.specs.ratios['6'] or r.specs.ratios[6] or 0)-0.846)<0.001)
   check('verified_final_drive',math.abs((r.specs.final_drive or 0)-3.154)<0.001)
+  -- Optional C005 benchmark. Existing 45 C004 regression checks remain intact.
+  if FS:fileExists('/acng-handling-plan.json') then
+    extensions.load('acng_handlinglab')
+    local function simDelay(s) local finish=simElapsed+s;while simElapsed<finish do coroutine.yield() end end
+    result.handling=extensions.acng_handlinglab.run(veh,function() return simElapsed end,simDelay)
+    save();vcmd('obj:requestReset(RESET_PHYSICS)');delay(5)
+    spawn.safeTeleport(veh,vec3(0,0,1),quat(0,0,0,1));delay(4)
+  end
   check('lamp_glow_registered',(r.glow or 0)>=5)
   sampleJitter(3);r=probe('idle_jitter');result.idle_jitter=r.jitter
   -- worst is nil when nothing was measured; never pass on an empty sample.
@@ -319,8 +328,9 @@ local function run()
   result.completed=true;stage='done';save();log('I','ACNG_C001','C001 complete')
 end
 M.receive=function(encoded) response=jsonDecode(encoded) end
-M.onUpdate=function(dtReal)
+M.onUpdate=function(dtReal,dtSim)
   elapsed=elapsed+dtReal
+  simElapsed=simElapsed+(dtSim or 0)
   if not co then co=coroutine.create(run) end
   if coroutine.status(co)=='dead' then return end
   local ok,err=coroutine.resume(co)
