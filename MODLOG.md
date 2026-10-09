@@ -1,3 +1,10 @@
+## 2026-10-08 - C006 1M steering frame, panel groups, seats, lamps (installed)
+
+Steering column frame from the AC STEER_HR node; seat shells only on native ETK
+seat nodes, seat cages removed; one node group per outer panel with split front
+fenders; ETK wheel-well tubs stripped; patterned lamp glow with intense brake
+lamps. CarLab ACNG-car-018 45/45; installer accepts C006 evidence. Installed.
+
 ## 2026-10-08 - C005 handling measurement preparation (blocked)
 
 Read Claude's C004 handoff, claimed then released the native lease while the

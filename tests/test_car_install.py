@@ -57,9 +57,10 @@ class CarInstallProof(unittest.TestCase):
             self.assertEqual(verify_local_build(package, test)[1], 12)
 
     def test_c004_requires_lamp_and_steadiness_evidence(self):
-        with tempfile.TemporaryDirectory() as temp:
+        for label in ('C004 1M lamps', 'C006 1M steering frame'):
+          with self.subTest(label), tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))
-            proof['test'] = 'C004 1M lamps'
+            proof['test'] = label
             proof['checks'].update(dict.fromkeys(['four_native_gauges', 'three_native_mirrors',
                 'three_native_mirror_cameras', 'four_bmw_rim_meshes',
                 'gauges_receive_native_engine_signals', 'speed_gauge_receives_native_motion'], True))

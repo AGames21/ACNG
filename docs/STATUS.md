@@ -1,4 +1,14 @@
-# Latest checkpoint - 2026-10-08: C005 handling baseline prepared
+# Latest checkpoint - 2026-10-08 (late): C006 1M fixes installed
+
+Playtest faults fixed with causes found: steering axis 42 degrees off the AC column,
+trims and belts classed as seat parts, panels spanning several node groups (crash
+tearing), visible ETK wheel-well tubs, flat brake lamps. CarLab ACNG-car-018 45/45;
+mass 2.3% over reference; interior 1.0 mm idle / 0.15 mm driving. Installed after a
+backup. 195 Python tests and 7 Node suites pass. See
+[C006](test-results/C006-1m-steering-panels-seats-lamps.md). C005 handling baseline
+should now run against the C006 ZIP (seat cages removed, mass slightly lower).
+
+# Previous checkpoint - 2026-10-08: C005 handling baseline prepared
 
 C005 is blocked by an open normal BeamNG session; it has not been controlled or
 closed. Optional CarLab handling measurements and a rejecting summary tool are

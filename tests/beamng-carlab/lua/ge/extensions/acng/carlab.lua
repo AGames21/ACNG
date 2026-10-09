@@ -7,7 +7,7 @@ local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
 local MODEL='acng_bmw1m'
-local result={test='C004 1M lamps glass mirrors and steady interior',completed=false,checks={},probes={},shots={}}
+local result={test='C006 1M steering frame, panel groups, seats and patterned lamps',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -297,6 +297,7 @@ local function run()
   check('crash_native_damage',(r.damage or 0)>(before.damage or 0)+1000)
   check('crash_tires_still_running',r.tires and r.finite)
   shot('crash_front',3.5,-4.0,1.5)
+  localShot('crash_side_FL',{1.2,-3.2,0.9},{1.0,-0.8,0.5})
   if obstacle then obstacle:delete();obstacle=nil end
   -- Native puncture and a detached wheel, then drive the wreck.
   probe('puncture',[[for _,w in pairs(wheels.wheels) do if w.name=='FL' then beamstate.deflateTire(w.cid);break end end]])
