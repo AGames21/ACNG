@@ -409,7 +409,7 @@ def build(ac_car, beamng, out_root, skin):
             if name.endswith('.jbeam') and '/etk' in name.lower():
                 try: stock.update(jbeam_io.loads(common.read(name).decode('utf-8','replace')))
                 except ValueError: pass
-    for name in ('etkc_fueltank', 'etkc_brake_F_tt', 'etkc_brake_R_tt'):  # transformed local parts
+    for name in ('etkc_fueltank', 'etkc_brake_F_tt', 'etkc_brake_R_tt', 'etkc_shifter_M'):  # transformed local parts
         stock[name]=next(data[name] for data in files.values() if name in data)
     parts=car_upgrades.spec_parts(stock)
     pc=car_upgrades.spec_config(pc)
@@ -418,9 +418,14 @@ def build(ac_car, beamng, out_root, skin):
         donors = dict(stock)
         for data in files.values():
             donors.update(data)
+        donors.update(parts)  # selected cloned turbo still contributes the donor EQ
         offsets = car_sounds.donor_offsets(donors, pc['parts'].values())
         report['sound_eq_offsets'] = offsets
         car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE), offsets)
+        report['event_sounds'] = car_sounds.write_events(bank, vdir, VEHICLE)
+        car_sounds.apply_events(parts, report['event_sounds'])
+        report['unmapped_event_sounds'] = {'bmw_6cyl_limiter': 'No standalone native engine sample slot in BeamNG 0.39.4'}
+        report['shift_sound_semantics'] = 'Native H-pattern gear-in / gear-out, not directional upshift / downshift'
     parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
     parts.update(car_details.plate_part())
     parts.update(car_details.brake_parts(stock))

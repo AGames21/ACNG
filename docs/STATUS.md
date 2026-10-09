@@ -1,4 +1,14 @@
-# Latest checkpoint - 2026-10-09 (night): C012 1M sound crossfades installed
+# Latest checkpoint - 2026-10-09 (night): C013 1M 250 km/h limiter and event sounds installed
+
+Native ETK 250 km/h limiter on the converted engine; the cloned turbo and shifter play the
+owned AC turbo whine, blow-off and gear-in/out recordings. The AC rev-limiter recording
+has no native slot and is not played. Engine/exhaust blends unchanged from C012. CarLab
+ACNG-car-028 54/54 (wheel speed held 250.0-250.2 km/h); installed after a backup. 225
+Python tests and 10 Node suites pass. See
+[C013](test-results/C013-1m-native-limiter-event-sounds.md). Open: the player's listening
+verdict. Dash paused.
+
+# Previous checkpoint - 2026-10-09 (night): C012 1M sound crossfades installed
 
 The "different sound around 2500 rpm" came from BeamNG blending two different AC
 recordings across the whole gap between them. Each loop now plays alone across its band

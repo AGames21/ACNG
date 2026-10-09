@@ -58,7 +58,7 @@ class CarInstallProof(unittest.TestCase):
 
     def test_c004_requires_lamp_and_steadiness_evidence(self):
         for label in ('C004 1M lamps', 'C006 1M steering frame', 'C007 1M fitment', 'C008 1M crash isolation',
-                      'C009 1M wheel track', 'C010 1M declared wheel track', 'C011 1M brakes', 'C012 1M sound crossfades'):
+                      'C009 1M wheel track', 'C010 1M declared wheel track', 'C011 1M brakes', 'C012 1M sound crossfades', 'C013 1M limiter and sounds'):
           with self.subTest(label), tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))
             proof['test'] = label
@@ -75,13 +75,38 @@ class CarInstallProof(unittest.TestCase):
             fitted = ['crash_isolation_groups_found', 'tires_centred_on_ac_wheels', 'front_wheels_steer_right']
             extra = {'C008': ['crash_isolation_groups_found'], 'C009': fitted, 'C010': fitted,
                      'C011': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded'],
-                     'C012': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded']}.get(label[:4], [])
+                     'C012': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded'],
+                     'C013': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded',
+                         'native_top_speed_limit_configured', 'native_turbo_samples_loaded',
+                         'native_shift_samples_loaded', 'top_speed_limiter_holds_250']}.get(label[:4], [])
             if extra:
                 with self.assertRaisesRegex(RuntimeError, 'incomplete'):
                     verify_local_build(package, test)
                 proof['checks'].update(dict.fromkeys(extra, True))
                 test.write_text(json.dumps(proof))
             self.assertEqual(verify_local_build(package, test)[1], 18+len(extra))
+
+    def test_c013_rejects_each_missing_or_failed_native_feature(self):
+        needed=['spawn_undamaged','drive_no_self_damage','reset_repairs_native',
+                'four_animated_controls','native_prop_meshes_created','native_shifter_moves',
+                'four_native_gauges','three_native_mirrors','three_native_mirror_cameras',
+                'four_bmw_rim_meshes','gauges_receive_native_engine_signals','speed_gauge_receives_native_motion',
+                'lamp_glow_registered','lowbeam_and_brake_signals','interior_steady_at_idle',
+                'interior_steady_while_driving','tires_auto_compound','unladen_mass_within_three_percent',
+                'crash_isolation_groups_found','tires_centred_on_ac_wheels','front_wheels_steer_right',
+                'torque_curve_matches_ac','ac_engine_sound_loaded']
+        features=['native_top_speed_limit_configured','native_turbo_samples_loaded',
+                  'native_shift_samples_loaded','top_speed_limiter_holds_250']
+        with tempfile.TemporaryDirectory() as temp:
+            package,test,proof=self.fixture(Path(temp));proof['test']='C013'
+            for name in features:
+                for value in (None,False):
+                    proof['checks']=dict.fromkeys(needed+features,True)
+                    if value is None:del proof['checks'][name]
+                    else:proof['checks'][name]=value
+                    test.write_text(json.dumps(proof))
+                    with self.subTest(name=name,value=value),self.assertRaisesRegex(RuntimeError,'incomplete or failed'):
+                        verify_local_build(package,test)
 
     def test_failed_or_incomplete_native_runs_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

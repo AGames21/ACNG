@@ -351,6 +351,9 @@ def spec_parts(stock):
     """Clone local donor parts; original numeric targets, native powertrain retained."""
     engine = copy.deepcopy(stock['etk_engine_i6_3.0'])
     engine['information'] = {'name': 'BMW 1M target 3.0L I6 (experimental)', 'authors': 'ACNG local build'}
+    # Stock ETK ECUs use this native vehicleController field, in m/s. Keep the
+    # target on the cloned engine too, so its default is explicit in the build.
+    engine.setdefault('vehicleController', {})['topSpeedLimit'] = 250 / 3.6
     # Native idle region and over-rev tail scaled; 1000-7000 rpm replaced by BASE_TORQUE.
     # The 500 Nm plateau is AC's (and the real overboost); there is no timed overboost controller.
     rows = engine['mainEngine']['torque']
@@ -368,14 +371,21 @@ def spec_parts(stock):
     for row in tank['variables'][1:]:
         if isinstance(row,list) and row[0]=='$fuel':
             row[4],row[6]=47.7,53
-    return {'acng_1m_engine': engine, 'acng_1m_transmission': transmission,'acng_1m_fueltank':tank}
+    turbo = copy.deepcopy(stock['etk_intake_i6_3.0_petrol_turbo'])
+    turbo['information'] = {'name': 'BMW 1M native turbo (local sounds)', 'authors': 'ACNG local build'}
+    shifter = copy.deepcopy(stock['etkc_shifter_M'])
+    shifter['information'] = {'name': 'BMW 1M native manual shifter (local sounds)', 'authors': 'ACNG local build'}
+    return {'acng_1m_engine': engine, 'acng_1m_transmission': transmission,
+            'acng_1m_fueltank': tank, 'acng_1m_turbo': turbo, 'acng_1m_shifter': shifter}
 
 
 def spec_config(pc):
     pc = copy.deepcopy(pc)
     pc['parts'].update(etk_engine='acng_1m_engine', etk_transmission='acng_1m_transmission',
                        etk_finaldrive_R='etk_finaldrive_R_315', etkc_differential_R='etkc_differential_R_LSD',
-                       etkc_fueltank='acng_1m_fueltank')
+                       etkc_fueltank='acng_1m_fueltank',
+                       etk_engine_ecu_speedlimit='etk_engine_ecu_speedlimit_250', etkc_shifter='acng_1m_shifter')
+    pc['parts']['etk_intake_i6_3.0_petrol'] = 'acng_1m_turbo'
     # Chassis weights remain native: reducing them caused front-subframe self-damage.
     # Accept the measured ~2.5% mass difference instead of breaking damage physics.
     pc.setdefault('vars',{}).update({'$fuel':47.7})

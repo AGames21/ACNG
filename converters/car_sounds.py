@@ -241,6 +241,46 @@ def write(bank, vdir, vehicle):
             for key, name in names.items()}
 
 
+EVENT_SAMPLES = ('turbo', 'flutter_4', 'bmw_6cyl_limiter', 'gearup', 'geardn')
+
+
+def write_events(bank, vdir, vehicle):
+    """Export owned recordings separately; never alter engine/exhaust blends.
+
+    BeamNG 0.39 has no standalone combustion-engine rev-limiter sample slot.
+    Preserve that recording locally for research, without pretending it is wired.
+    """
+    samples = read_fsb(bank.read_bytes())
+    missing = set(EVENT_SAMPLES) - samples.keys()
+    if missing:
+        raise ValueError('Missing 1M event samples: ' + ', '.join(sorted(missing)))
+    sdir = vdir / 'sounds'
+    sdir.mkdir(exist_ok=True)
+    files = {}
+    for name in EVENT_SAMPLES:
+        rate, channels, pcm = samples[name]
+        pcm = mono(pcm, channels)
+        if name == 'turbo':
+            pcm = seamless(pcm, rate)
+        filename = 'acng_1m_' + name + '.wav'
+        (sdir / filename).write_bytes(wav(pcm, rate))
+        files[name] = 'vehicles/' + vehicle + '/sounds/' + filename
+    return files
+
+
+def apply_events(parts, files):
+    """Use stock turbo and H-pattern hooks; retain every mechanical parameter.
+
+    H-pattern hooks mean entering/leaving a gear, not directional up/down shifts.
+    No custom controller or unsupported revLimiterSound property is installed.
+    """
+    parts['acng_1m_turbo']['turbocharger'].update(
+        whineLoopEvent=files['turbo'], bovSoundFileName=files['flutter_4'])
+    parts['acng_1m_shifter']['hPattern'].update(
+        shiftSoundEventHPatternGearIn=files['gearup'],
+        shiftSoundEventHPatternGearOut=files['geardn'])
+
+
 def donor_offsets(parts, chosen):
     """Sum the "$+" sound EQ keys that the chosen child parts add on top of the engine's values."""
     out = {'soundConfig': {}, 'soundConfigExhaust': {}}

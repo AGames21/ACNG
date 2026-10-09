@@ -34,6 +34,40 @@ class SoundContracts(unittest.TestCase):
     SAMPLES = [('1m_idle', 2, 4), ('1m_on_4000', 2, 3), ('1m_off_4000', 2, 3),
                ('ext_1m_idle', 1, 5), ('ext1m_on_2500', 1, 2), ('ext1m_off_2500', 1, 2), ('horn', 1, 1)]
 
+    def test_event_samples_leave_blends_and_donor_physics_unchanged(self):
+        events=[(name,2 if name=='bmw_6cyl_limiter' else 1,128) for name in s.EVENT_SAMPLES]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);bank=root/'test.bank';bank.write_bytes(fake_bank(self.SAMPLES+events))
+            s.write(bank,root,'acng_test')
+            before={p.name:p.read_bytes() for p in (root/'sounds').iterdir()}
+            files=s.write_events(bank,root,'acng_test')
+            for name,data in before.items():self.assertEqual((root/'sounds'/name).read_bytes(),data)
+            self.assertEqual(set(files),set(s.EVENT_SAMPLES))
+            for path in files.values():
+                data=(root/'sounds'/Path(path).name).read_bytes()
+                self.assertEqual(data[:4],b'RIFF')
+                self.assertEqual(struct.unpack_from('<H',data,22)[0],1)
+            parts={'acng_1m_engine':{'mainEngine':{'torque':[[1000,300]]}},
+                   'acng_1m_turbo':{'turbocharger':{'wastegateStart':5,'pressurePSI':[[60000,3]]}},
+                   'acng_1m_shifter':{'hPattern':{'gearCoordinates':[[1,0,1]]}}}
+            s.apply_events(parts,files)
+            self.assertEqual(parts['acng_1m_engine'],{'mainEngine':{'torque':[[1000,300]]}})
+            turbo=parts['acng_1m_turbo']['turbocharger']
+            self.assertEqual(turbo['whineLoopEvent'],files['turbo'])
+            self.assertEqual(turbo['bovSoundFileName'],files['flutter_4'])
+            self.assertEqual(turbo['pressurePSI'],[[60000,3]])
+            shifter=parts['acng_1m_shifter']['hPattern']
+            self.assertEqual(shifter['shiftSoundEventHPatternGearIn'],files['gearup'])
+            self.assertEqual(shifter['shiftSoundEventHPatternGearOut'],files['geardn'])
+            self.assertEqual(shifter['gearCoordinates'],[[1,0,1]])
+
+    def test_missing_events_fail_without_partial_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);bank=root/'test.bank';bank.write_bytes(fake_bank(self.SAMPLES))
+            with self.assertRaisesRegex(ValueError,'Missing 1M event samples'):
+                s.write_events(bank,root,'acng_test')
+            self.assertFalse((root/'sounds').exists())
+
     def test_reads_names_rates_channels_and_pcm(self):
         got = s.read_fsb(fake_bank(self.SAMPLES))
         self.assertEqual(set(got), {n for n, _, _ in self.SAMPLES})

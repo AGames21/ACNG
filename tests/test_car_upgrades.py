@@ -218,15 +218,25 @@ class UpgradeContracts(unittest.TestCase):
     def test_spec_parts_do_not_mutate_donor_tank_or_engine(self):
         stock={'etk_engine_i6_3.0':{'mainEngine':{'torque':[['rpm','torque'],[3000,300]]}},
                'etk_transmission_6M_sport':{'gearbox':{'gearRatios':[0,1]}},
+               'etk_intake_i6_3.0_petrol_turbo':{'turbocharger':{'wastegateStart':5}},
+               'etkc_shifter_M':{'hPattern':{'gearCoordinates':[[1,0,1]]}},
                'etkc_fueltank':{'mainTank':{'fuelCapacity':50},'variables':[['name'],['$fuel','range','L','Chassis',50,0,50]]}}
         original=copy.deepcopy(stock);parts=u.spec_parts(stock)
         self.assertEqual(stock,original)
         self.assertEqual(parts['acng_1m_fueltank']['mainTank']['fuelCapacity'],53)
         self.assertEqual(parts['acng_1m_fueltank']['variables'][1][4],47.7)
+        self.assertAlmostEqual(parts['acng_1m_engine']['vehicleController']['topSpeedLimit']*3.6,250)
+        self.assertEqual(parts['acng_1m_turbo']['turbocharger'],stock['etk_intake_i6_3.0_petrol_turbo']['turbocharger'])
+        self.assertEqual(parts['acng_1m_shifter']['hPattern'],stock['etkc_shifter_M']['hPattern'])
+        config=u.spec_config({'parts':{'etk_engine_ecu_speedlimit':'etk_engine_ecu_speedlimit_off'}})
+        self.assertEqual(config['parts']['etk_engine_ecu_speedlimit'],'etk_engine_ecu_speedlimit_250')
+        self.assertEqual(config['parts']['etk_intake_i6_3.0_petrol'],'acng_1m_turbo')
+        self.assertEqual(config['parts']['etkc_shifter'],'acng_1m_shifter')
 
     def test_torque_curve_keeps_idle_and_tail_and_uses_the_ac_shape(self):
         stock={'etk_engine_i6_3.0':{'mainEngine':{'torque':[['rpm','torque'],[0,0],[700,200],[3000,300],[8000,200]]}},
                'etk_transmission_6M_sport':{'gearbox':{'gearRatios':[0,1]}},
+               'etk_intake_i6_3.0_petrol_turbo':{},'etkc_shifter_M':{},
                'etkc_fueltank':{'mainTank':{},'variables':[]}}
         rows=u.spec_parts(stock)['acng_1m_engine']['mainEngine']['torque']
         self.assertEqual(rows[:3],[['rpm','torque'],[0,0],[700,190.0]])

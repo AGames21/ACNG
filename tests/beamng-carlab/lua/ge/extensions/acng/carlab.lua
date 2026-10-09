@@ -7,7 +7,7 @@ local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
 local MODEL='acng_bmw1m'
-local result={test='C012 1M sound follows AC loop crossfades',completed=false,checks={},probes={},shots={}}
+local result={test='C013 1M native limiter and event sounds',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -45,6 +45,10 @@ local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capaci
 r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^acng_bmw1m_') then r.glow=r.glow+1 end end
 if e and e.soundConfiguration then local c=e.soundConfiguration
   r.sound={engine=c.engine and c.engine.blendFile,exhaust=c.exhaust and c.exhaust.blendFile,id=e.engineSoundID,id_exhaust=e.engineSoundIDExhaust} end
+r.limiter={configured_m_s=v.data.vehicleController and v.data.vehicleController.topSpeedLimit,
+  wheel_m_s=electrics.values.wheelspeed,throttle_input=electrics.values.throttle_input,
+  controller_throttle=controller.mainController.throttle}
+local events=rawget(_G,'acngEventSounds');if events then r.event_sounds=events;rawset(_G,'acngEventSounds',nil) end
 -- rawget/rawset: plain globals trip BeamNG's undeclared-global warning.
 local fit=rawget(_G,'acngFit');if fit then r.fit=fit;rawset(_G,'acngFit',nil) end
 r.lights={lowbeam=electrics.values.lowbeam,brakelights=electrics.values.brakelights,reverse=electrics.values.reverse}
@@ -132,6 +136,56 @@ local function anyBroken(r) for _,w in ipairs(r.wheels) do if w.broken then retu
 local function anyDeflated(r) for _,w in ipairs(r.wheels) do if w.deflated then return true end end return false end
 local DRIVE="controller.mainController.setGearboxMode('arcade'); input.event('parkingbrake',0,1); input.event('clutch',0,1); input.event('brake',0,1); input.event('steering',0,1)"
 local STOP="controller.mainController.setGearboxMode('realistic'); input.event('throttle',0,1); input.event('clutch',1,1); input.event('brake',1,1)"
+local EVENT_SOUNDS=[[
+local out={}
+local turbo=v.data.turbocharger or {};local h=v.data.hPattern or {}
+local slots={turbo=turbo.whineLoopEvent,flutter_4=turbo.bovSoundFileName,
+  gearup=h.shiftSoundEventHPatternGearIn,geardn=h.shiftSoundEventHPatternGearOut}
+for _,name in ipairs({'turbo','flutter_4','gearup','geardn'}) do
+ local expected='vehicles/acng_bmw1m/sounds/acng_1m_'..name..'.wav'
+ local file=slots[name];local entry={file=file,configured=file==expected,exists=FS:fileExists('/'..expected)}
+ if entry.configured and entry.exists then
+  local ok,id=pcall(function() return obj:createSFXSource2(file,'AudioDefaultLoop3D','ACNG_C013_'..name,0,0) end)
+  entry.source_id=ok and id or nil;entry.loaded=ok and type(id)=='number' and id>=0
+  if entry.loaded then obj:stopSFX(id) end
+ end
+ out[name]=entry
+end
+rawset(_G,'acngEventSounds',out)]]
+local function testSpeedLimiter()
+  stage='sustained native speed limiter';save()
+  local samples={};local start,nextSample=simElapsed,simElapsed
+  local reached,peak=nil,0
+  vcmd(DRIVE..";input.event('throttle',1,1)")
+  while simElapsed-start<180 do
+    local speed=be:getPlayerVehicle(0):getVelocity():length()*3.6
+    peak=math.max(peak,speed)
+    if simElapsed>=nextSample then
+      local p=probe('limiter sample')
+      samples[#samples+1]={time_s=simElapsed-start,km_h=speed,signals=p.limiter}
+      nextSample=simElapsed+2
+    end
+    if speed>=245 and not reached then reached=simElapsed end
+    if reached and simElapsed-reached>=15 then break end
+    coroutine.yield()
+  end
+  local held,cut,count=true,false,0
+  for _,s in ipairs(samples) do
+    if reached and s.time_s>=reached-start+5 then
+      -- The limiter governs wheel speed (also what the speedometer shows); ground speed sits
+      -- about 1 % lower from tire slip at 250 (C013 first run: wheel 250.0, ground 247.9).
+      local l=s.signals or {}
+      local wheel=(l.wheel_m_s or 0)*3.6
+      count=count+1;held=held and wheel>=248 and wheel<=252 and s.km_h>=245
+      cut=cut or ((l.throttle_input or 0)>0.95 and (l.controller_throttle or 1)<0.95)
+    end
+  end
+  result.speed_limiter={samples=samples,peak_km_h=peak,held_samples=count,throttle_reduction=cut}
+  check('top_speed_limiter_holds_250',reached~=nil and count>=4 and held and cut and peak<=253)
+  vcmd(STOP);delay(3)
+  vcmd('obj:requestReset(RESET_PHYSICS)');delay(5)
+  spawn.safeTeleport(be:getPlayerVehicle(0),vec3(0,0,1),quat(0,0,0,1));delay(4)
+end
 local function peakDuring(seconds,jitter)
   local stop,peak=elapsed+seconds,0
   while elapsed<stop do
@@ -280,6 +334,12 @@ local function run()
   end
   check('lamp_glow_registered',(r.glow or 0)>=5)
   check('ac_engine_sound_loaded',r.sound and tostring(r.sound.engine):find('acng_1m_engine',1,true)~=nil and tostring(r.sound.exhaust):find('acng_1m_exhaust',1,true)~=nil and r.sound.id~=nil)
+  check('native_top_speed_limit_configured',r.limiter and math.abs((r.limiter.configured_m_s or 0)*3.6-250)<0.1)
+  r=probe('native event sound sources',EVENT_SOUNDS);result.event_sounds=r.event_sounds
+  local es=r.event_sounds or {}
+  check('native_turbo_samples_loaded',es.turbo and es.turbo.loaded and es.flutter_4 and es.flutter_4.loaded)
+  check('native_shift_samples_loaded',es.gearup and es.gearup.loaded and es.geardn and es.geardn.loaded)
+  testSpeedLimiter()
   r=probe('fitment',FIT);result.fitment=r.fit
   -- AC tire centres sit at |x| 0.754 (kn5 WHEEL_* pivots); C008 measured 0.770 front, 0.805 rear.
   local centred=r.fit and true or false
