@@ -153,7 +153,8 @@ class Builder(unittest.TestCase):
     def test_every_exported_group_has_a_flexbody_owner(self):
         targets = {'body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'bumper_F', 'bumper_R',
                    'lights_FL', 'lights_FR', 'lights_RL', 'lights_RR',
-                   'trunk', 'dash', 'cabin', 'seat_L', 'seat_R', 'shifter', 'shifter_boot'}
+                   'trunk', 'dash', 'cabin', 'seat_L', 'seat_R', 'shifter', 'shifter_boot',
+                   'nose'}  # 'nose' only receives far body triangles (car_upgrades.reroute_nose)
         self.assertEqual(set(build_ac_car.FLEXBODIES), targets)
         # One node group per outer panel: spanning groups stretched and tore the skin in crashes.
         for name in ('body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'trunk',

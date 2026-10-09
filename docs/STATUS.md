@@ -1,4 +1,18 @@
-# Latest checkpoint - 2026-10-08 (night): C010 1M wheel track and crash liner installed
+# Latest checkpoint - 2026-10-09: 1M sound EQ and nose binding built, native test pending
+
+Sound: the AC 1M recordings were healthy, but the donor ETK child parts add EQ on
+top of the engine's values with `$+` keys. The turbo intake adds +4 dB at the firing
+frequency, and the I6 exhaust adds +12 dB low shelf and -9 dB high shelf, so the
+"flat" EQ was not flat in game. The converter now sums those keys and cancels them,
+then adds 3 dB to win the level back. The one clicking loop (`ext_1m_idle`) gets a
+30 ms crossfade at its loop point. Engine-bay spikes: the radiator-support panel at
+the nose bound to body nodes up to 0.45 m away. Body triangles ahead of y -1.6 now
+use a `nose` flexbody on the body nodes plus the unbreakable bumper bar (third node
+0.24/0.29 m, median/95th). 214 Python tests pass. Not yet run in game: C011 waits
+until the normal game is closed. Turbo whine, blow-off and limiter samples are not
+mapped yet.
+
+# Previous checkpoint - 2026-10-08 (night): C010 1M wheel track and crash liner installed
 
 Steering direction and pedals were confirmed fixed in C008: the road wheels turn
 right for right input, and the foot rest is static. Crash spikes came from the

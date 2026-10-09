@@ -1,3 +1,11 @@
+## 2026-10-09 - 1M sound EQ cancel, loop seam, nose binding (built, native test pending)
+
+Child-part `$+` sound EQ (turbo intake, I6 exhaust) is summed and cancelled in the
+engine base config with +3 dB level match; loop seams that click get a 30 ms
+equal-power crossfade. Body triangles ahead of y -1.6 move to a `nose` flexbody on
+`etkc_body` + unbreakable `etkc_bumperbar` (2753 triangles). 214 tests pass. C011
+pending: the normal game is open.
+
 ## 2026-10-08 - C007-C010 1M steering, pedals, crash liner, wheel track (installed)
 
 Prop steering sign and pedal picking by X position (foot rest static); BeamNG

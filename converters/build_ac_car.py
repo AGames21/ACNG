@@ -59,6 +59,7 @@ KEEP_PREFIXES = ('etkc_lowerarm', 'etkc_tierod', 'etkc_hub', 'etkc_upperarm', 'e
 # group was nearest, so crashes stretched and tore the skin between panels.
 FLEXBODIES = {
     'body': ('etkc_body', ['etkc_body']),
+    'nose': ('etkc_body', ['etkc_body', 'etkc_bumperbar']),  # radiator support; see car_upgrades
     'fender_L': ('etkc_fender_L', ['etkc_fender_L']),
     'fender_R': ('etkc_fender_R', ['etkc_fender_R']),
     **{side: ('etkc_body', [group]) for sides in car_upgrades.LAMP_SIDES.values()
@@ -299,6 +300,8 @@ def build(ac_car, beamng, out_root, skin):
             model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
         model,report['rerouted_fender_triangles']=car_upgrades.reroute_fenders(
             model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
+        model,report['rerouted_nose_triangles']=car_upgrades.reroute_nose(
+            model,MESH_LIFT,lambda m:export_kn5.route(m,materials))
         report['mesh'] = export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT)
         groups = report['mesh']['groups']
         # Native light switching: electrics swap each AC lamp to its emissive copy.
@@ -348,12 +351,17 @@ def build(ac_car, beamng, out_root, skin):
                 except ValueError: pass
     stock['etkc_fueltank']=next(data['etkc_fueltank'] for data in files.values() if 'etkc_fueltank' in data)
     parts=car_upgrades.spec_parts(stock)
+    pc=car_upgrades.spec_config(pc)
     bank = ac_car / 'sfx' / (ac_car.name + '.bank')
     if bank.is_file():  # the user's own AC recordings; written to the build output only
-        car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE))
+        donors = dict(stock)
+        for data in files.values():
+            donors.update(data)
+        offsets = car_sounds.donor_offsets(donors, pc['parts'].values())
+        report['sound_eq_offsets'] = offsets
+        car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE), offsets)
     parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
     (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
-    pc=car_upgrades.spec_config(pc)
     (vdir / f'{CONFIG}.pc').write_text(json.dumps(pc, indent=2), encoding='ascii')
     (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')
 

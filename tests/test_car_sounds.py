@@ -1,4 +1,5 @@
 import json
+import math
 import struct
 import sys
 import tempfile
@@ -70,6 +71,37 @@ class SoundContracts(unittest.TestCase):
         self.assertEqual(engine['soundConfig']['sampleFolder'], 'vehicles/acng_test/sounds/')
         self.assertEqual((engine['soundConfig']['mainGain'], engine['soundConfig']['eqHighGain']), (-7, 0))
         self.assertEqual(engine['soundConfigExhaust']['sampleName'], 'acng_1m_exhaust')
+
+    def test_base_eq_cancels_child_part_eq_so_the_final_eq_is_flat(self):
+        donors = {'intake_turbo': {'soundConfig': {'$+eqFundamentalGain': 4, '$+eqLowGain': 2, '$+mainGain': 1.5},
+                                   'soundConfigExhaust': {'$+eqFundamentalGain': 4}},
+                  'exhaust': {'soundConfigExhaust': {'$+lowShelfGain': 12, '$+highShelfGain': -9}},
+                  'not_fitted': {'soundConfig': {'$+eqHighGain': 7}}}
+        offsets = s.donor_offsets(donors, ['intake_turbo', 'exhaust', '', 'missing'])
+        self.assertEqual(offsets['soundConfig'], {'eqFundamentalGain': 4, 'eqLowGain': 2})
+        engine = {'mainEngine': {'soundConfig': 'soundConfig', 'soundConfigExhaust': 'soundConfigExhaust'},
+                  'soundConfig': {'mainGain': -7}, 'soundConfigExhaust': {'mainGain': -3}}
+        updates = {k: {'sampleName': 'x', **s.FLAT_EQ} for k in ('engine', 'exhaust')}
+        s.apply(engine, updates, offsets)
+        for section in ('soundConfig', 'soundConfigExhaust'):
+            for key in s.FLAT_EQ:  # what BeamNG sees after merging the "$+" child keys
+                final = engine[section][key] + sum(d.get(section, {}).get('$+' + key, 0)
+                                                    for n, d in donors.items() if n != 'not_fitted')
+                self.assertEqual(final, 0, (section, key))
+        self.assertEqual((engine['soundConfig']['mainGain'], engine['soundConfigExhaust']['mainGain']),
+                         (-7 + s.LEVEL_MATCH_DB, -3 + s.LEVEL_MATCH_DB))
+
+    def test_clicking_loop_gets_a_crossfaded_seam_and_clean_loops_stay_untouched(self):
+        rate, period = 1000, 50
+        tone = [round(8000 * math.sin(2 * math.pi * i / period)) for i in range(1000)]
+        clean = struct.pack('<1000h', *tone)
+        self.assertEqual(s.seamless(clean, rate), clean)
+        cut = struct.pack('<1013h', *(tone + tone[:13]))  # stops mid-cycle: a jump at the loop point
+        self.assertGreater(s.seam_ratio(struct.unpack('<1013h', cut)), s.SEAM_RATIO)
+        out = s.seamless(cut, rate)
+        fixed = struct.unpack(f'<{len(out) // 2}h', out)
+        self.assertEqual(len(fixed), 1013 - int(rate * s.FADE_S))
+        self.assertLessEqual(s.seam_ratio(fixed), s.SEAM_RATIO)
 
 
 if __name__ == '__main__':

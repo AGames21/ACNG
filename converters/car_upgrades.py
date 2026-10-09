@@ -33,6 +33,13 @@ LAMP_FALLBACKS = ('body', 'trunk', 'hood', 'bumper_F', 'bumper_R', 'fender_L', '
 # far vertices swung into a sawtooth of spikes in crashes (C008 isolation shots). Only the
 # body takes them: the hood opens and the bumper can fall off.
 FENDER_FALLBACKS = ('body',)
+# Behind the grille the body shell carries the radiator-support panel. BeamNG binds each vertex
+# to a node triple, and the third body node there is 0.38 m away (95th: 0.45), so a big front
+# crash folded the sparse nose nodes and the panel spiked out (C010 shots). The bumper bar
+# (y -2.02..-1.90) sits just below it and every one of its beams is unbreakable, so body + bar
+# ('nose', third node 0.23 m) holds every body triangle ahead of this line without ever tearing
+# away with a loose part. Extra nodes only shorten bindings, so the zone can be generous.
+NOSE_Y_MAX = -1.6
 PROP_HEADER = ['func', 'mesh', 'idRef:', 'idX:', 'idY:', 'baseRotation', 'rotation',
                'translation', 'min', 'max', 'offset', 'multiplier']
 
@@ -266,6 +273,28 @@ def reroute_lamps(model, lift, route_of, clouds):
 def reroute_fenders(model, lift, route_of, clouds):
     """Move fender triangles beyond the fender nodes' reach (arch liner) to closer panel groups."""
     return reroute_far(model, lift, route_of, clouds, {'fender_L', 'fender_R'}, FENDER_FALLBACKS, LAMP_REACH)
+
+
+def reroute_nose(model, lift, route_of):
+    """Move body triangles ahead of NOSE_Y_MAX to the 'nose' flexbody (body + bumper bar nodes)."""
+    meshes, moved = [], 0
+    for mesh in model['meshes']:
+        if route_of(mesh) != 'body':
+            meshes.append(mesh); continue
+        pts = [(p[0], -p[2], p[1]+lift) for p in mesh['positions']]
+        tris, ind = {'': [], 'nose': []}, mesh['indices']
+        for i in range(0, len(ind), 3):
+            y = sum(pts[ind[i+k]][1] for k in range(3))/3
+            tris['nose' if y < NOSE_Y_MAX else ''].extend(ind[i:i+3])
+        if not tris['nose']:
+            meshes.append(mesh); continue
+        if tris['']:
+            meshes.append(_subset(mesh, tris[''], ''))
+        part = _subset(mesh, tris['nose'], '_to_nose')
+        part['acng_group'] = 'nose'
+        meshes.append(part)
+        moved += len(tris['nose'])//3
+    return dict(model, meshes=meshes), moved
 
 
 def add_prop(part, name, frame, prefix):

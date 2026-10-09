@@ -5,6 +5,7 @@ bank), writes them as mono WAVs plus BeamNG `.sfxBlend2D.json` rpm blends into t
 output only, and points the cloned engine part at them. Nothing here is committed or shipped.
 """
 import json
+import math
 import struct
 
 RATES = {1: 8000, 2: 11000, 3: 11025, 4: 16000, 5: 22050, 6: 24000, 7: 32000, 8: 44100, 9: 48000}
@@ -16,6 +17,13 @@ SETS = {
 }
 # The donor ETK I6 heavily EQs synthetic loops; the AC loops are finished recordings, so flat.
 FLAT_EQ = {'lowShelfGain': 0, 'highShelfGain': 0, 'eqLowGain': 0, 'eqHighGain': 0, 'eqFundamentalGain': 0}
+# Child parts still add EQ with "$+" keys (turbo intake +4 dB fundamental, I6 exhaust +12 dB
+# low shelf / -9 dB high shelf), so a flat base was not flat in game. Undoing that EQ drops the
+# average A-weighted level about 3.6 dB (engine) and 4.1 dB (exhaust); win most of it back.
+LEVEL_MATCH_DB = 3
+# A loop whose end-to-start jump is this many times its mean step clicks (ext_1m_idle: 7.3).
+SEAM_RATIO = 2
+FADE_S = 0.03
 
 
 def read_fsb(data):
@@ -54,6 +62,26 @@ def mono(pcm, channels):
     return struct.pack(f'<{len(mixed)}h', *mixed)
 
 
+def seam_ratio(vals):
+    step = sum(abs(b - a) for a, b in zip(vals, vals[1:])) / max(len(vals) - 1, 1)
+    return abs(vals[0] - vals[-1]) / (step or 1)
+
+
+def seamless(pcm, rate):
+    """Remove a loop-point click: crossfade the tail into the head (equal power), else unchanged."""
+    vals = struct.unpack(f'<{len(pcm) // 2}h', pcm)
+    n = int(rate * FADE_S)
+    if len(vals) < 4 * n or seam_ratio(vals) <= SEAM_RATIO:
+        return pcm
+    body, tail = vals[:-n], vals[-n:]
+    head = []
+    for i in range(n):
+        t = (i + 0.5) / n * math.pi / 2
+        head.append(max(-32768, min(32767, round(body[i] * math.sin(t) + tail[i] * math.cos(t)))))
+    out = head + list(body[n:])
+    return struct.pack(f'<{len(out)}h', *out)
+
+
 def wav(pcm, rate):
     return (b'RIFF' + struct.pack('<I', 36 + len(pcm)) + b'WAVEfmt ' +
             struct.pack('<IHHIIHH', 16, 1, 1, rate, rate * 2, 2, 16) + b'data' + struct.pack('<I', len(pcm)) + pcm)
@@ -84,7 +112,7 @@ def write(bank, vdir, vehicle):
         for rows in lists:
             for _, n in rows:
                 rate, ch, pcm = samples[n]
-                (sdir / f'{n}.wav').write_bytes(wav(mono(pcm, ch), rate))
+                (sdir / f'{n}.wav').write_bytes(wav(seamless(mono(pcm, ch), rate), rate))
         blend = {'header': {'version': 1}, 'eventName': 'event:>Engine>default',
                  'samples': [[[folder + f'{n}.wav', rpm] for rpm, n in rows] for rows in lists]}
         names[key] = f'acng_1m_{key}'
@@ -92,10 +120,29 @@ def write(bank, vdir, vehicle):
     return {key: {'sampleFolder': folder, 'sampleName': name, **FLAT_EQ} for key, name in names.items()}
 
 
-def apply(engine, updates):
-    """Point a cloned engine part's soundConfig/soundConfigExhaust at the AC blends."""
+def donor_offsets(parts, chosen):
+    """Sum the "$+" sound EQ keys that the chosen child parts add on top of the engine's values."""
+    out = {'soundConfig': {}, 'soundConfigExhaust': {}}
+    for name in sorted(set(chosen)):
+        for section, add in out.items():
+            for k, v in parts.get(name, {}).get(section, {}).items():
+                key = k[2:]
+                if k.startswith('$+') and key in FLAT_EQ and isinstance(v, (int, float)):
+                    add[key] = add.get(key, 0) + v
+    return out
+
+
+def apply(engine, updates, offsets=None):
+    """Point a cloned engine part's soundConfig/soundConfigExhaust at the AC blends.
+
+    With `offsets` from donor_offsets the base EQ cancels the child parts, so the final EQ is flat.
+    """
     for key, section in (('engine', 'soundConfig'), ('exhaust', 'soundConfigExhaust')):
         if key in updates:
             ref = engine['mainEngine'].get(section, section)
-            engine.setdefault(ref, {}).update(updates[key])
+            config = engine.setdefault(ref, {})
+            config.update(updates[key])
+            if offsets is not None:
+                config.update({k: -v for k, v in offsets.get(section, {}).items() if v})
+                config['mainGain'] = config.get('mainGain', 0) + LEVEL_MATCH_DB
     return engine

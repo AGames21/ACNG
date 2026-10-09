@@ -178,6 +178,19 @@ class UpgradeContracts(unittest.TestCase):
         self.assertEqual(groups,{'skin':('fender_L',2),'skin_to_body':('body',1)})
         self.assertEqual(moved,{'fender_L->body':1})
 
+    def test_body_triangles_at_the_nose_bind_to_body_and_bumper_bar(self):
+        def tri(x,y,z): return [(x,z-.016,-y),(x+.01,z-.016,-y),(x,z-.006,-y)]
+        pos=tri(0,-1.98,.6)+tri(0,-1.0,.6)+tri(.5,1.0,.6)
+        shell={'name':'shell','path':['ROOT','shell'],'material':'Chassis','acng_group':'body','positions':pos,
+               'normals':[(0,1,0)]*len(pos),'uvs':[(0,0)]*len(pos),'indices':list(range(len(pos)))}
+        hood=dict(shell,name='hood',acng_group='hood')
+        out,moved=u.reroute_nose({'meshes':[shell,hood]},.016,lambda m:m['acng_group'])
+        groups={m['name']:(m['acng_group'],len(m['indices'])//3) for m in out['meshes']}
+        # Only the body triangle ahead of the line moves; other panels keep their own groups.
+        self.assertEqual(groups,{'shell':('body',2),'shell_to_nose':('nose',1),'hood':('hood',3)})
+        self.assertEqual(moved,1)
+        self.assertEqual(len(out['meshes'][1]['positions']),3)
+
     def test_flexbody_clouds_use_installed_parts_only(self):
         files={'a.jbeam':{'etkc_headlight_L_usdm':{'nodes':[['id','posX','posY','posZ'],{'group':'etkc_headlight_L'},['h1',.5,-1.9,.6],{'group':''}]},
                           'etkc_headlight_L_euro':{'nodes':[['id','posX','posY','posZ'],{'group':'etkc_headlight_L'},['h2',9,9,9]]}}}
