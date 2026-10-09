@@ -1,4 +1,19 @@
-# Latest checkpoint - 2026-10-08 (late): C006 1M fixes installed
+# Latest checkpoint - 2026-10-08 (night): C010 1M wheel track and crash liner installed
+
+Steering direction and pedals were confirmed fixed in C008: the road wheels turn
+right for right input, and the foot rest is static. Crash spikes came from the
+fender mesh's inner arch liner, which sat far from the fender nodes; those
+triangles now ride with the body (C009). Wheels stuck out because the `.pc` track
+variable was never declared by any part, so BeamNG ignored it. Our rims now declare
+it, and the tires sit at the AC pivots (C010 49/49, profile ACNG-car-023).
+Installed after a backup. 211 Python tests pass. See
+[C007](test-results/C007-1m-fitment-crash.md),
+[C008](test-results/C008-1m-crash-isolation-steering-pedals.md),
+[C009](test-results/C009-1m-wheel-track-fender-liner.md) and
+[C010](test-results/C010-1m-declared-wheel-track.md). Still open: better engine
+sounds, and the minor engine-bay spikes on the body front.
+
+# Previous checkpoint - 2026-10-08 (late): C006 1M fixes installed
 
 Playtest faults fixed with causes found: steering axis 42 degrees off the AC column,
 trims and belts classed as seat parts, panels spanning several node groups (crash

@@ -7,7 +7,7 @@ local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
 local MODEL='acng_bmw1m'
-local result={test='C006 1M steering frame, panel groups, seats and patterned lamps',completed=false,checks={},probes={},shots={}}
+local result={test='C010 1M declared wheel track, fender liner, crash isolation, steering direction',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -38,17 +38,29 @@ if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r
 if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
 local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
 r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^acng_bmw1m_') then r.glow=r.glow+1 end end
+if e and e.soundConfiguration then local c=e.soundConfiguration
+  r.sound={engine=c.engine and c.engine.blendFile,exhaust=c.exhaust and c.exhaust.blendFile,id=e.engineSoundID,id_exhaust=e.engineSoundIDExhaust} end
+-- rawget/rawset: plain globals trip BeamNG's undeclared-global warning.
+local fit=rawget(_G,'acngFit');if fit then r.fit=fit;rawset(_G,'acngFit',nil) end
 r.lights={lowbeam=electrics.values.lowbeam,brakelights=electrics.values.brakelights,reverse=electrics.values.reverse}
-if acngJ then
+local J=rawget(_G,'acngJ')
+if J then
   local worst,wname,base=0,nil,0
-  for name,s in pairs(acngJ.span) do local d=s[2]-s[1]
+  for name,s in pairs(J.span) do local d=s[2]-s[1]
     if name=='__chassis' then base=d elseif d>worst then worst,wname=d,name end end
-  r.jitter={max_mm=worst*1000,worst=wname,chassis_mm=base*1000,frames=acngJ.frames}
-  acngJ=nil
+  r.jitter={max_mm=worst*1000,worst=wname,chassis_mm=base*1000,frames=J.frames}
+  rawset(_G,'acngJ',nil)
 end
 for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^acng_bmw1m_') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
  r.mirrors={};for _,m in pairs(v.data.mirrors or {}) do r.mirrors[#r.mirrors+1]={mesh=m.mesh,id=m.id} end
 for id,n in pairs(v.data.nodes or {}) do if n.name=='sh_l3' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
+-- Front wheel axle yaw in the car frame, to read the steering direction from physics.
+r.wheel_yaw={};pcall(function()
+ local fwd,up=obj:getDirectionVector(),obj:getDirectionVectorUp();local right=fwd:cross(up)
+ for i=0,tableSizeC(wd)-1 do local w=wd[i];if w and (w.name=='FL' or w.name=='FR') then
+  local p1=obj:getNodePosition(w.node1);local x1,y1,z1=p1.x,p1.y,p1.z  -- copy: the vector may be reused
+  local p2=obj:getNodePosition(w.node2);local a=vec3(p2.x-x1,p2.y-y1,p2.z-z1)
+  r.wheel_yaw[w.name]=math.deg(math.atan2(a:dot(fwd),a:dot(right))) end end end)
 r.controls={steering=electrics.values.steering,brake=electrics.values.brake,throttle=electrics.values.throttle,clutch=electrics.values.clutch,shift_x=electrics.values.hPatternAxisX,shift_y=electrics.values.hPatternAxisY}
 for _,f in pairs(v.data.flexbodies or {}) do
   r.flexbodies=r.flexbodies+1
@@ -76,20 +88,37 @@ local function probe(label,code)
   result.probes[#result.probes+1]=keep;save()
   return response
 end
+-- Static tire position in the jbeam/mesh frame (same frame as the AC meshes): tire-ring nodes
+-- (radius > 0.29 m from the hub axis) from their initial jbeam positions. C007 mixed world
+-- node positions with jbeam positions and reported a 3.11 m wheelbase.
+local FIT=[[
+local fit,nodes,wd={},v.data.nodes,v.data.wheels
+for i=0,tableSizeC(wd)-1 do local w=wd[i]
+ if w and w.name and nodes[w.node1] and nodes[w.node2] and nodes[w.node1].pos then
+  local h1,h2=nodes[w.node1].pos,nodes[w.node2].pos;local a=(h2-h1):normalized()
+  local f={n=0,xmin=1e9,xmax=-1e9,y=0,z=0,hub={(h1.x+h2.x)/2,(h1.y+h2.y)/2,(h1.z+h2.z)/2}}
+  for _,n in pairs(nodes) do if n.wheelID==i and n.pos then local d=n.pos-h1;local rad=(d-a*d:dot(a)):length()
+   if rad>0.29 then f.n=f.n+1;f.xmin=math.min(f.xmin,n.pos.x);f.xmax=math.max(f.xmax,n.pos.x);f.y=f.y+n.pos.y;f.z=f.z+n.pos.z end end end
+  if f.n>0 then f.y=f.y/f.n;f.z=f.z/f.n end
+  fit[w.name]=f
+ end
+end
+rawset(_G,'acngFit',fit)]]
 local function vcmd(code) be:getPlayerVehicle(0):queueLuaCommand(code) end
 -- Distance from every ACNG seat/prop node to dash node dsh3, sampled once per frame. A steady
 -- mount keeps it within a millimetre or two; the old 2%-damped mounts rang visibly.
 local JIT=[[
-if not acngJ then acngJ={pairs={},span={},frames=0}
+local J=rawget(_G,'acngJ')
+if not J then J={pairs={},span={},frames=0};rawset(_G,'acngJ',J)
   local cid={};for id,n in pairs(v.data.nodes) do if n.name then cid[n.name]=n.cid or id end end
-  for name,c in pairs(cid) do if tostring(name):find('^acng_bmw1m_') then acngJ.pairs[name]={c,cid.dsh3} end end
-  acngJ.pairs.__chassis={cid.dsh1l,cid.f7l}
+  for name,c in pairs(cid) do if tostring(name):find('^acng_bmw1m_') then J.pairs[name]={c,cid.dsh3} end end
+  J.pairs.__chassis={cid.dsh1l,cid.f7l}
 end
-acngJ.frames=acngJ.frames+1
+J.frames=J.frames+1
 -- Copy coordinates at once: getNodePosition may hand back a reused vector.
-for name,p in pairs(acngJ.pairs) do local a=obj:getNodePosition(p[1]);local ax,ay,az=a.x,a.y,a.z
+for name,p in pairs(J.pairs) do local a=obj:getNodePosition(p[1]);local ax,ay,az=a.x,a.y,a.z
   local b=obj:getNodePosition(p[2]);local d=math.sqrt((ax-b.x)^2+(ay-b.y)^2+(az-b.z)^2)
-  local s=acngJ.span[name];if s then s[1]=math.min(s[1],d);s[2]=math.max(s[2],d) else acngJ.span[name]={d,d} end end]]
+  local s=J.span[name];if s then s[1]=math.min(s[1],d);s[2]=math.max(s[2],d) else J.span[name]={d,d} end end]]
 local function sampleJitter(seconds)
   local stop=elapsed+seconds
   while elapsed<stop do vcmd(JIT);coroutine.yield() end
@@ -173,6 +202,21 @@ local function localShot(name,eye,target)
   delay(4)
   pcall(function() commands.setGameCamera() end)
 end
+-- Crash spike check: show one AC mesh group at a time on the wrecked car, from the front and the
+-- left-front corner, so a stretched panel can be told apart from its neighbours.
+local ISOLATE={{'lights_F','_lights_F[LR]'},{'bumper_F','_bumper_F'},{'fenders','_fender_'},{'hood','_hood'},{'body','_body'}}
+local function isolationShots()
+  local veh=be:getPlayerVehicle(0)
+  for _,g in ipairs(ISOLATE) do
+    local shown=0
+    pcall(function() veh:setMeshAlpha(0,'',false)
+      for _,m in ipairs(result.ac_meshes or {}) do if m:find(g[2]) then veh:setMeshAlpha(1,m,false);shown=shown+1 end end end)
+    result.isolated=result.isolated or {};result.isolated[g[1]]=shown
+    localShot('iso_'..g[1]..'_front',{4.5,0,1.2},{0,0,0.5})
+    localShot('iso_'..g[1]..'_FL',{2.5,-3.5,1.3},{1.4,-0.6,0.5})
+  end
+  pcall(function() veh:setMeshAlpha(1,'',false) end)
+end
 local function run()
   waitFor(function() return core_modmanager.isReady() end,60)
   assert(FS:getUserPath():gsub('\\','/'):lower():match('/acng%-car%-[%w%-]+/current/?$'),'Fresh isolated car profile required')
@@ -223,6 +267,13 @@ local function run()
     spawn.safeTeleport(veh,vec3(0,0,1),quat(0,0,0,1));delay(4)
   end
   check('lamp_glow_registered',(r.glow or 0)>=5)
+  check('ac_engine_sound_loaded',r.sound and tostring(r.sound.engine):find('acng_1m_engine',1,true)~=nil and tostring(r.sound.exhaust):find('acng_1m_exhaust',1,true)~=nil and r.sound.id~=nil)
+  r=probe('fitment',FIT);result.fitment=r.fit
+  -- AC tire centres sit at |x| 0.754 (kn5 WHEEL_* pivots); C008 measured 0.770 front, 0.805 rear.
+  local centred=r.fit and true or false
+  for _,name in ipairs({'FL','FR','RL','RR'}) do local f=r.fit and r.fit[name]
+    if not (f and f.n>0 and math.abs(math.abs((f.xmin+f.xmax)/2)-0.754)<0.012) then centred=false end end
+  check('tires_centred_on_ac_wheels',centred)
   sampleJitter(3);r=probe('idle_jitter');result.idle_jitter=r.jitter
   -- worst is nil when nothing was measured; never pass on an empty sample.
   check('interior_steady_at_idle',r.jitter and r.jitter.worst and r.jitter.frames>20 and r.jitter.max_mm<2)
@@ -230,6 +281,9 @@ local function run()
   shot('spawn_rear',-4.2,-5.2,1.6)
   localShot('wheelwell_FL',{2.7,-2.3,0.5},{1.33,-0.82,0.1})
   localShot('wheelwell_FR',{2.7,2.3,0.5},{1.33,0.82,0.1})
+  localShot('wheelwell_RL',{-2.7,-2.3,0.5},{-1.35,-0.82,0.1})
+  localShot('wheelwell_RR',{-2.7,2.3,0.5},{-1.35,0.82,0.1})
+  localShot('rear_track',{-6,0,0.45},{0,0,0.4})
   localShot('fuel_door_RR',{0.2,1.9,0.9},{-1.4,0.8,0.5})
   -- Realistic gearbox: in arcade mode a held brake at rest selects reverse instead.
   vcmd(STOP..";electrics.setLightsState(1)");delay(2)
@@ -237,8 +291,11 @@ local function run()
   check('lowbeam_and_brake_signals',(r.lights.lowbeam or 0)>0.4 and (r.lights.brakelights or 0)>0.4)
   localShot('lights_front',{5.5,1.8,0.6},{1.8,0,0.35})
   localShot('lights_rear',{-5.5,1.8,0.8},{-2,0,0.5})
-  vcmd("electrics.setLightsState(0);input.event('brake',0,1)");delay(1)
+  vcmd("electrics.setLightsState(0);input.event('brake',0,1);input.event('clutch',0,1)");delay(2)
+  r=probe('controls_neutral');result.wheel_yaw_neutral=r.wheel_yaw
   shot('cockpit_neutral',0.36,0.18,1.14,'wheel')
+  shot('pedals_neutral',0.36,0.25,0.60,'pedals')
+  localShot('steer_neutral_wheels',{3.6,0,2.6},{1.3,0,0.2})
   shot('gauges_idle',0,0,0,'gauges')
   vcmd(STOP..";input.event('throttle',0.35,1)");delay(3)
   r=probe('gauges_revved')
@@ -249,7 +306,12 @@ local function run()
   vcmd(STOP);delay(2)
   vcmd("controller.mainController.setGearboxMode('realistic');input.event('steering',0.3,1);input.event('brake',1,1);input.event('clutch',1,1)");delay(2)
   r=probe('controls_applied');check('native_controls_received',math.abs(r.controls.steering or 0)>1 and (r.controls.brake or 0)>0.9)
+  result.wheel_yaw_applied=r.wheel_yaw;result.steering_applied=r.controls.steering
+  -- Input +0.3 steers right: the left front axle turns clockwise seen from above (yaw falls).
+  local y0,y1=result.wheel_yaw_neutral and result.wheel_yaw_neutral.FL,r.wheel_yaw and r.wheel_yaw.FL
+  check('front_wheels_steer_right',y0~=nil and y1~=nil and y1<y0-3)
   shot('cockpit_controls',0.36,0.18,1.14,'wheel')
+  localShot('steer_applied_wheels',{3.6,0,2.6},{1.3,0,0.2})
   shot('pedals_applied',0.36,0.25,0.60,'pedals')
   vcmd("controller.mainController.shiftToGearIndex(1)");delay(2)
   local first=probe('shifter_first')
@@ -298,6 +360,23 @@ local function run()
   check('crash_tires_still_running',r.tires and r.finite)
   shot('crash_front',3.5,-4.0,1.5)
   localShot('crash_side_FL',{1.2,-3.2,0.9},{1.0,-0.8,0.5})
+  if obstacle then obstacle:delete();obstacle=nil end
+  -- Second, offset hit on the left front corner to knock a headlight loose (stretch check).
+  vcmd('obj:requestReset(RESET_PHYSICS)');delay(5)
+  spawn.safeTeleport(veh,vec3(0,0,1),quat(0,0,0,1));delay(3)
+  obstacle=core_vehicles.spawnNewVehicle('pickup',{autoEnterVehicle=false,pos=vec3(-1.1,40,1),rot=quat(0,0,1,0)})
+  if obstacle then delay(2);spawn.safeTeleport(obstacle,vec3(-1.1,40,1),quat(0,0,1,0))
+    obstacle:queueLuaCommand("controller.mainController.setGearboxMode('realistic'); input.event('clutch',1,1); input.event('brake',1,1); input.event('parkingbrake',1,1)");delay(5) end
+  vcmd(DRIVE..";input.event('throttle',1,1)");result.crash2_peak_m_s=peakDuring(8)
+  vcmd(STOP);delay(4)
+  if obstacle then obstacle:delete();obstacle=nil end
+  delay(2);r=probe('post_crash_offset')
+  localShot('crash2_front',{4.5,0,1.2},{0,0,0.5})
+  localShot('crash2_FL',{2.5,-3.5,1.3},{1.4,-0.6,0.5})
+  localShot('crash2_FR',{2.5,3.5,1.3},{1.4,0.6,0.5})
+  localShot('crash2_top',{1.5,0.01,6},{1.4,0,0.4})
+  isolationShots()
+  check('crash_isolation_groups_found',result.isolated and result.isolated.bumper_F>0 and result.isolated.lights_F>0 and result.isolated.body>0)
   if obstacle then obstacle:delete();obstacle=nil end
   -- Native puncture and a detached wheel, then drive the wreck.
   probe('puncture',[[for _,w in pairs(wheels.wheels) do if w.name=='FL' then beamstate.deflateTire(w.cid);break end end]])

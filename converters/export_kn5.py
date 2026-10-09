@@ -68,6 +68,16 @@ GLOW_COLOURS = {'headlight': (255, 248, 235), 'reverselight': (255, 255, 255),
 # AC lights its red lenses with low ksDiffuse; BeamNG has no equivalent, so unlit lenses
 # looked switched on in daylight. Dim their albedo instead.
 UNLIT_LENS_FACTOR = 0.45
+# Lenses with an AC normal map get that relief baked in instead: light direction in normal-map
+# space, unlit red = DARK + SHADE * light term, and chrome reflector parts (the non-red texels).
+LENS_LIGHT = (0.33, 0.43, 0.84)
+LENS_DARK, LENS_SHADE = 0.22, 0.38
+LENS_ROUGHNESS, CHROME_ROUGHNESS = 60, 20  # 0-255 data map values
+# Paint layer as on the vanilla ETK body (etkc_main): the paint preset drives roughness, a
+# clear-coat orange-peel detail normal, and an AO map. Ours comes from the AC skin's baked shading.
+PAINT_DETAIL = {'detailNormalMap': '/vehicles/common/orange_peel_n.normal.png',
+                'detailNormalMapStrength': 0.15, 'detailScale': [128, 64]}
+PAINT_PAD_PX = 16  # trim colour grown into the paint area, so mip levels to 1/16 keep no white halo
 # AC cabin glass is an olive-tinted texture; BeamNG shows that as green glass. Keep its
 # opacity, drop the hue.
 GLASS_MATERIALS = {'VETRI_Texture', 'VETRI_defrost_interno'}
@@ -283,9 +293,12 @@ def material_entry(prefix, vehicle_dir, mat, opacity_file=None, paint=None, file
              'Stages': [stage, {}, {}, {}]}
     if paint:
         # Layer 0: car paint from the BeamNG colour picker. Layer 1: AC trim/decal texture on top.
+        layer0 = {'colorPaletteMap': '/vehicles/common/nullcolormaskR.color.png', 'instanceDiffuse': True,
+                  'metallicFactor': 1, 'clearCoatFactor': 1, **PAINT_DETAIL}
+        if paint.get('ao'):
+            layer0['ambientOcclusionMap'] = f'/vehicles/{vehicle_dir}/{paint["ao"]}'
         entry['Stages'] = [
-            {'colorPaletteMap': '/vehicles/common/nullcolormaskR.color.png', 'instanceDiffuse': True,
-             'metallicFactor': 1, 'roughnessFactor': 0.3, 'clearCoatFactor': 1},
+            layer0,
             {'baseColorMap': f'/vehicles/{vehicle_dir}/{paint["base"]}',
              'opacityMap': f'/vehicles/{vehicle_dir}/{paint["opacity"]}',
              'metallicFactor': 0, 'roughnessFactor': 0.5},
@@ -338,25 +351,84 @@ def _grey_png(dds_bytes):
 def _solid_png(colour):
     from PIL import Image
     buf = io.BytesIO()
-    Image.new('RGB', (4, 4), colour).save(buf, 'PNG')
+    Image.new('RGB', (16, 16), colour).save(buf, 'PNG')  # BeamNG skips cooking textures under 16x16
     return buf.getvalue()
 
 
-def _pattern_png(dds_bytes, colour):
+def _paint_maps(dds_bytes):
+    """AC multimap diffuse -> PNG bytes (trim colour, trim opacity, paint AO).
+
+    Under the paint (alpha 0) the diffuse RGB is white with baked occlusion and panel lines; that
+    becomes the paint's AO map instead of being lost. The trim colour is grown into the paint area
+    so filtering at trim edges does not blend in that white as a pale halo.
+    """
+    from PIL import Image, ImageChops, ImageStat
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    rgba = im.convert('RGBA')
+    rgb, alpha = rgba.convert('RGB'), rgba.getchannel('A')
+    ao = Image.composite(Image.new('L', rgba.size, 255), rgb.convert('L'), alpha)
+    known = alpha.point(lambda a: 255 if a >= 128 else 0)
+    fill = rgb
+    if known.getbbox():
+        trim_mean = tuple(int(round(c)) for c in ImageStat.Stat(rgb, known).mean)
+        for _ in range(PAINT_PAD_PX):
+            grown = known
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                from_known = ImageChops.offset(known, dx, dy)
+                fresh = ImageChops.subtract(from_known, grown)
+                fill = Image.composite(ImageChops.offset(fill, dx, dy), fill, fresh)
+                grown = ImageChops.lighter(grown, from_known)
+            known = grown
+        fill = Image.composite(fill, Image.new('RGB', rgba.size, trim_mean), known)
+    files = []
+    for out in (fill, alpha, ao):
+        buf = io.BytesIO()
+        out.save(buf, 'PNG')
+        files.append(buf.getvalue())
+    return files
+
+
+def _is_red(rv, gv, bv):
+    return rv > 150 and gv < 120 and bv < 120
+
+
+def _lens_shade(dds_bytes, normal_bytes):
+    """Per-pixel 0..1 light term from the AC lens normal map, at the diffuse's size.
+
+    AC shades the near-flat red lens texture through its (object-space) normal map, which a
+    BeamNG material cannot read. Baking a fixed light term keeps the reflector facets visible.
+    """
+    from PIL import Image
+    size = Image.open(io.BytesIO(dds_bytes)).size
+    nm = Image.open(io.BytesIO(normal_bytes))
+    nm.load()
+    raw = nm.convert('RGB').resize(size).tobytes()
+    out = []
+    for q in zip(raw[0::3], raw[1::3], raw[2::3]):
+        n = [c / 127.5 - 1 for c in q]
+        length = max(1e-6, sum(c * c for c in n) ** 0.5)
+        out.append(max(0.0, sum(a * b for a, b in zip(n, LENS_LIGHT)) / length))
+    return out
+
+
+def _pattern_png(dds_bytes, colour, shade=None):
     """Emissive map from a red lens texture: its brightness detail, stretched, times colour."""
     from PIL import Image
     im = Image.open(io.BytesIO(dds_bytes))
     im.load()
     rgb = im.convert('RGB')
     # AC paints the lens red at R 230-255; the detail is in that band. Non-red pixels (chrome,
-    # clear reverse lens) stay nearly dark.
+    # clear reverse lens) stay nearly dark. With a baked normal-map shade the facets carry it.
     pixels = []
     raw = rgb.tobytes()
-    for rv, gv, bv in zip(raw[0::3], raw[1::3], raw[2::3]):
-        if rv > 150 and gv < 120 and bv < 120:
-            k = PATTERN_FLOOR + (1 - PATTERN_FLOOR) * min(1.0, max(0.0, (rv - 230) / 25))
-        else:
+    for i, (rv, gv, bv) in enumerate(zip(raw[0::3], raw[1::3], raw[2::3])):
+        if not _is_red(rv, gv, bv):
             k = 0.05
+        elif shade is not None:
+            k = PATTERN_FLOOR + (1 - PATTERN_FLOOR) * shade[i] ** 2
+        else:
+            k = PATTERN_FLOOR + (1 - PATTERN_FLOOR) * min(1.0, max(0.0, (rv - 230) / 25))
         pixels.append(tuple(int(round(c * k)) for c in colour))
     out = Image.new('RGB', rgb.size)
     out.putdata(pixels)
@@ -365,13 +437,33 @@ def _pattern_png(dds_bytes, colour):
     return buf.getvalue()
 
 
-def _rgb_png(dds_bytes):
+def _lens_maps(dds_bytes, shade):
+    """Unlit tail-lamp PBR maps: shaded deep-red lens, chrome reflectors. Returns PNG bytes
+    (base colour, metallic, roughness)."""
     from PIL import Image
     im = Image.open(io.BytesIO(dds_bytes))
     im.load()
-    buf = io.BytesIO()
-    im.convert('RGB').save(buf, 'PNG')
-    return buf.getvalue()
+    rgb = im.convert('RGB')
+    raw = rgb.tobytes()
+    base, metal, rough = [], [], []
+    for i, (rv, gv, bv) in enumerate(zip(raw[0::3], raw[1::3], raw[2::3])):
+        if _is_red(rv, gv, bv):
+            k = LENS_DARK + LENS_SHADE * shade[i]
+            base.append((int(rv * k), int(gv * k / 2), int(bv * k / 2)))
+            metal.append(0)
+            rough.append(LENS_ROUGHNESS)
+        else:
+            base.append((rv, gv, bv))
+            metal.append(255)
+            rough.append(CHROME_ROUGHNESS)
+    files = []
+    for mode, data in (('RGB', base), ('L', metal), ('L', rough)):
+        out = Image.new(mode, rgb.size)
+        out.putdata(data)
+        buf = io.BytesIO()
+        out.save(buf, 'PNG')
+        files.append(buf.getvalue())
+    return files
 
 
 def guard_output(out_dir):
@@ -402,7 +494,7 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             if g is not None:  # spill into a lettered continuation mesh
                 name = name + '_' + 'abcdefgh'[sum(1 for k in groups if k.startswith(name))]
             g = groups[name] = Group(name)
-        func = light_function(mesh) if target in ('lights_F', 'lights_R', 'trunk') else None
+        func = light_function(mesh) if target.startswith('lights_') or target == 'trunk' else None
         g.add(mesh['material'] + ('@' + func if func else ''), pos, nrm, uvs, tris)
         report['meshes'][label] = name
     used = sorted({m for g in groups.values() for m in g.tris})
@@ -429,11 +521,10 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
         diffuse = mat['textures'].get('txDiffuse')
         if m == paint_material and diffuse in model['textures']:
             # AC multimap: diffuse alpha 1 = trim/decal, 0 = paint shows through.
-            base = f'textures/{prefix}paint_b.color.png'
-            opac = f'textures/{prefix}paint_o.data.png'
-            (out / base).write_bytes(_rgb_png(model['textures'][diffuse]))
-            (out / opac).write_bytes(_alpha_png(model['textures'][diffuse]))
-            paint = {'base': base, 'opacity': opac}
+            paint = {'base': f'textures/{prefix}paint_b.color.png', 'opacity': f'textures/{prefix}paint_o.data.png',
+                     'ao': f'textures/{prefix}paint_ao.data.png'}
+            for key, data in zip(('base', 'opacity', 'ao'), _paint_maps(model['textures'][diffuse])):
+                (out / paint[key]).write_bytes(data)
         elif (mat['blend'] == 1 or mat['alpha_test']) and diffuse in model['textures']:
             opacity = f'textures/{prefix}{m.lower()}_o.data.png'
             source = _opacity_source(mat, model['textures'])
@@ -448,7 +539,20 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             grey = f'textures/{prefix}{m.lower()}_b.color.png'
             (out / grey).write_bytes(_grey_png(model['textures'][diffuse]))
             stage['baseColorMap'] = f'/vehicles/{vehicle_dir}/{grey}'
-        if m in TAILLIGHT_MATERIALS and not paint:
+        shade = None
+        normal = mat['textures'].get('txNormal')
+        if (m in TAILLIGHT_MATERIALS and not paint and diffuse in model['textures'] and normal in model['textures']
+                and '_os' in normal.lower()):
+            shade = _lens_shade(model['textures'][diffuse], model['textures'][normal])
+            stem = f'textures/{prefix}{m.lower()}_lens'
+            lens = dict(zip(('_b.color.png', '_m.data.png', '_r.data.png'), _lens_maps(model['textures'][diffuse], shade)))
+            for suffix, data in lens.items():
+                (out / (stem + suffix)).write_bytes(data)
+            stage.pop('roughnessFactor', None)
+            stage.update(baseColorMap=f'/vehicles/{vehicle_dir}/{stem}_b.color.png', metallicFactor=1,
+                         metallicMap=f'/vehicles/{vehicle_dir}/{stem}_m.data.png',
+                         roughnessMap=f'/vehicles/{vehicle_dir}/{stem}_r.data.png')
+        elif m in TAILLIGHT_MATERIALS and not paint:
             stage['baseColorFactor'] = [UNLIT_LENS_FACTOR] * 3 + [1]
         if func:
             key = material_names[m + '@' + func]
@@ -457,7 +561,7 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             if func in PATTERNED_GLOW and diffuse in model['textures']:
                 glow_file = 'textures/{}glow_{}.color.png'.format(prefix, m.lower())
                 if not (out / glow_file).exists():
-                    (out / glow_file).write_bytes(_pattern_png(model['textures'][diffuse], colour))
+                    (out / glow_file).write_bytes(_pattern_png(model['textures'][diffuse], colour, shade))
             else:
                 glow_file = 'textures/{}glow_{:02x}{:02x}{:02x}.color.png'.format(prefix, *colour)
                 if not (out / glow_file).exists():

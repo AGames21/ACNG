@@ -151,11 +151,13 @@ class Builder(unittest.TestCase):
         self.assertEqual(self.PART['nodes'][2][2], -1.0)  # input untouched
 
     def test_every_exported_group_has_a_flexbody_owner(self):
-        targets = {'body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'bumper_F', 'bumper_R', 'lights_F', 'lights_R',
+        targets = {'body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'bumper_F', 'bumper_R',
+                   'lights_FL', 'lights_FR', 'lights_RL', 'lights_RR',
                    'trunk', 'dash', 'cabin', 'seat_L', 'seat_R', 'shifter', 'shifter_boot'}
         self.assertEqual(set(build_ac_car.FLEXBODIES), targets)
         # One node group per outer panel: spanning groups stretched and tore the skin in crashes.
-        for name in ('body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'trunk'):
+        for name in ('body', 'fender_L', 'fender_R', 'door_L', 'door_R', 'hood', 'trunk',
+                     'lights_FL', 'lights_FR', 'lights_RL', 'lights_RR'):
             self.assertEqual(len(build_ac_car.FLEXBODIES[name][1]), 1, name)
         self.assertFalse(build_ac_car.strip_visible('etkc_lowerarm_F'))
         self.assertTrue(build_ac_car.strip_visible('etkc_tubs'))  # poked out of the 1M arch

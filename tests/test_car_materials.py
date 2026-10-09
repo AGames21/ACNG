@@ -24,6 +24,15 @@ def png(colour, size=(4, 4), alpha=None):
     return buf.getvalue()
 
 
+def tail_png():
+    """Red lens texels with one grey reflector texel at (0, 0)."""
+    im = Image.new('RGB', (2, 2), (250, 10, 10))
+    im.putpixel((0, 0), (180, 180, 180))
+    buf = io.BytesIO()
+    im.save(buf, 'PNG')
+    return buf.getvalue()
+
+
 def mat(name, shader='ksPerPixel', blend=0, diffuse=None, normal=None):
     textures = {'txDiffuse': diffuse} if diffuse else {}
     if normal:
@@ -49,13 +58,16 @@ class Materials(unittest.TestCase):
                           mat('Fanali_POSTERIORI_TS', diffuse='red.png'),
                           mat('MIRROR'),
                           mat('cap', 'ksPerPixelNM', 1, 'grey.png', 'cap_nm.png'),
-                          mat('VETRI_Texture', 'ksPerPixelReflection', 1, 'olive.png')],
+                          mat('VETRI_Texture', 'ksPerPixelReflection', 1, 'olive.png'),
+                          mat('Fanali_POSTERIORI_OS', 'ksPerPixelMultiMap', 0, 'tail.png', 'tail_OS.png')],
             'textures': {'lamp.png': png((200, 200, 200)), 'red.png': png((225, 30, 30)),
                          'grey.png': png((90, 93, 90)), 'cap_nm.png': png((244, 59, 253), alpha=0),
-                         'olive.png': png((29, 31, 10), alpha=125)},
+                         'olive.png': png((29, 31, 10), alpha=125), 'tail.png': tail_png(),
+                         'tail_OS.png': png((128, 128, 255))},
             'meshes': [mesh('front_light_1', 'lamp'), mesh('brake_light_1', 'Fanali_POSTERIORI_TS', -2),
                        mesh('rear_light_1', 'Fanali_POSTERIORI_TS', -2), mesh('m', 'MIRROR', group='mirror_L'),
-                       mesh('cap', 'cap'), mesh('glass', 'VETRI_Texture')]}
+                       mesh('cap', 'cap'), mesh('glass', 'VETRI_Texture'),
+                       mesh('polymsh263_SUB0', 'Fanali_POSTERIORI_OS', -2), mesh('rear_light_2', 'Fanali_POSTERIORI_OS', -2)]}
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         out = Path(self.tmp.name)
@@ -101,6 +113,32 @@ class Materials(unittest.TestCase):
                          [export_kn5.UNLIT_LENS_FACTOR] * 3 + [1])
         self.assertNotIn('baseColorFactor', mats['t_Fanali_POSTERIORI_TS_brakelight_on_intense']['Stages'][0])
 
+    def test_tail_lens_with_normal_map_gets_shaded_red_and_chrome_reflectors(self):
+        out, report, mats = self.export()
+        stage = mats['t_Fanali_POSTERIORI_OS']['Stages'][0]
+        self.assertNotIn('baseColorFactor', stage)
+        self.assertNotIn('roughnessFactor', stage)
+        self.assertEqual(stage['metallicFactor'], 1)
+        read = lambda key: Image.open(out / stage[key][len('/vehicles/v/'):])
+        with read('baseColorMap') as b, read('metallicMap') as m, read('roughnessMap') as r:
+            lens, chrome = b.getpixel((1, 1)), b.getpixel((0, 0))
+            self.assertLess(lens[0], 160)  # deep red, not the AC near-flat 250
+            self.assertGreater(lens[0], 4 * lens[1])
+            self.assertEqual(chrome, (180, 180, 180))
+            self.assertEqual((m.getpixel((0, 0)), m.getpixel((1, 1))), (255, 0))
+            self.assertLess(r.getpixel((0, 0)), r.getpixel((1, 1)))
+        lit = mats[report['glow']['t_Fanali_POSTERIORI_OS_taillight']['on']]['Stages'][0]
+        self.assertEqual(lit['baseColorMap'], stage['baseColorMap'])
+        with Image.open(out / lit['emissiveMap'][len('/vehicles/v/'):]) as g:
+            self.assertGreater(g.getpixel((1, 1))[0], 10 * g.getpixel((0, 0))[0])
+
+    def test_lens_shade_follows_normal_map_relief(self):
+        lit, tilted = png((128, 128, 255)), png((255, 128, 128))
+        flat = export_kn5._lens_shade(tail_png(), lit)
+        side = export_kn5._lens_shade(tail_png(), tilted)
+        self.assertEqual(len(flat), 4)
+        self.assertGreater(flat[0], side[0])
+
     def test_mirror_uses_vanilla_reflective_material(self):
         out, _, mats = self.export()
         self.assertNotIn('mirror', mats)
@@ -121,6 +159,36 @@ class Materials(unittest.TestCase):
         self.assertEqual(r, g)
         self.assertEqual(g, b)
         self.assertIn('opacityMap', stage)
+
+
+    def test_paint_layer_matches_vanilla_and_keeps_baked_shading(self):
+        skin = Image.new('RGBA', (40, 4), (240, 240, 240, 0))  # paint: white with baked shading
+        skin.putpixel((5, 1), (120, 120, 120, 0))  # a panel line under the paint
+        for x in range(30, 40):
+            for y in range(4):
+                skin.putpixel((x, y), (20, 30, 40, 255))  # black trim
+        buf = io.BytesIO()
+        skin.save(buf, 'PNG')
+        model = {'materials': [mat('LIVREA', 'ksPerPixelMultiMap', 0, 'skin.png')],
+                 'textures': {'skin.png': buf.getvalue()}, 'meshes': [mesh('body', 'LIVREA')]}
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            export_kn5.export(model, out, 'v', 't_', 0)
+            paint, trim = json.loads((out / 'main.materials.json').read_text())['t_LIVREA']['Stages'][:2]
+            self.assertNotIn('roughnessFactor', paint)  # the paint preset sets roughness
+            self.assertEqual(paint['detailNormalMap'], '/vehicles/common/orange_peel_n.normal.png')
+            with Image.open(out / paint['ambientOcclusionMap'][len('/vehicles/v/'):]) as ao:
+                self.assertEqual((ao.getpixel((0, 0)), ao.getpixel((5, 1)), ao.getpixel((35, 1))), (240, 120, 255))
+            with Image.open(out / trim['baseColorMap'][len('/vehicles/v/'):]) as base:
+                # trim colour grown under the paint edge, so filtering blends no white into the trim
+                self.assertEqual(base.convert('RGB').getpixel((25, 1)), (20, 30, 40))
+                self.assertEqual(base.convert('RGB').getpixel((0, 0)), (20, 30, 40))
+            with Image.open(out / trim['opacityMap'][len('/vehicles/v/'):]) as op:
+                self.assertEqual((op.getpixel((0, 0)), op.getpixel((35, 1))), (0, 255))
+
+    def test_solid_glow_maps_are_at_least_16_px(self):
+        with Image.open(io.BytesIO(export_kn5._solid_png((255, 0, 0)))) as im:
+            self.assertGreaterEqual(min(im.size), 16)
 
 
 if __name__ == '__main__':

@@ -56,6 +56,24 @@ class DetailContracts(unittest.TestCase):
                 self.assertEqual(part[key],donor[key])
         self.assertEqual(parts['acng_1m_wheel_F']['flexbodies'][1][0],'local_rim_FR')
 
+    def test_rims_declare_the_track_the_config_sets(self):
+        donor={'information':{},'flexbodies':[['mesh','[group]:','nonFlexMaterials'],
+               ['a',['wheel_FL'],[],{'pos':{'x':.51}}],['b',['wheel_FR'],[],{'pos':{'x':-.51}}]]}
+        rear=copy.deepcopy(donor)
+        for row in rear['flexbodies'][1:]: row[-1]['pos']['x']=.5 if row[-1]['pos']['x']>0 else -.5
+        parts=d.wheel_parts({'etk_wheel_08a_19x9_F':donor,'etk_wheel_08a_19x10_R':rear},'p_')
+        vars=d.wheel_config({'parts':{}})['vars']
+        for axle in 'FR':
+            part=parts['acng_1m_wheel_'+axle];head,decl=part['variables']
+            row=dict(zip(head,decl))
+            # BeamNG ignores (and clamps) .pc vars that no part declares.
+            self.assertEqual(row['name'],'$trackwidth_'+axle)
+            self.assertTrue(row['min']<=vars[row['name']]<=row['max'])
+            self.assertEqual(row['default'],vars[row['name']])
+            rows=part['flexbodies'][1:]
+            self.assertAlmostEqual(vars[row['name']]+rows[0][-1]['pos']['x'],.754,places=2)
+            self.assertAlmostEqual(-vars[row['name']]+rows[1][-1]['pos']['x'],-.754,places=2)
+
     def test_mirror_centers_are_offsets_from_native_refs(self):
         files={'x':{'etkc_mirror_L':{'nodes':[['id','x','y','z'],['mi4l',1,2,3]]}}}
         d.add_mirrors(files,{'mirror_L':[1.1,2.2,3.3]},'local_')

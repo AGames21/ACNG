@@ -14,6 +14,7 @@ Usage:
 """
 import argparse
 import copy
+import car_sounds
 import car_upgrades
 import car_details
 import io
@@ -38,6 +39,11 @@ BASE_CONFIG = 'kc6_360_M'
 # re-centred on the AC body) and raise the roof (ETK roof ~1.35 m -> 1M ~1.42 m). Width unchanged.
 SY, TY = 1.0322, 0.0107
 Z_KNEE, Z_SCALE = 0.9, 1.15
+# The ETK front overhang is ~0.17 m longer than the 1M's (bumper nodes reach -2.28 m, the AC
+# bumper skin -2.11 m), so bumper, headlight and hood nodes sat ahead of the panels they carry and
+# crumpling stretched those panels into long shards. Nodes ahead of the front tyres are pulled in
+# to the 1M overhang; the suspension, subframe and engine nodes all lie behind the knee.
+Y_KNEE_F, Y_SCALE_F = -1.6, 0.75
 MESH_LIFT = 0.016  # AC ground plane vs ETK node frame, from the wheel-centre fit
 
 # Visible ETK meshes are removed; these mechanical ones stay (seen through wheel wells and in crashes).
@@ -55,8 +61,8 @@ FLEXBODIES = {
     'body': ('etkc_body', ['etkc_body']),
     'fender_L': ('etkc_fender_L', ['etkc_fender_L']),
     'fender_R': ('etkc_fender_R', ['etkc_fender_R']),
-    'lights_F': ('etkc_body', ['etkc_headlight_L', 'etkc_headlight_R']),
-    'lights_R': ('etkc_body', ['etkc_taillight_L', 'etkc_taillight_R', 'etkc_trunklight_L', 'etkc_trunklight_R']),
+    **{side: ('etkc_body', [group]) for sides in car_upgrades.LAMP_SIDES.values()
+       for side, group in sides.items()},
     'door_L': ('etkc_door_L', ['etkc_door_L']),
     'door_R': ('etkc_door_R', ['etkc_door_R']),
     'hood': ('etkc_hood', ['etkc_hood']),
@@ -73,7 +79,8 @@ FLEXBODIES = {
 
 
 def tf_y(y):
-    return SY*y+TY
+    y = SY*y+TY
+    return Y_KNEE_F + Y_SCALE_F * (y - Y_KNEE_F) if y < Y_KNEE_F else y
 
 
 def tf_z(z):
@@ -194,6 +201,39 @@ def common_centroids(common_zip, names):
     return found
 
 
+def flexbody_clouds(files, pc):
+    """Transformed node positions of each FLEXBODIES target, from the parts the config installs."""
+    installed = {v for v in pc['parts'].values() if v} | {'etkc'}
+    groups = {}
+    for data in files.values():
+        for pname, part in data.items():
+            if pname not in installed or not isinstance(part, dict):
+                continue
+            current = []
+            for row in part.get('nodes', [])[1:]:
+                if isinstance(row, dict) and 'group' in row:
+                    g = row['group']
+                    current = g if isinstance(g, list) else [g] if g else []
+                elif isinstance(row, list) and len(row) > 3 and all(isinstance(v, (int, float)) for v in row[1:4]):
+                    for g in current:
+                        groups.setdefault(g, []).append(tuple(row[1:4]))
+    return {target: [p for g in node_groups for p in groups.get(g, [])]
+            for target, (_, node_groups) in FLEXBODIES.items()}
+
+
+# BeamNG's own paint presets (vanilla info.json): solid paints are glossy without a separate
+# clear coat; metallic paints have a rough flake base under a smooth clear coat. AC's 1M skins
+# carry no paint type, so the solid ones are listed by name.
+SOLID_SKINS = {'white', 'crimson_red', 'red'}
+SOLID_PAINT = {'metallic': 0, 'roughness': 0.07, 'clearcoat': 0, 'clearcoatRoughness': 0}
+METALLIC_PAINT = {'metallic': 0.8, 'roughness': 0.65, 'clearcoat': 1, 'clearcoatRoughness': 0.05}
+
+
+def paint_label(skin):
+    """Paint name shown in the BeamNG colour picker for an AC skin folder ('0_orange' -> 'Orange')."""
+    return re.sub(r'^\d+_', '', skin).replace('_', ' ').title()
+
+
 def ac_paints(ac_car):
     """BeamNG paint presets from the AC skins' paint colour (metal_detail.dds mean colour)."""
     from PIL import Image, ImageStat
@@ -204,9 +244,9 @@ def ac_paints(ac_car):
             continue
         with Image.open(tex) as im:
             r, g, b = ImageStat.Stat(im.convert('RGB')).mean
-        label = skin.name.replace('_', ' ').title()
-        paints[label] = {'baseColor': [round(r / 255, 4), round(g / 255, 4), round(b / 255, 4), 1.2],
-                         'metallic': 0.5, 'roughness': 0.5, 'clearcoat': 1, 'clearcoatRoughness': 0.05}
+        finish = SOLID_PAINT if skin.name in SOLID_SKINS else METALLIC_PAINT
+        paints.setdefault(paint_label(skin.name),
+                          {'baseColor': [round(r / 255, 4), round(g / 255, 4), round(b / 255, 4), 1.2], **finish})
     return paints
 
 
@@ -225,11 +265,8 @@ def build(ac_car, beamng, out_root, skin):
     model = kn5_model.read((ac_car / (ac_car.name + '.kn5')).read_bytes())
     model,gauge_frames,mirror_centers=car_details.prepare(model,MESH_LIFT)
     model,prop_frames=car_upgrades.prepare_model(model,MESH_LIFT)
-    materials={m['name']:m for m in model['materials']}
-    model=car_upgrades.split_fenders(model,MESH_LIFT,lambda m:export_kn5.route(m,materials)=='body')
     prop_frames.update(gauge_frames)
-    report = {'mesh': export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT), 'prop_frames': prop_frames}
-    groups = report['mesh']['groups']
+    report = {'prop_frames': prop_frames}
 
     with zipfile.ZipFile(etkc_zip) as z:
         files = {}
@@ -253,8 +290,19 @@ def build(ac_car, beamng, out_root, skin):
                 if pname == 'etkc':
                     data[pname]['information'] = {'authors': 'local AC conversion (personal use)',
                                                   'name': 'BMW 1M (local)'}
-                    # Native light switching: electrics swap each AC lamp to its emissive copy.
-                    data[pname].setdefault('glowMap', {}).update(report['mesh']['glow'])
+        pc = json.loads(z.read(f'vehicles/etkc/{BASE_CONFIG}.pc'))
+        clouds = flexbody_clouds(files, pc)
+        materials={m['name']:m for m in model['materials']}
+        model=car_upgrades.split_fenders(model,MESH_LIFT,lambda m:export_kn5.route(m,materials)=='body')
+        model=car_upgrades.split_lamps(model,MESH_LIFT,lambda m:export_kn5.route(m,materials))
+        model,report['rerouted_lamp_triangles']=car_upgrades.reroute_lamps(
+            model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
+        model,report['rerouted_fender_triangles']=car_upgrades.reroute_fenders(
+            model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
+        report['mesh'] = export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT)
+        groups = report['mesh']['groups']
+        # Native light switching: electrics swap each AC lamp to its emissive copy.
+        next(d['etkc'] for d in files.values() if 'etkc' in d).setdefault('glowMap', {}).update(report['mesh']['glow'])
         # Bind each exported AC mesh (and any lettered overflow mesh) to its ETK damage groups.
         added = []
         for gname in groups:
@@ -285,7 +333,6 @@ def build(ac_car, beamng, out_root, skin):
         for n in ('etkc.cdae', 'etkc_extraparts.cdae', 'etkc_transfercase.cdae'):
             (vdir / n).write_bytes(z.read('vehicles/etkc/' + n))
         (vdir / 'etkc_base.materials.json').write_bytes(z.read('vehicles/etkc/main.materials.json'))
-        pc = json.loads(z.read(f'vehicles/etkc/{BASE_CONFIG}.pc'))
 
     pc['model'] = VEHICLE
     for slot in ('etkc_licenseplate_R', 'etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
@@ -301,6 +348,9 @@ def build(ac_car, beamng, out_root, skin):
                 except ValueError: pass
     stock['etkc_fueltank']=next(data['etkc_fueltank'] for data in files.values() if 'etkc_fueltank' in data)
     parts=car_upgrades.spec_parts(stock)
+    bank = ac_car / 'sfx' / (ac_car.name + '.bank')
+    if bank.is_file():  # the user's own AC recordings; written to the build output only
+        car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE))
     parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
     (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
     pc=car_upgrades.spec_config(pc)
@@ -308,7 +358,7 @@ def build(ac_car, beamng, out_root, skin):
     (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')
 
     paints = ac_paints(ac_car)
-    default_paint = skin.replace('_', ' ').title()
+    default_paint = paint_label(skin)
     info = {'Author': 'Local conversion of the user\'s own Assetto Corsa car (personal use only)',
             'Brand': 'BMW', 'Body Style': 'Coupe', 'Country': 'Germany', 'Name': 'BMW 1M (local)',
             'Type': 'Car', 'Years': {'min': 2011, 'max': 2012}, 'default_pc': CONFIG,

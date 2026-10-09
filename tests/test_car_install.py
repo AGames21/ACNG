@@ -57,7 +57,8 @@ class CarInstallProof(unittest.TestCase):
             self.assertEqual(verify_local_build(package, test)[1], 12)
 
     def test_c004_requires_lamp_and_steadiness_evidence(self):
-        for label in ('C004 1M lamps', 'C006 1M steering frame'):
+        for label in ('C004 1M lamps', 'C006 1M steering frame', 'C007 1M fitment', 'C008 1M crash isolation',
+                      'C009 1M wheel track', 'C010 1M declared wheel track'):
           with self.subTest(label), tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))
             proof['test'] = label
@@ -71,7 +72,14 @@ class CarInstallProof(unittest.TestCase):
                 'interior_steady_at_idle', 'interior_steady_while_driving', 'tires_auto_compound',
                 'unladen_mass_within_three_percent'], True))
             test.write_text(json.dumps(proof))
-            self.assertEqual(verify_local_build(package, test)[1], 18)
+            fitted = ['crash_isolation_groups_found', 'tires_centred_on_ac_wheels', 'front_wheels_steer_right']
+            extra = {'C008': ['crash_isolation_groups_found'], 'C009': fitted, 'C010': fitted}.get(label[:4], [])
+            if extra:
+                with self.assertRaisesRegex(RuntimeError, 'incomplete'):
+                    verify_local_build(package, test)
+                proof['checks'].update(dict.fromkeys(extra, True))
+                test.write_text(json.dumps(proof))
+            self.assertEqual(verify_local_build(package, test)[1], 18+len(extra))
 
     def test_failed_or_incomplete_native_runs_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

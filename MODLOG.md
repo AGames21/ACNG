@@ -1,3 +1,11 @@
+## 2026-10-08 - C007-C010 1M steering, pedals, crash liner, wheel track (installed)
+
+Prop steering sign and pedal picking by X position (foot rest static); BeamNG
+paint presets; 16x16 glow maps; far lamp and fender-liner triangles rerouted to
+nearby panel groups; crash-isolation, steering-direction and tire-centre lab
+checks. Rim parts declare `$trackwidth_F/R` so the `.pc` track applies. CarLab
+ACNG-car-023 49/49; installer accepts C007-C010 evidence. Installed.
+
 ## 2026-10-08 - C006 1M steering frame, panel groups, seats, lamps (installed)
 
 Steering column frame from the AC STEER_HR node; seat shells only on native ETK

@@ -15,6 +15,24 @@ BELT_MATERIALS = {'INT_CintureSicurezza'}
 # Body-shell triangles in front of the doors, outboard and below the hood line, belong to the
 # ETK fender node group (fender nodes: |x| 0.72-0.92, y -1.88..-0.56, z 0.30-0.92).
 FENDER_ZONE = {'y_max': -0.58, 'abs_x_min': 0.6, 'z_max': 0.97}
+# Pedal pads by centre X (BeamNG +X = driver's left): throttle 0.28, brake 0.40, clutch 0.49.
+# Further left is the dead pedal (foot rest, 0.61): it used to become the clutch prop while the
+# real clutch pad moved with the brake.
+PEDAL_X = (('pedal_throttle', 0.345), ('pedal_brake', 0.45), ('pedal_clutch', 0.545))
+# Lamp meshes span both sides of the car; vanilla gives each lamp its own flexbody and group.
+# One flexbody on both sides' groups let vertices follow the other lamp's nodes, so a lamp that
+# broke off in a crash dragged a long sheet of the other lamp's mesh after it.
+LAMP_SIDES = {'lights_F': {'lights_FL': 'etkc_headlight_L', 'lights_FR': 'etkc_headlight_R'},
+              'lights_R': {'lights_RL': 'etkc_taillight_L', 'lights_RR': 'etkc_taillight_R'}}
+# Lamp triangles farther than this from every node of their own lamp group (inner tail-lamp
+# sections on the trunk lid, the AC headlamp backs) move to the nearest panel: a lamp group has
+# only five nodes, and vertices far outside them were thrown into long shards when it crumpled.
+LAMP_REACH = 0.18
+LAMP_FALLBACKS = ('body', 'trunk', 'hood', 'bumper_F', 'bumper_R', 'fender_L', 'fender_R')
+# The fender shell carries the inner arch liner, up to 0.5 m from the fender nodes; those
+# far vertices swung into a sawtooth of spikes in crashes (C008 isolation shots). Only the
+# body takes them: the hood opens and the bumper can fall off.
+FENDER_FALLBACKS = ('body',)
 PROP_HEADER = ['func', 'mesh', 'idRef:', 'idX:', 'idY:', 'baseRotation', 'rotation',
                'translation', 'min', 'max', 'offset', 'multiplier']
 
@@ -61,7 +79,7 @@ def interior_group(mesh, lift):
     low, high = bounds(points)
     x, y, z = [(low[k]+high[k])/2 for k in range(3)]
     if mesh['material'] == 'INT_Pedali' or (low[0] > 0.2 and high[0] < 0.7 and high[1] < -0.5 and high[2] < 0.54):
-        return 'pedal_throttle' if x < 0.37 else 'pedal_brake' if x < 0.52 else 'pedal_clutch'
+        return next((name for name, limit in PEDAL_X if x < limit), 'cabin')
     (ax0, ax1), (y0, y1), (z0, z1) = SEAT_BOX
     inside = (ax0 <= min(abs(low[0]), abs(high[0])) and max(abs(low[0]), abs(high[0])) <= ax1
               and low[0]*high[0] > 0 and y0 <= low[1] and high[1] <= y1 and z0 <= low[2] and high[2] <= z1)
@@ -182,6 +200,74 @@ def split_fenders(model, lift, is_body):
     return dict(model, meshes=meshes)
 
 
+def split_lamps(model, lift, route_of):
+    """Give each side's lamp triangles their own mesh, bound only to that side's lamp group."""
+    meshes = []
+    for mesh in model['meshes']:
+        sides = LAMP_SIDES.get(route_of(mesh))
+        if not sides:
+            meshes.append(mesh); continue
+        left, right = sides
+        tris = {left: [], right: []}
+        ind = mesh['indices']
+        for i in range(0, len(ind), 3):
+            x = sum(mesh['positions'][ind[i+k]][0] for k in range(3))/3  # AC and BeamNG share X
+            tris[left if x > 0 else right].extend(ind[i:i+3])
+        for group, inds in tris.items():
+            if inds:
+                part = _subset(mesh, inds, '_' + group[-2:])
+                part['acng_group'] = group
+                meshes.append(part)
+    return dict(model, meshes=meshes)
+
+
+def _reach(points, cloud):
+    """Farthest of points from its nearest cloud node."""
+    return max(min(math.dist(p, q) for q in cloud) for p in points)
+
+
+def reroute_far(model, lift, route_of, clouds, owners, fallbacks, reach):
+    """Move triangles that lie outside their own group's reach to the nearest closer panel group."""
+    meshes, moved = [], {}
+    for mesh in model['meshes']:
+        own = route_of(mesh)
+        if own not in owners or not clouds.get(own):
+            meshes.append(mesh); continue
+        pts = [(p[0], -p[2], p[1]+lift) for p in mesh['positions']]
+        tris, ind = {own: []}, mesh['indices']
+        cands = [g for g in fallbacks if clouds.get(g)]
+        for i in range(0, len(ind), 3):
+            corners = [pts[ind[i+k]] for k in range(3)]
+            group, best = own, _reach(corners, clouds[own])
+            if best > reach:
+                for g in cands:
+                    d = _reach(corners, clouds[g])
+                    if d < best:
+                        group, best = g, d
+            tris.setdefault(group, []).extend(ind[i:i+3])
+        for group, inds in tris.items():
+            if not inds:
+                continue
+            if group == own:
+                meshes.append(_subset(mesh, inds, '') if len(tris) > 1 else mesh); continue
+            part = _subset(mesh, inds, '_to_' + group)
+            part['acng_group'] = group
+            meshes.append(part)
+            moved[f'{own}->{group}'] = moved.get(f'{own}->{group}', 0) + len(inds)//3
+    return dict(model, meshes=meshes), moved
+
+
+def reroute_lamps(model, lift, route_of, clouds):
+    """Move lamp triangles that lie outside their lamp group's reach to the nearest panel group."""
+    lamps = {side for sides in LAMP_SIDES.values() for side in sides}
+    return reroute_far(model, lift, route_of, clouds, lamps, LAMP_FALLBACKS, LAMP_REACH)
+
+
+def reroute_fenders(model, lift, route_of, clouds):
+    """Move fender triangles beyond the fender nodes' reach (arch liner) to closer panel groups."""
+    return reroute_far(model, lift, route_of, clouds, {'fender_L', 'fender_R'}, FENDER_FALLBACKS, LAMP_REACH)
+
+
 def add_prop(part, name, frame, prefix):
     """Damage-attached native prop with an explicit orthonormal reference frame."""
     pivot, axes = frame['pivot'], frame['axes']
@@ -201,7 +287,9 @@ def add_prop(part, name, frame, prefix):
     for a, b in ((0, 1), (0, 2), (1, 2)):
         beams.append([ids[a], ids[b]])
     func = frame.get('func', 'steering' if name == 'steer' else name.replace('pedal_', ''))
-    rotation = {'x': 0, 'y': 0, 'z': frame['rate']} if 'rate' in frame else {'x': 0, 'y': 0, 'z': 1} if name == 'steer' else {'x': -20, 'y': 0, 'z': 0}
+    # Steering turns about -Z: this frame's X axis points to the car's left, vanilla's (f5l->f5r)
+    # to its right, so the vanilla +1 turned the 1M wheel the opposite way to the road wheels.
+    rotation = {'x': 0, 'y': 0, 'z': frame['rate']} if 'rate' in frame else {'x': 0, 'y': 0, 'z': -1} if name == 'steer' else {'x': -20, 'y': 0, 'z': 0}
     props = part.setdefault('props', [PROP_HEADER])
     props.append([func, prefix+name, *ids, {'x': 0, 'y': 0, 'z': 0}, rotation,
                   {'x': 0, 'y': 0, 'z': 0}, frame.get('min', -1000 if name == 'steer' else 0),

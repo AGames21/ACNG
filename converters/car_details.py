@@ -88,6 +88,13 @@ def add_mirrors(files, centers, prefix):
              'label': {'mirror_L':'Left mirror', 'mirror_R':'Right mirror', 'mirror_C':'Interior mirror'}[name]}])
 
 
+# Our ETK suspension places the wheel at $trackwidth_* when a part declares it,
+# else at $trackoffset_*+0.26/0.305. Nothing declared it, so the .pc track was
+# ignored and both tires and rims sat 16/51 mm outboard (C009 probe). Declare it
+# on our rims. Track plus bindings (+/-0.51 front, +/-0.50 rear) = AC pivots 0.754.
+TRACK = {'F': 0.2438, 'R': 0.254}
+
+
 def wheel_parts(stock, prefix):
     """Clone selected rims, changing visual bindings only. Keep native physics."""
     result = {}
@@ -101,6 +108,10 @@ def wheel_parts(stock, prefix):
             row[0] = prefix+'rim_'+side
             row[-1]['rot'] = {'x': 0, 'y': 0, 'z': 0}
             row[-1]['scale'] = {'x': 1, 'y': 1, 'z': 1}
+        side = {'F': 'Front', 'R': 'Rear'}[axle]
+        part['variables'] = [['name', 'type', 'unit', 'category', 'default', 'min', 'max', 'title', 'description'],
+                             ['$trackwidth_'+axle, 'range', 'm', 'Alignment', TRACK[axle], 0.2, 0.32,
+                              side+' Track Width', 'Widen or narrow the wheel track', {'stepDis': 0.001}]]
         result['acng_1m_wheel_'+axle] = part
     return result
 
@@ -109,5 +120,5 @@ def wheel_config(pc):
     pc = copy.deepcopy(pc)
     pc['parts'].update(wheel_F_5='acng_1m_wheel_F', wheel_R_5='acng_1m_wheel_R')
     # Native hub offsets plus bindings +/-0.51 front, +/-0.50 rear match AC pivots.
-    pc.setdefault('vars', {}).update({'$trackwidth_F': 0.2438, '$trackwidth_R': 0.254})
+    pc.setdefault('vars', {}).update({'$trackwidth_'+a: t for a, t in TRACK.items()})
     return pc
