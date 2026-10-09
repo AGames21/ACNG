@@ -58,7 +58,7 @@ class CarInstallProof(unittest.TestCase):
 
     def test_c004_requires_lamp_and_steadiness_evidence(self):
         for label in ('C004 1M lamps', 'C006 1M steering frame', 'C007 1M fitment', 'C008 1M crash isolation',
-                      'C009 1M wheel track', 'C010 1M declared wheel track', 'C011 1M brakes'):
+                      'C009 1M wheel track', 'C010 1M declared wheel track', 'C011 1M brakes', 'C012 1M sound crossfades'):
           with self.subTest(label), tempfile.TemporaryDirectory() as temp:
             package, test, proof = self.fixture(Path(temp))
             proof['test'] = label
@@ -74,7 +74,8 @@ class CarInstallProof(unittest.TestCase):
             test.write_text(json.dumps(proof))
             fitted = ['crash_isolation_groups_found', 'tires_centred_on_ac_wheels', 'front_wheels_steer_right']
             extra = {'C008': ['crash_isolation_groups_found'], 'C009': fitted, 'C010': fitted,
-                     'C011': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded']}.get(label[:4], [])
+                     'C011': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded'],
+                     'C012': fitted + ['torque_curve_matches_ac', 'ac_engine_sound_loaded']}.get(label[:4], [])
             if extra:
                 with self.assertRaisesRegex(RuntimeError, 'incomplete'):
                     verify_local_build(package, test)

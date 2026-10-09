@@ -7,7 +7,7 @@ local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
 local MODEL='acng_bmw1m'
-local result={test='C011 1M centred brakes, native plate, AC torque curve, sound balance',completed=false,checks={},probes={},shots={}}
+local result={test='C012 1M sound follows AC loop crossfades',completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end

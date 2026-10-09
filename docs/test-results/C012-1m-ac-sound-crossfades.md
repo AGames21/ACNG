@@ -1,7 +1,7 @@
-# C012 - 1M sound follows AC's loop crossfades (built, game test pending)
+# C012 - 1M sound follows AC's loop crossfades (installed)
 
-Date: 2026-10-09. Build fix-011 (ZIP SHA256 e3ede788...), local, not released, not yet
-run in a lab profile or installed.
+Date: 2026-10-09. Build fix-011 (ZIP SHA256 e3ede788...), local, not released. Fresh lab
+profile ACNG-car-026.
 
 ## Fault
 
@@ -34,4 +34,6 @@ of one loop stay in step. AC's volumes (0 to -4.5 dB) are baked into the WAVs.
 
 - Build output: 40 mono WAVs, 22.6 MB; blend tags within 0.3 % of AC's window edges.
 - 222 Python tests pass.
-- Not yet checked in game; how it sounds needs a player to listen.
+- CarLab ACNG-car-026: 50/50 checks, including `ac_engine_sound_loaded`; no sound errors in the lab log.
+- Installed in the normal profile after an automatic backup; the installed hash matches the tested ZIP.
+- How it sounds still needs a player to listen.

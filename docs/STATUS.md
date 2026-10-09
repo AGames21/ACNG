@@ -1,9 +1,10 @@
-# Latest checkpoint - 2026-10-09 (night): C012 1M sound crossfades built, game test pending
+# Latest checkpoint - 2026-10-09 (night): C012 1M sound crossfades installed
 
 The "different sound around 2500 rpm" came from BeamNG blending two different AC
 recordings across the whole gap between them. Each loop now plays alone across its band
 and only crossfades inside AC's own windows (read from the bank), with AC's per-loop
-volumes. Build fix-011; 222 Python tests pass. Not yet run in game or installed. See
+volumes. Build fix-011; CarLab ACNG-car-026 50/50; installed after a backup. 222 Python
+tests pass. See
 [C012](test-results/C012-1m-ac-sound-crossfades.md). Still open: a 250 km/h limiter,
 turbo/blow-off samples.
 

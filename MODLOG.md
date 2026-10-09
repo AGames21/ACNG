@@ -1,8 +1,9 @@
-## 2026-10-09 - C012 1M sound follows AC loop crossfades (built, game test pending)
+## 2026-10-09 - C012 1M sound follows AC loop crossfades (installed)
 
 Each AC loop gets pitched copies at both edges of its solo band so the sfxBlend2D only
 mixes two recordings inside AC's fade windows; AC's per-loop volumes baked into the WAVs.
-Copy lengths give near-whole tags. Build fix-011; 222 tests pass.
+Copy lengths give near-whole tags. CarLab ACNG-car-026 50/50; installer accepts C012
+evidence; 222 tests pass. Installed.
 
 ## 2026-10-09 - C011 1M centred brakes, native plate, AC torque, sound balance (installed)
 
