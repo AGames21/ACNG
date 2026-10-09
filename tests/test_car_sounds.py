@@ -47,21 +47,66 @@ class SoundContracts(unittest.TestCase):
         w = s.wav(pcm, 44100)
         self.assertEqual((w[:4], w[8:12], len(w)), (b'RIFF', b'WAVE', 44 + 4))
 
-    def test_blends_put_idle_under_off_and_on_load_lists(self):
-        b = s.blends({n: None for n, _, _ in self.SAMPLES})
+    def test_loops_put_idle_under_off_and_on_load_lists(self):
+        b = s.loops({n: None for n, _, _ in self.SAMPLES})
         self.assertEqual(b['engine'], [[(650, '1m_idle'), (4000, '1m_off_4000')],
                                        [(650, '1m_idle'), (4000, '1m_on_4000')]])
         self.assertEqual(b['exhaust'][1], [(650, 'ext_1m_idle'), (2500, 'ext1m_on_2500')])
         self.assertEqual(s.IDLE_RPM, 650)  # measured recording rpm, matches the engine idleRPM
 
+    def test_zones_follow_ac_crossfade_windows(self):
+        self.assertEqual(s.zone('engine', 1, 650, 2800), (1600, 2000))
+        self.assertEqual(s.zone('engine', 0, 650, 2000), (1200, 2400))  # the one wide idle fade
+        self.assertEqual(s.zone('engine', 0, 6000, 8000), (5600, 6000))  # ends at the lower loop
+        self.assertEqual(s.zone('engine', 1, 4000, 5000), (4300, 4700))  # unknown: centred 400
+
+    def test_each_loop_plays_alone_between_ac_windows(self):
+        names = ['1m_idle', 'ext_1m_idle'] + [f'{p}{r}' for p, rs in (
+            ('1m_off_', (2000, 4000, 6000, 8000)), ('1m_on_', (2800, 4000, 6000, 8000)),
+            ('ext1m_off_', (2500, 4500, 6000, 8000)), ('ext1m_on_', (2500, 4000, 5500, 8000)))
+            for r in rs]
+        b = s.blends(dict.fromkeys(names))
+        self.assertEqual([(tag, rpm, db) for tag, _, rpm, db in b['engine'][1]],
+                         [(650, 650, 0), (1600, 650, 0), (2000, 2800, -2.5), (2800, 2800, -2.5),
+                          (3200, 4000, -3), (4000, 4000, -3), (4400, 6000, -3), (6000, 6000, -3),
+                          (6400, 8000, -3), (8000, 8000, -3)])
+        for key in b:
+            for entries in b[key]:
+                tags = [e[0] for e in entries]
+                self.assertEqual(tags, sorted(set(tags)), key)
+                # Two different recordings only ever meet across one entry gap (a crossfade window).
+                for (_, n1, _, _), (_, n2, _, _), (_, n3, _, _) in zip(entries, entries[1:], entries[2:]):
+                    self.assertTrue(n1 == n2 or n2 == n3, (key, n1, n2, n3))
+
+    def test_copies_get_near_whole_tags_and_loop_without_a_seam(self):
+        n, rpm = 44100, 4000
+        frames, tag = s.copy_length(n, rpm, 3200)
+        self.assertLessEqual(abs(tag - 3200) / 3200, s.TAG_SLACK)
+        self.assertLess(abs(rpm * n / frames - tag), 0.01)
+        self.assertEqual(s.copy_length(n, rpm, rpm), (n, rpm))
+        period = 100
+        tone = struct.pack(f'<{n}h', *(round(8000 * math.sin(2 * math.pi * i / period)) for i in range(n)))
+        for target in (frames, 30000):
+            out = struct.unpack(f'<{target}h', s.repitch(tone, target))
+            self.assertLessEqual(s.seam_ratio(out), s.SEAM_RATIO, target)
+        half = struct.unpack('<2h', s.gain(struct.pack('<2h', 1000, -1000), -6))
+        self.assertEqual(half, (501, -501))
+
     def test_write_and_apply_point_engine_at_build_local_blends(self):
         with tempfile.TemporaryDirectory() as tmp:
             bank, vdir = Path(tmp) / 'car.bank', Path(tmp) / 'v'
-            bank.write_bytes(fake_bank(self.SAMPLES))
+            bank.write_bytes(fake_bank([(n, ch, 3000) for n, ch, _ in self.SAMPLES]))
             vdir.mkdir()
             updates = s.write(bank, vdir, 'acng_test')
             blend = json.loads((vdir / 'sounds' / 'acng_1m_engine.sfxBlend2D.json').read_text())
-            self.assertEqual(blend['samples'][1][1], ['vehicles/acng_test/sounds/1m_on_4000.wav', 4000])
+            on = blend['samples'][1]
+            self.assertEqual(on[0], ['vehicles/acng_test/sounds/1m_idle.wav', 650])
+            self.assertEqual(on[-1], ['vehicles/acng_test/sounds/1m_on_4000_-3dB.wav', 4000])
+            for (_, got), want in zip(on, [650, 2800, 3200, 4000], strict=True):
+                self.assertLessEqual(abs(got - want) / want, s.TAG_SLACK)
+            self.assertTrue(on[1][0].startswith('vehicles/acng_test/sounds/1m_idle_at_'))
+            for path, _ in sum(blend['samples'], []):
+                self.assertTrue((vdir / 'sounds' / Path(path).name).is_file(), path)
             self.assertTrue((vdir / 'sounds' / 'ext1m_off_2500.wav').is_file())
             self.assertFalse((vdir / 'sounds' / 'horn.wav').exists())
         engine = {'mainEngine': {'soundConfig': 'soundConfig', 'soundConfigExhaust': 'soundConfigExhaust'},

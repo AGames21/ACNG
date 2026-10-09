@@ -24,6 +24,27 @@ SETS = {
     'engine': {'idle': '1m_idle', 'prefix_on': '1m_on_', 'prefix_off': '1m_off_'},
     'exhaust': {'idle': 'ext_1m_idle', 'prefix_on': 'ext1m_on_', 'prefix_off': 'ext1m_off_'},
 }
+# AC holds each loop alone over a wide rpm band and crossfades to the next one over 400 rpm
+# (1200 for one idle). Read from the 1M bank's event metadata: each loop instrument's fade-in
+# and fade-out curves and its volume. A BeamNG blend crossfades linearly between neighbouring
+# entries, so with one entry per loop two different recordings played together across the whole
+# gap (C011 playtest: "switches to a different sound around 2500"). Each loop now gets pitched
+# copies at both edges of its band, so BeamNG only crossfades inside AC's windows.
+# Per set, (off-load, on-load): {loop rpm: (fade-in window from the loop below, AC volume dB)}.
+AC_LAYOUT = {
+    'engine': ({IDLE_RPM: (None, -3.5), 2000: ((1200, 2400), -4.5), 4000: ((2600, 3000), -2),
+                6000: ((4000, 4400), -2.5), 8000: ((5600, 6000), -2)},
+               {IDLE_RPM: (None, 0), 2800: ((1600, 2000), -2.5), 4000: ((2800, 3200), -3),
+                6000: ((4000, 4400), -3), 8000: ((6000, 6400), -3)}),
+    'exhaust': ({IDLE_RPM: (None, -3), 2500: ((1800, 2200), 0), 4500: ((2600, 3000), 0),
+                 6000: ((4400, 4800), 0), 8000: ((5600, 6000), 0)},
+                {IDLE_RPM: (None, -1.5), 2500: ((1600, 2000), -2), 4000: ((2600, 3000), -3),
+                 5500: ((4000, 4400), -3), 8000: ((5600, 6000), -3)}),
+}
+XFADE_RPM = 400
+# Pitched copies of one loop must stay in step when BeamNG mixes them, so their lengths are
+# chosen to make the tag rpm (nearly) a whole number; the tag may move this much to find one.
+TAG_SLACK = 0.003
 # The donor ETK I6 heavily EQs synthetic loops; the AC loops are finished recordings, so flat.
 FLAT_EQ = {'lowShelfGain': 0, 'highShelfGain': 0, 'eqLowGain': 0, 'eqHighGain': 0, 'eqFundamentalGain': 0}
 # Child parts still add EQ with "$+" keys (turbo intake +4 dB fundamental, I6 exhaust +12 dB
@@ -96,8 +117,8 @@ def wav(pcm, rate):
             struct.pack('<IHHIIHH', 16, 1, 1, rate, rate * 2, 2, 16) + b'data' + struct.pack('<I', len(pcm)) + pcm)
 
 
-def blends(samples):
-    """Map each sound set to (off-load, on-load) rpm-sorted lists of sample names."""
+def loops(samples):
+    """Map each sound set to (off-load, on-load) rpm-sorted lists of (recorded rpm, sample name)."""
     out = {}
     for key, spec in SETS.items():
         lists = []
@@ -111,19 +132,109 @@ def blends(samples):
     return out
 
 
+def layout(key, load, rpm):
+    """(fade-in window, volume dB) for the loop recorded at `rpm`; (None, 0) when AC's is unknown."""
+    return AC_LAYOUT.get(key, ({}, {}))[load].get(rpm, (None, 0))
+
+
+def zone(key, load, lower, upper):
+    """The rpm window where loop `lower` hands over to loop `upper` (AC's, else a centred 400)."""
+    window = layout(key, load, upper)[0]
+    if window and window[0] < window[1]:  # AC's may end below `lower` or above `upper`
+        return window
+    mid = (lower + upper) / 2
+    return round(mid - XFADE_RPM / 2), round(mid + XFADE_RPM / 2)
+
+
+def blends(samples):
+    """Map each sound set to (off-load, on-load) lists of (tag rpm, sample name, recorded rpm, dB).
+
+    Each loop appears at both edges of the band where it plays alone; BeamNG's linear blend then
+    only mixes two different recordings inside AC's crossfade windows.
+    """
+    out = {}
+    for key, lists in loops(samples).items():
+        out[key] = []
+        for load, rows in enumerate(lists):
+            entries = []
+            for i, (rpm, name) in enumerate(rows):
+                lo = zone(key, load, rows[i - 1][0], rpm)[1] if i else rpm
+                hi = zone(key, load, rpm, rows[i + 1][0])[0] if i + 1 < len(rows) else rpm
+                db = layout(key, load, rpm)[1]
+                entries += [(lo, name, rpm, db)] + ([(max(hi, lo + 1), name, rpm, db)] if hi != lo else [])
+            out[key].append(entries)
+    return out
+
+
+def gain(pcm, db):
+    if not db:
+        return pcm
+    k = 10 ** (db / 20)
+    vals = struct.unpack(f'<{len(pcm) // 2}h', pcm)
+    return struct.pack(f'<{len(vals)}h', *(max(-32768, min(32767, round(v * k))) for v in vals))
+
+
+def copy_length(n, rpm, tag):
+    """Frames for a copy of an n-frame loop recorded at `rpm` re-pitched to play at `tag`.
+
+    Returns (frames, whole-number tag) with frames chosen so rpm * n / frames is nearly whole:
+    then every copy runs through the source in step when BeamNG plays them at rpm / tag.
+    """
+    if tag == rpm:
+        return n, rpm
+    ideal = n * rpm / tag
+    # Lengths whose tag stays within TAG_SLACK of the wanted one (tag falls as the length grows).
+    lo, hi = math.ceil(n * rpm / (tag * (1 + TAG_SLACK))), math.floor(n * rpm / (tag * (1 - TAG_SLACK)))
+    frames = min(range(max(lo, 1), max(hi, lo, 1) + 1), key=lambda f: (abs(rpm * n / f - round(rpm * n / f)), abs(f - ideal)))
+    return frames, round(rpm * n / frames)
+
+
+def repitch(pcm, frames):
+    """Resample a mono loop to `frames` frames, wrapping round the loop point (no seam)."""
+    vals = struct.unpack(f'<{len(pcm) // 2}h', pcm)
+    n = len(vals)
+    step = n / frames
+    width = int(round(step))
+    if width > 1:  # shortening raises the pitch: average first so it doesn't alias
+        ext = vals[-(width // 2):] + vals + vals[:width]  # centred window, wrapping round the loop
+        acc, run = [0], 0
+        for v in ext:
+            run += v
+            acc.append(run)
+        vals = [(acc[i + width] - acc[i]) / width for i in range(n)]
+    out = []
+    for j in range(frames):
+        x = j * step
+        i = int(x)
+        f = x - i
+        out.append(max(-32768, min(32767, round(vals[i % n] * (1 - f) + vals[(i + 1) % n] * f))))
+    return struct.pack(f'<{frames}h', *out)
+
+
 def write(bank, vdir, vehicle):
     """Write WAVs and blends under vdir/sounds; return the engine-part sound key updates."""
     samples = read_fsb(bank.read_bytes())
     sdir, folder = vdir / 'sounds', f'vehicles/{vehicle}/sounds/'
     sdir.mkdir(exist_ok=True)
-    names = {}
+    names, clean, done = {}, {}, {}
     for key, lists in blends(samples).items():
-        for rows in lists:
-            for _, n in rows:
-                rate, ch, pcm = samples[n]
-                (sdir / f'{n}.wav').write_bytes(wav(seamless(mono(pcm, ch), rate), rate))
-        blend = {'header': {'version': 1}, 'eventName': 'event:>Engine>default',
-                 'samples': [[[folder + f'{n}.wav', rpm] for rpm, n in rows] for rows in lists]}
+        blend_rows = []
+        for entries in lists:
+            rows = []
+            for tag, n, rpm, db in entries:
+                if n not in clean:
+                    rate, ch, pcm = samples[n]
+                    clean[n] = (rate, seamless(mono(pcm, ch), rate))
+                rate, pcm = clean[n]
+                frames, exact = copy_length(len(pcm) // 2, rpm, tag)
+                file = n + (f'_at_{exact}' if exact != rpm else '') + (f'_{db:+g}dB' if db else '') + '.wav'
+                if file not in done:
+                    out = pcm if frames * 2 == len(pcm) else repitch(pcm, frames)
+                    (sdir / file).write_bytes(wav(gain(out, db), rate))
+                    done[file] = exact
+                rows.append([folder + file, exact])
+            blend_rows.append(rows)
+        blend = {'header': {'version': 1}, 'eventName': 'event:>Engine>default', 'samples': blend_rows}
         names[key] = f'acng_1m_{key}'
         (sdir / f'{names[key]}.sfxBlend2D.json').write_text(json.dumps(blend, indent=1), encoding='ascii')
     return {key: {'sampleFolder': folder, 'sampleName': name, 'offLoadGain': OFF_LOAD_GAIN, **FLAT_EQ}

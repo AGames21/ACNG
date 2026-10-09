@@ -1,4 +1,13 @@
-# Latest checkpoint - 2026-10-09 (late): C011 1M brakes, plate, torque and sound installed
+# Latest checkpoint - 2026-10-09 (night): C012 1M sound crossfades built, game test pending
+
+The "different sound around 2500 rpm" came from BeamNG blending two different AC
+recordings across the whole gap between them. Each loop now plays alone across its band
+and only crossfades inside AC's own windows (read from the bank), with AC's per-loop
+volumes. Build fix-011; 222 Python tests pass. Not yet run in game or installed. See
+[C012](test-results/C012-1m-ac-sound-crossfades.md). Still open: a 250 km/h limiter,
+turbo/blow-off samples.
+
+# Previous checkpoint - 2026-10-09 (late): C011 1M brakes, plate, torque and sound installed
 
 Brake discs sat off centre because moved meshes stayed where they were authored; every
 kept flexbody now shifts with its nodes (also exhaust, fuel tank, heatshield, wings).

@@ -1,3 +1,9 @@
+## 2026-10-09 - C012 1M sound follows AC loop crossfades (built, game test pending)
+
+Each AC loop gets pitched copies at both edges of its solo band so the sfxBlend2D only
+mixes two recordings inside AC's fade windows; AC's per-loop volumes baked into the WAVs.
+Copy lengths give near-whole tags. Build fix-011; 222 tests pass.
+
 ## 2026-10-09 - C011 1M centred brakes, native plate, AC torque, sound balance (installed)
 
 Kept flexbodies shift by the node move at their group centroid (brakes, exhaust, tank,
