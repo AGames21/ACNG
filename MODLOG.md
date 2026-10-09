@@ -1,3 +1,7 @@
+## 2026-10-09 - Car import pipeline and guide
+
+`scripts/car_pipeline.py`: build, fresh isolated CarLab run, report, optional gated install, one command; refuses while BeamNG runs (confirmed live). `docs/CAR-IMPORT.md`: stages, generic vs per-car values, new-car checklist, new-source reader interface; Forza excluded (encrypted assets). End-to-end game run pending a closed BeamNG.
+
 ## 2026-10-09 - C013 BMW 1M limiter and event sounds (installed)
 
 Converter: explicit native 250 km/h target and ECU selection; cloned turbo/shifter sound mappings. Gear samples use native gear-in/out semantics. Rev-limiter recording is local research only: no standalone native playback slot found. C012 engine/exhaust audio and mechanical settings preserved byte-for-byte where applicable. 225 Python tests, 10 Node suites and publication audit pass; fix-012 builds externally. CarLab ACNG-car-028 54/54 after the limiter check moved to wheel speed (027: limiter held 250 by wheel speed, ground speed 247.9 failed a 248 band). Installed. [Evidence and next step](docs/test-results/C013-1m-native-limiter-event-sounds.md).

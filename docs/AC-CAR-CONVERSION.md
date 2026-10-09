@@ -34,6 +34,9 @@ The converter reads the owner's installed assets locally:
    deforms and detaches with the ETK hood's nodes, and so on. Paint colours
    come from the AC skins.
 
+The one-command build, lab test and install is `python scripts/car_pipeline.py --install`;
+see [Importing cars](CAR-IMPORT.md). The manual steps follow.
+
 Run, with the output folder outside the repository:
 
 ```

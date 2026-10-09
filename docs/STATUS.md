@@ -1,4 +1,15 @@
-# Latest checkpoint - 2026-10-09 (night): C013 1M 250 km/h limiter and event sounds installed
+# Latest checkpoint - 2026-10-09 (night): car import pipeline and guide
+
+`scripts/car_pipeline.py` runs a car import in one command: build into the next numbered
+folder outside the repo, CarLab in the next fresh lab profile with that exact ZIP, wait,
+stop only that lab game, report every check, and with `--install` hand the tested ZIP to
+the evidence-gated installer. It refuses to start while any BeamNG runs. Unit-tested
+helpers; not yet run end to end in the game (BeamNG was open, and the guard refused as
+intended). [docs/CAR-IMPORT.md](CAR-IMPORT.md) documents the stages, which values are per
+car, the plan for a per-car profile with the second car, and source-game rules: Forza is
+not a possible source because its assets are encrypted.
+
+# Previous checkpoint - 2026-10-09 (night): C013 1M 250 km/h limiter and event sounds installed
 
 Native ETK 250 km/h limiter on the converted engine; the cloned turbo and shifter play the
 owned AC turbo whine, blow-off and gear-in/out recordings. The AC rev-limiter recording
