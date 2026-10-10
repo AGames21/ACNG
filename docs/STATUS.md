@@ -1,4 +1,16 @@
-# Latest checkpoint - 2026-10-09 (night): car import pipeline and guide
+# Latest checkpoint - 2026-10-10: C014 BMW M3 E92 and 1M shift sounds installed
+
+Second converted car: the AC BMW M3 E92 (DCT) on the ETK K-Series with the native 4.4 V8
+cloned to BMW figures (309 kW, 400 Nm, 8400 rpm, 7-speed M DCT, 250 km/h). Per-car values
+now live in `converters/cars/<car>.py`; CarLab reads each car's targets from the ZIP.
+Native shift-sound hooks only play FMOD events, so the AC gearup / geardn recordings had
+never been heard. The new original `acng_shiftSound` controller plays them on both cars.
+CarLab: M3 ACNG-car-032 53/53, 1M ACNG-car-034 54/54. Both cars are installed after
+backups, and their installed hashes match the tested ZIPs. 247 Python tests and 10 Node
+suites pass. See [C014](test-results/C014-m3-e92-generic-carlab.md). Open: the player's
+drive and listening verdict for both cars. Dash paused.
+
+# Previous checkpoint - 2026-10-09 (night): car import pipeline and guide
 
 `scripts/car_pipeline.py` runs a car import in one command: build into the next numbered
 folder outside the repo, CarLab in the next fresh lab profile with that exact ZIP, wait,

@@ -37,7 +37,8 @@ r.static=acngC5Mass
 obj:queueGameEngineLua(string.format('extensions.acng_handlinglab.receive(%q)',jsonEncode(r)))
 ]]
 M.receive=function(encoded) latest=jsonDecode(encoded) end
-function M.run(veh,now,delay)
+function M.run(veh,now,delay,massKg)
+  massKg=massKg or 1495 -- BMW 1M
   local out={schema_version=1,completed=false,map='smallgrid',master=false,
     transmission='native arcade automatic shifts',assists='native donor factory defaults',
     acceleration={},braking={},circles={},samples={},starts={},checks={}}
@@ -53,7 +54,7 @@ function M.run(veh,now,delay)
     delay(1);latest=nil;command('acngC5Mass=nil\n'..SAMPLE);delay(0.3)
     assert(latest and latest.damage<50,'Handling start damaged or missing native sample')
     assert(veh:getVelocity():length()<0.1,'Handling start is moving')
-    assert(latest.static and math.abs(latest.static.mass_kg-1495)/1495<0.03,'Handling mass outside target')
+    assert(latest.static and math.abs(latest.static.mass_kg-massKg)/massKg<0.03,'Handling mass outside target')
     out.starts[#out.starts+1]={stage=out.stage,static=latest.static}
   end
   local function record(phase)

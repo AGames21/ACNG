@@ -6,12 +6,22 @@ output only, and points the cloned engine part at them. Nothing here is committe
 """
 import json
 import math
+import re
+import shutil
 import struct
+import wave
+from pathlib import Path
 
 RATES = {1: 8000, 2: 11000, 3: 11025, 4: 16000, 5: 22050, 6: 24000, 7: 32000, 8: 44100, 9: 48000}
 # Measured, not named: the idle loops' firing-frequency envelopes put them at 630-675 rpm (I6 fires
 # three times per rev). Tagging them 800 played the idle 19 % flat at the 650 rpm engine idle.
 IDLE_RPM = 650
+PREFIX, LABEL = 'acng_1m_', '1M'  # per-car names (converters/cars/ profiles override the constants here)
+# Optional explicit loop order per set: {key: (off-load names, on-load names)}. Needed when a
+# bank's names do not sort into AC's play order (the M3's on_4198 plays below its on_4000).
+CHAINS = {}
+# Idle loop tag per set when the sets' idles were recorded at different speeds.
+IDLE_TAGS = {}
 # AC 1M bank sample names: the interior set drives the engine node, the exterior set the exhaust.
 # Both are full-car recordings, so at equal level the car played two engines from two positions
 # (C010 playtest: "weird and artificial"). The exterior set leads; the interior set stays as a
@@ -122,10 +132,17 @@ def loops(samples):
     out = {}
     for key, spec in SETS.items():
         lists = []
+        idle = IDLE_TAGS.get(key, IDLE_RPM)
+        if key in CHAINS:
+            chains = [[(idle if n == spec['idle'] else int(re.search(r'(\d+)$', n).group(1)), n)
+                       for n in chain if n in samples] for chain in CHAINS[key]]
+            if all(chains):
+                out[key] = chains
+            continue
         for prefix in (spec['prefix_off'], spec['prefix_on']):
             rows = [(int(n[len(prefix):]), n) for n in samples if n.startswith(prefix) and n[len(prefix):].isdigit()]
             if spec['idle'] in samples:
-                rows.append((IDLE_RPM, spec['idle']))
+                rows.append((idle, spec['idle']))
             lists.append(sorted(rows))
         if all(lists):
             out[key] = lists
@@ -235,13 +252,23 @@ def write(bank, vdir, vehicle):
                 rows.append([folder + file, exact])
             blend_rows.append(rows)
         blend = {'header': {'version': 1}, 'eventName': 'event:>Engine>default', 'samples': blend_rows}
-        names[key] = f'acng_1m_{key}'
+        names[key] = PREFIX + key
         (sdir / f'{names[key]}.sfxBlend2D.json').write_text(json.dumps(blend, indent=1), encoding='ascii')
     return {key: {'sampleFolder': folder, 'sampleName': name, 'offLoadGain': OFF_LOAD_GAIN, **FLAT_EQ}
             for key, name in names.items()}
 
 
 EVENT_SAMPLES = ('turbo', 'flutter_4', 'bmw_6cyl_limiter', 'gearup', 'geardn')
+SEAMLESS_EVENTS = {'turbo'}  # looped events get the click-free seam
+# Hooks: (part suffix, section, field, event sample). Gear sounds go to ACNG's controller below.
+EVENT_HOOKS = (('turbo', 'turbocharger', 'whineLoopEvent', 'turbo'),
+               ('turbo', 'turbocharger', 'bovSoundFileName', 'flutter_4'),
+               ('shifter', 'acng_shiftSound', 'upSample', 'gearup'),
+               ('shifter', 'acng_shiftSound', 'downSample', 'geardn'))
+# Hooks into this section feed ACNG's own vehicle controller (converters/vehicle_lua): native
+# playSFXOnceCT takes FMOD events only, so a WAV on a native lever hook is never heard.
+SHIFT_SECTION = 'acng_shiftSound'
+SHIFT_LUA = Path(__file__).resolve().parent / 'vehicle_lua' / 'acng_shiftSound.lua'
 
 
 def write_events(bank, vdir, vehicle):
@@ -253,32 +280,38 @@ def write_events(bank, vdir, vehicle):
     samples = read_fsb(bank.read_bytes())
     missing = set(EVENT_SAMPLES) - samples.keys()
     if missing:
-        raise ValueError('Missing 1M event samples: ' + ', '.join(sorted(missing)))
+        raise ValueError(f'Missing {LABEL} event samples: ' + ', '.join(sorted(missing)))
     sdir = vdir / 'sounds'
     sdir.mkdir(exist_ok=True)
     files = {}
     for name in EVENT_SAMPLES:
         rate, channels, pcm = samples[name]
         pcm = mono(pcm, channels)
-        if name == 'turbo':
+        if name in SEAMLESS_EVENTS:
             pcm = seamless(pcm, rate)
-        filename = 'acng_1m_' + name + '.wav'
+        filename = PREFIX + name + '.wav'
         (sdir / filename).write_bytes(wav(pcm, rate))
         files[name] = 'vehicles/' + vehicle + '/sounds/' + filename
     return files
 
 
-def apply_events(parts, files):
-    """Use stock turbo and H-pattern hooks; retain every mechanical parameter.
+def apply_events(parts, files, vdir=None):
+    """Point the hooks (EVENT_HOOKS) at the exported samples; retain mechanical values.
 
-    H-pattern hooks mean entering/leaving a gear, not directional up/down shifts.
-    No custom controller or unsupported revLimiterSound property is installed.
+    The shift controller plays upSample on a higher gear and downSample on a lower one.
+    A SHIFT_SECTION hook (`upSample`/`downSample`) also gets the recording's length
+    (`upSeconds`/`downSeconds`) and installs the controller under vdir/lua/controller.
+    No unsupported revLimiterSound property is installed.
     """
-    parts['acng_1m_turbo']['turbocharger'].update(
-        whineLoopEvent=files['turbo'], bovSoundFileName=files['flutter_4'])
-    parts['acng_1m_shifter']['hPattern'].update(
-        shiftSoundEventHPatternGearIn=files['gearup'],
-        shiftSoundEventHPatternGearOut=files['geardn'])
+    for suffix, section, field, sample in EVENT_HOOKS:
+        data = parts[PREFIX + suffix][section]
+        data[field] = files[sample]
+        if section == SHIFT_SECTION:
+            with wave.open(str(vdir / 'sounds' / Path(files[sample]).name)) as w:
+                data[field.replace('Sample', 'Seconds')] = round(w.getnframes() / w.getframerate(), 3)
+            target = vdir / 'lua' / 'controller'
+            target.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(SHIFT_LUA, target / SHIFT_LUA.name)
 
 
 def donor_offsets(parts, chosen):

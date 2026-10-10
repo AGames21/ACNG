@@ -12,6 +12,7 @@ Usage:
   python scripts/car_pipeline.py                     # build + lab test, report only
   python scripts/car_pipeline.py --install           # ... and install if every check passed
   python scripts/car_pipeline.py --zip <tested.zip>  # skip the build, test an existing ZIP
+  python scripts/car_pipeline.py --car bmw_m3_e92    # another car profile (converters/cars/)
 """
 import argparse
 import csv
@@ -97,12 +98,16 @@ def main():
     paths = load_paths()
     work = Path(paths['lab_user']).resolve().parents[1]
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    ap.add_argument('--ac-car', default=str(Path(paths['assetto']) / 'content' / 'cars' / 'bmw_1m'))
-    ap.add_argument('--skin', default='valencia_orange')
+    ap.add_argument('--car', default='bmw_1m', help='car profile in converters/cars/ (also the AC folder name)')
+    ap.add_argument('--ac-car', help='AC car folder; default <assetto>/content/cars/<car>')
+    ap.add_argument('--skin', help='default paint (AC skin folder); profile default if omitted')
     ap.add_argument('--zip', type=Path, help='test this already-built ZIP instead of building')
     ap.add_argument('--install', action='store_true', help='install in the normal profile if every check passes')
     ap.add_argument('--timeout', type=int, default=1800, help='seconds to wait for the lab run')
     a = ap.parse_args()
+    if not re.fullmatch(r'[a-z0-9_]+', a.car):
+        raise SystemExit(f'Bad car profile name: {a.car!r}')
+    ac_car = a.ac_car or str(Path(paths['assetto']) / 'content' / 'cars' / a.car)
 
     if game_running():
         raise SystemExit('BeamNG is running. Close it first; this pipeline never touches a running game.')
@@ -110,11 +115,16 @@ def main():
     if a.zip:
         package = a.zip.resolve()
     else:
-        out = next_folder(work / 'ACNG-car', 'bmw1m-fix')
+        # The 1M keeps its historical folder names (bmw1m-fix-NNN).
+        out = next_folder(work / 'ACNG-car', 'bmw1m-fix' if a.car == 'bmw_1m' else a.car.replace('_', '') + '-fix')
         print(f'1/4 build -> {out}', flush=True)
-        subprocess.run([sys.executable, str(ROOT / 'converters' / 'build_ac_car.py'), '--ac-car', a.ac_car,
-                        '--beamng', paths['beamng'], '--out', str(out), '--skin', a.skin], check=True)
-        package = out / 'acng_bmw1m.zip'
+        subprocess.run([sys.executable, str(ROOT / 'converters' / 'build_ac_car.py'), '--car', a.car,
+                        '--ac-car', ac_car, '--beamng', paths['beamng'], '--out', str(out)]
+                       + (['--skin', a.skin] if a.skin else []), check=True)
+        zips = sorted(out.glob('*.zip'))
+        if len(zips) != 1:
+            raise SystemExit(f'Expected one car ZIP in {out}, found {len(zips)}')
+        package = zips[0]
     if not package.is_file():
         raise SystemExit(f'No car ZIP at {package}')
 

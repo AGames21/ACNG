@@ -1,4 +1,4 @@
-"""Original local BMW 1M fitting/rigging helpers; contains no extracted assets."""
+"""Original local car fitting/rigging helpers (BMW 1M defaults); contains no extracted assets."""
 import copy
 import math
 
@@ -19,6 +19,11 @@ FENDER_ZONE = {'y_max': -0.58, 'abs_x_min': 0.6, 'z_max': 0.97}
 # Further left is the dead pedal (foot rest, 0.61): it used to become the clutch prop while the
 # real clutch pad moved with the brake.
 PEDAL_X = (('pedal_throttle', 0.345), ('pedal_brake', 0.45), ('pedal_clutch', 0.545))
+# Pedal islands: their own material, or wholly inside this box (x_min, x_max, y_max, z_max).
+PEDAL_MATERIALS = {'INT_Pedali'}
+PEDAL_BOX = (0.2, 0.7, -0.5, 0.54)
+# AC nodes holding the shift lever and its boot (separate damage-attached flexbodies).
+SHIFTER_NODE, SHIFT_BOOT_NODE = 'SHIFT_HR', 'GEO_Guaina_Cambio'
 # Lamp meshes span both sides of the car; vanilla gives each lamp its own flexbody and group.
 # One flexbody on both sides' groups let vertices follow the other lamp's nodes, so a lamp that
 # broke off in a crash dragged a long sheet of the other lamp's mesh after it.
@@ -40,6 +45,9 @@ FENDER_FALLBACKS = ('body',)
 # ('nose', third node 0.23 m) holds every body triangle ahead of this line without ever tearing
 # away with a loose part. Extra nodes only shorten bindings, so the zone can be generous.
 NOSE_Y_MAX = -1.6
+# Lamp pieces that sit on another panel: (mesh name prefix, lowest BeamNG z, target group). A
+# roof-line brake lamp modelled inside the tail-lamp mesh (M3) moves to the body and keeps glowing.
+LAMP_MOVES = ()
 PROP_HEADER = ['func', 'mesh', 'idRef:', 'idX:', 'idY:', 'baseRotation', 'rotation',
                'translation', 'min', 'max', 'offset', 'multiplier']
 
@@ -85,7 +93,8 @@ def interior_group(mesh, lift):
     points = [(p[0], -p[2], p[1]+lift) for p in mesh['positions']]
     low, high = bounds(points)
     x, y, z = [(low[k]+high[k])/2 for k in range(3)]
-    if mesh['material'] == 'INT_Pedali' or (low[0] > 0.2 and high[0] < 0.7 and high[1] < -0.5 and high[2] < 0.54):
+    px0, px1, py1, pz1 = PEDAL_BOX
+    if mesh['material'] in PEDAL_MATERIALS or (low[0] > px0 and high[0] < px1 and high[1] < py1 and high[2] < pz1):
         return next((name for name, limit in PEDAL_X if x < limit), 'cabin')
     (ax0, ax1), (y0, y1), (z0, z1) = SEAT_BOX
     inside = (ax0 <= min(abs(low[0]), abs(high[0])) and max(abs(low[0]), abs(high[0])) <= ax1
@@ -102,10 +111,10 @@ def prepare_model(model, lift):
         if mesh.get('acng_group'):
             meshes.append(mesh)
         elif 'COCKPIT_HR' in path and not any(p.startswith(('DOOR_', 'ARROW_', 'STEER_')) for p in path):
-            if any(p.startswith('SHIFT_HR') for p in path):
+            if SHIFTER_NODE and any(p.startswith(SHIFTER_NODE) for p in path):
                 mesh = dict(mesh, acng_group='shifter')
                 meshes.append(mesh)
-            elif 'GEO_Guaina_Cambio' in path:
+            elif SHIFT_BOOT_NODE and SHIFT_BOOT_NODE in path:
                 meshes.append(dict(mesh, acng_group='shifter_boot'))
             else:
                 for part in components(mesh):
@@ -114,7 +123,7 @@ def prepare_model(model, lift):
         else:
             meshes.append(mesh)
     frames = {}
-    for name in ('steer', 'pedal_throttle', 'pedal_brake', 'pedal_clutch'):
+    for name in ('steer', *(name for name, _ in PEDAL_X)):
         selected = [m for m in meshes if m.get('acng_group') == name or
                     (name == 'steer' and 'STEER_HR' in m['path'])]
         if not selected:
@@ -204,6 +213,26 @@ def split_fenders(model, lift, is_body):
                 if group:
                     part['acng_group'] = group
                 meshes.append(part)
+    return dict(model, meshes=meshes)
+
+
+def move_lamp_parts(model, lift):
+    """Move LAMP_MOVES triangles to their target group; the moved piece keeps its lamp function."""
+    meshes = []
+    for mesh in model['meshes']:
+        rule = next((r for r in LAMP_MOVES if mesh['name'].startswith(r[0])), None)
+        if not rule or mesh.get('acng_group'):
+            meshes.append(mesh); continue
+        _, z_min, target = rule
+        tris, ind = {'': [], target: []}, mesh['indices']
+        for i in range(0, len(ind), 3):
+            z = sum(mesh['positions'][ind[i+k]][1] for k in range(3))/3 + lift  # AC y is up
+            tris[target if z > z_min else ''].extend(ind[i:i+3])
+        if not tris[target]:
+            meshes.append(mesh); continue
+        if tris['']:
+            meshes.append(_subset(mesh, tris[''], ''))
+        meshes.append(dict(_subset(mesh, tris[target], '_' + target), acng_group=target, acng_glow=True))
     return dict(model, meshes=meshes)
 
 
@@ -375,6 +404,11 @@ def spec_parts(stock):
     turbo['information'] = {'name': 'BMW 1M native turbo (local sounds)', 'authors': 'ACNG local build'}
     shifter = copy.deepcopy(stock['etkc_shifter_M'])
     shifter['information'] = {'name': 'BMW 1M native manual shifter (local sounds)', 'authors': 'ACNG local build'}
+    # The native lever keeps its FMOD gear-in / gear-out clicks; ACNG's controller adds the AC
+    # gearbox recordings (a WAV on the native hooks is never played).
+    shifter.setdefault('controller', [['fileName']]).append(['acng_shiftSound', {'name': 'acng_shiftSound'}])
+    # sh_b3 is the manual lever's own sound node (hPattern shiftSoundNode); this part has no f7.
+    shifter['acng_shiftSound'] = {'soundNode:': ['sh_b3'], 'volume': 0.5}
     return {'acng_1m_engine': engine, 'acng_1m_transmission': transmission,
             'acng_1m_fueltank': tank, 'acng_1m_turbo': turbo, 'acng_1m_shifter': shifter}
 

@@ -1,4 +1,6 @@
--- C001 isolated check of the user's local AC-converted car (acng_bmw1m); never deploy to a player profile.
+-- C001 isolated check of the user's local AC-converted car; never deploy to a player profile.
+-- The car and its targets come from acng_car/<vehicle>.json inside the car zip (written by the
+-- converter from the car profile's LAB_TARGETS); a zip without one is the BMW 1M (C013 targets).
 -- The car zip is built locally by converters/build_ac_car.py and placed in this lab profile only by
 -- scripts/launch-lab.ps1 -ExtraMod; it is never copied into the repo or ACNG packages.
 -- Spawn on smallgrid, confirm the AC meshes replaced the ETK skin, then the FR002b damage path:
@@ -6,8 +8,16 @@
 local M={}
 local elapsed,co,response=0,nil,nil
 local simElapsed=0
-local MODEL='acng_bmw1m'
-local result={test='C013 1M native limiter and event sounds',completed=false,checks={},probes={},shots={}}
+-- BMW 1M defaults. AC ui_car.json torque curve (Nm, crank): flat 500 to 4000, 406 at 6000 (~255 kW).
+local CAR={test='C014 1M generic car lab',model='acng_bmw1m',prefix='acng_1m_',
+  mass_kg=1495,power_kw=250,torque_nm=500,fuel_l=53,gears=6,ratio_first=4.11,ratio_last=0.846,final_drive=3.154,
+  top_speed_kmh=250,wheel_x={0.754,0.754},shifter_node='sh_l3',
+  curve={['2000']=500,['2500']=500,['3000']=500,['3500']=500,['4000']=500,['4500']=480,['5000']=441,['5500']=415,['6000']=406,['6500']=357},
+  controls={'steer','pedal_throttle','pedal_brake','pedal_clutch'},gauges={'gauge_rpm','gauge_speed','gauge_fuel','gauge_oil'},
+  events={{'turbocharger','whineLoopEvent','turbo'},{'turbocharger','bovSoundFileName','flutter_4'},
+    {'acng_shiftSound','downSample','geardn'},{'acng_shiftSound','upSample','gearup'}}}
+local MODEL=CAR.model
+local result={test=CAR.test,completed=false,checks={},probes={},shots={}}
 local stage='start'
 local function save() result.stage=stage;jsonWriteFile('/acng-car-test.json',result,true) end
 local function check(name,ok) result.checks[name]=ok==true;save();if not ok then log('W','ACNG_C001','FAIL '..name) end;return ok==true end
@@ -30,7 +40,7 @@ for id,b in pairs(v.data.beams or {}) do
   r.broken_beams[#r.broken_beams+1]={part=b.partOrigin,n1=v.data.nodes[b.id1].name,n2=v.data.nodes[b.id2].name}
  end
 end
-for id,n in pairs(v.data.nodes or {}) do if tostring(n.name):find('^acng_bmw1m') then
+for id,n in pairs(v.data.nodes or {}) do if tostring(n.name):find('^__MODEL___') then
  local p=obj:getNodePosition(n.cid or id);r.new_nodes[#r.new_nodes+1]={name=n.name,cid=n.cid or id,x=p.x,y=p.y,z=p.z,mass=obj:getNodeMass(n.cid or id)}
 end end
 local e=powertrain.getDevice('mainEngine');local gb=powertrain.getDevice('gearbox');local diff=powertrain.getDevice('differential_R')
@@ -38,16 +48,16 @@ if e then local ok,d=pcall(function() return e:getTorqueData() end);if ok then r
   -- Full-boost curve (highest priority: Turbo over NA), indexed rpm+1 by getTorqueData.
   local best;for _,c in pairs(d.curves or {}) do if not best or c.priority>best.priority then best=c end end
   if best then r.specs.curve_name=best.name;r.specs.curve={}
-   for rpm=1000,7000,500 do local nm=best.torque[rpm+1];if nm then r.specs.curve[#r.specs.curve+1]={rpm,nm} end end end end
+   for rpm=1000,__CURVE_MAX__,500 do local nm=best.torque[rpm+1];if nm then r.specs.curve[#r.specs.curve+1]={rpm,nm} end end end end
  r.specs.idle_rpm=e.idleRPM;r.specs.max_rpm=e.maxRPM end
 if gb then r.specs.ratios=gb.gearRatios end;if diff then r.specs.final_drive=diff.gearRatio end
 local tank=energyStorage.getStorage('mainTank');if tank then r.specs.fuel_capacity_l=tank.capacity;r.specs.fuel_l=tank.remainingVolume end
-r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^acng_bmw1m_') then r.glow=r.glow+1 end end
+r.glow=0;for k,_ in pairs(v.data.glowMap or {}) do if tostring(k):find('^__MODEL___') then r.glow=r.glow+1 end end
 if e and e.soundConfiguration then local c=e.soundConfiguration
   r.sound={engine=c.engine and c.engine.blendFile,exhaust=c.exhaust and c.exhaust.blendFile,id=e.engineSoundID,id_exhaust=e.engineSoundIDExhaust} end
 r.limiter={configured_m_s=v.data.vehicleController and v.data.vehicleController.topSpeedLimit,
   wheel_m_s=electrics.values.wheelspeed,throttle_input=electrics.values.throttle_input,
-  controller_throttle=controller.mainController.throttle}
+  controller_throttle=controller.mainController.throttle,gear=electrics.values.gearIndex,shift_sounds=electrics.values.acngShiftSounds}
 local events=rawget(_G,'acngEventSounds');if events then r.event_sounds=events;rawset(_G,'acngEventSounds',nil) end
 -- rawget/rawset: plain globals trip BeamNG's undeclared-global warning.
 local fit=rawget(_G,'acngFit');if fit then r.fit=fit;rawset(_G,'acngFit',nil) end
@@ -60,9 +70,9 @@ if J then
   r.jitter={max_mm=worst*1000,worst=wname,chassis_mm=base*1000,frames=J.frames}
   rawset(_G,'acngJ',nil)
 end
-for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^acng_bmw1m_') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
+for _,p in pairs(v.data.props or {}) do if tostring(p.mesh):find('^__MODEL___') then r.props[#r.props+1]={mesh=p.mesh,func=p.func,pid=p.pid,input=electrics.values[p.func] or 0} end end
  r.mirrors={};for _,m in pairs(v.data.mirrors or {}) do r.mirrors[#r.mirrors+1]={mesh=m.mesh,id=m.id} end
-for id,n in pairs(v.data.nodes or {}) do if n.name=='sh_l3' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
+for id,n in pairs(v.data.nodes or {}) do if n.name=='__SHIFTER__' then local p=obj:getNodePosition(n.cid or id);r.shifter_position={p.x,p.y,p.z} end end
 -- Front wheel axle yaw in the car frame, to read the steering direction from physics.
 r.wheel_yaw={};pcall(function()
  local fwd,up=obj:getDirectionVector(),obj:getDirectionVectorUp();local right=fwd:cross(up)
@@ -74,7 +84,7 @@ r.controls={steering=electrics.values.steering,brake=electrics.values.brake,thro
 for _,f in pairs(v.data.flexbodies or {}) do
   r.flexbodies=r.flexbodies+1
   local m=tostring(f.mesh)
-  if m:find('^acng_bmw1m_') then r.ac_meshes[#r.ac_meshes+1]=m end
+  if m:find('^__MODEL___') then r.ac_meshes[#r.ac_meshes+1]=m end
   if m=='etkc_body' or m=='etkc_door_L' or m=='etkc_hood' or m=='etkc_dash' then r.etk_skin=r.etk_skin+1 end
 end
 if r.tires then
@@ -120,7 +130,7 @@ local JIT=[[
 local J=rawget(_G,'acngJ')
 if not J then J={pairs={},span={},frames=0};rawset(_G,'acngJ',J)
   local cid={};for id,n in pairs(v.data.nodes) do if n.name then cid[n.name]=n.cid or id end end
-  for name,c in pairs(cid) do if tostring(name):find('^acng_bmw1m_') then J.pairs[name]={c,cid.dsh3} end end
+  for name,c in pairs(cid) do if tostring(name):find('^__MODEL___') then J.pairs[name]={c,cid.dsh3} end end
   J.pairs.__chassis={cid.dsh1l,cid.f7l}
 end
 J.frames=J.frames+1
@@ -136,14 +146,13 @@ local function anyBroken(r) for _,w in ipairs(r.wheels) do if w.broken then retu
 local function anyDeflated(r) for _,w in ipairs(r.wheels) do if w.deflated then return true end end return false end
 local DRIVE="controller.mainController.setGearboxMode('arcade'); input.event('parkingbrake',0,1); input.event('clutch',0,1); input.event('brake',0,1); input.event('steering',0,1)"
 local STOP="controller.mainController.setGearboxMode('realistic'); input.event('throttle',0,1); input.event('clutch',1,1); input.event('brake',1,1)"
-local EVENT_SOUNDS=[[
+-- __EVENTS__ is {{jbeam section, field, sample},...}; one entry per hook, keyed section.field.
+local EVENT_SOUNDS=[=[
 local out={}
-local turbo=v.data.turbocharger or {};local h=v.data.hPattern or {}
-local slots={turbo=turbo.whineLoopEvent,flutter_4=turbo.bovSoundFileName,
-  gearup=h.shiftSoundEventHPatternGearIn,geardn=h.shiftSoundEventHPatternGearOut}
-for _,name in ipairs({'turbo','flutter_4','gearup','geardn'}) do
- local expected='vehicles/acng_bmw1m/sounds/acng_1m_'..name..'.wav'
- local file=slots[name];local entry={file=file,configured=file==expected,exists=FS:fileExists('/'..expected)}
+for _,e in ipairs(__EVENTS__) do
+ local name=e[1]..'.'..e[2]
+ local expected='vehicles/__MODEL__/sounds/__PREFIX__'..e[3]..'.wav'
+ local file=(v.data[e[1]] or {})[e[2]];local entry={file=file,sample=e[3],configured=file==expected,exists=FS:fileExists('/'..expected)}
  if entry.configured and entry.exists then
   local ok,id=pcall(function() return obj:createSFXSource2(file,'AudioDefaultLoop3D','ACNG_C013_'..name,0,0) end)
   entry.source_id=ok and id or nil;entry.loaded=ok and type(id)=='number' and id>=0
@@ -151,7 +160,7 @@ for _,name in ipairs({'turbo','flutter_4','gearup','geardn'}) do
  end
  out[name]=entry
 end
-rawset(_G,'acngEventSounds',out)]]
+rawset(_G,'acngEventSounds',out)]=]
 local function testSpeedLimiter()
   stage='sustained native speed limiter';save()
   local samples={};local start,nextSample=simElapsed,simElapsed
@@ -165,7 +174,7 @@ local function testSpeedLimiter()
       samples[#samples+1]={time_s=simElapsed-start,km_h=speed,signals=p.limiter}
       nextSample=simElapsed+2
     end
-    if speed>=245 and not reached then reached=simElapsed end
+    if speed>=CAR.top_speed_kmh-5 and not reached then reached=simElapsed end
     if reached and simElapsed-reached>=15 then break end
     coroutine.yield()
   end
@@ -174,14 +183,24 @@ local function testSpeedLimiter()
     if reached and s.time_s>=reached-start+5 then
       -- The limiter governs wheel speed (also what the speedometer shows); ground speed sits
       -- about 1 % lower from tire slip at 250 (C013 first run: wheel 250.0, ground 247.9).
-      local l=s.signals or {}
+      local l=s.signals or {};local top=CAR.top_speed_kmh
       local wheel=(l.wheel_m_s or 0)*3.6
-      count=count+1;held=held and wheel>=248 and wheel<=252 and s.km_h>=245
+      count=count+1;held=held and wheel>=top-2 and wheel<=top+2 and s.km_h>=top-5
       cut=cut or ((l.throttle_input or 0)>0.95 and (l.controller_throttle or 1)<0.95)
     end
   end
   result.speed_limiter={samples=samples,peak_km_h=peak,held_samples=count,throttle_reduction=cut}
-  check('top_speed_limiter_holds_250',reached~=nil and count>=4 and held and cut and peak<=253)
+  check('top_speed_limiter_holds_'..CAR.top_speed_kmh,reached~=nil and count>=4 and held and cut and peak<=CAR.top_speed_kmh+3)
+  -- ACNG's shift-sound controller counts the recordings it started; a full-throttle run to the
+  -- limiter passes through most gears, so a working controller has played several.
+  local shiftController=false
+  for _,e in ipairs(CAR.events) do shiftController=shiftController or e[1]=='acng_shiftSound' end
+  if shiftController then
+    local plays,gear=0,0
+    for _,s in ipairs(samples) do local l=s.signals or {};plays=math.max(plays,l.shift_sounds or 0);gear=math.max(gear,l.gear or 0) end
+    result.speed_limiter.shift_sounds,result.speed_limiter.top_gear=plays,gear
+    check('shift_sounds_play_on_gear_changes',gear>=4 and plays>=gear-1)
+  end
   vcmd(STOP);delay(3)
   vcmd('obj:requestReset(RESET_PHYSICS)');delay(5)
   spawn.safeTeleport(be:getPlayerVehicle(0),vec3(0,0,1),quat(0,0,0,1));delay(4)
@@ -216,7 +235,7 @@ local function shot(name,dx,dy,dz,cockpit)
       dir=(target-eye):normalized()
       if cockpit=='pedals' then
         local snapshot=result.probes[#result.probes]
-        for _,n in ipairs(snapshot.new_nodes or {}) do if n.name=='acng_bmw1m_pedal_brake_ref' then
+        for _,n in ipairs(snapshot.new_nodes or {}) do if n.name==MODEL..'_pedal_brake_ref' then
           target=p+veh:getNodePosition(n.cid)-up*0.05
           eye=target-f*0.42+up*0.24
           dir=(target-eye):normalized()
@@ -225,7 +244,7 @@ local function shot(name,dx,dy,dz,cockpit)
       if cockpit=='gauges' then
         local points={};local snapshot=result.probes[#result.probes]
         for _,n in ipairs(snapshot.new_nodes or {}) do
-          if n.name=='acng_bmw1m_gauge_rpm_ref' or n.name=='acng_bmw1m_gauge_speed_ref' then points[#points+1]=p+veh:getNodePosition(n.cid) end
+          if n.name==MODEL..'_gauge_rpm_ref' or n.name==MODEL..'_gauge_speed_ref' then points[#points+1]=p+veh:getNodePosition(n.cid) end
         end
         assert(#points==2,'Gauge pivots missing')
         target=(points[1]+points[2])*0.5;eye=target-f*0.18+up*0.015
@@ -276,8 +295,28 @@ local function isolationShots()
   end
   pcall(function() veh:setMeshAlpha(1,'',false) end)
 end
+-- Read the lab targets from the installed car zip and fill the probe templates.
+local function configure()
+  local files=FS:findFiles('/acng_car/','*.json',0,false,false) or {}
+  table.sort(files)
+  if files[1] then
+    local t=jsonReadFile(files[1]);assert(type(t)=='table' and t.model,'Bad lab targets '..files[1])
+    if not t.controls or not t.events then error('Lab targets need controls and events: '..files[1]) end
+    for k,v in pairs(t) do CAR[k]=v end
+    if not t.shifter_node then CAR.shifter_node=nil end
+    result.targets_file=files[1]
+  end
+  MODEL=CAR.model;result.test=CAR.test;result.model=MODEL
+  local top=1000;for rpm,_ in pairs(CAR.curve) do top=math.max(top,tonumber(rpm)) end
+  local ev={};for _,e in ipairs(CAR.events) do ev[#ev+1]=string.format('{%q,%q,%q}',e[1],e[2],e[3]) end
+  local function fill(s) return (s:gsub('__MODEL__',MODEL):gsub('__PREFIX__',CAR.prefix):gsub('__CURVE_MAX__',tostring(top))
+    :gsub('__SHIFTER__',CAR.shifter_node or ''):gsub('__EVENTS__','{'..table.concat(ev,',')..'}')) end
+  PROBE=fill(PROBE);JIT=fill(JIT);EVENT_SOUNDS=fill(EVENT_SOUNDS)
+  save()
+end
 local function run()
   waitFor(function() return core_modmanager.isReady() end,60)
+  configure()
   assert(FS:getUserPath():gsub('\\','/'):lower():match('/acng%-car%-[%w%-]+/current/?$'),'Fresh isolated car profile required')
   freeroam_freeroam.startFreeroam('/levels/smallgrid/')
   waitFor(function() return worldReadyState==2 and be:getPlayerVehicle(0) end,150)
@@ -304,47 +343,47 @@ local function run()
   check('spawn_undamaged',(r.damage or 0)<50)
   local controls,gauges,created=0,0,true
   for _,p in ipairs(r.props) do if p.mesh:find('gauge_') then gauges=gauges+1 else controls=controls+1 end;created=created and p.pid~=nil end
-  check('four_animated_controls',controls==4)
-  check('four_native_gauges',gauges==4)
-  check('native_prop_meshes_created',#r.props==8 and created)
+  check('animated_controls_'..#CAR.controls,controls==#CAR.controls)
+  check('native_gauges_'..#CAR.gauges,gauges==#CAR.gauges)
+  check('native_prop_meshes_created',#r.props==#CAR.controls+#CAR.gauges and created)
   check('three_native_mirrors',#r.mirrors==3)
   local liveMirrors=0;for _,m in ipairs(r.mirrors) do if m.id and veh:getMirror(m.id) then liveMirrors=liveMirrors+1 end end
   check('three_native_mirror_cameras',liveMirrors==3)
   local rims=0;for _,m in ipairs(r.ac_meshes) do if m:find('rim_') then rims=rims+1 end end
   check('four_bmw_rim_meshes',rims==4)
-  check('unladen_mass_within_three_percent',math.abs(r.mass_kg-1495)/1495<0.03)
-  check('power_and_torque_target',math.abs((r.specs.peak_hp or 0)*0.745699872-250)<5 and math.abs((r.specs.peak_nm or 0)-500)<12)
-  check('fuel_capacity_target',r.specs.fuel_capacity_l==53)
-  -- AC ui_car.json torque curve (Nm, crank): flat 500 to 4000, 406 at 6000 (~255 kW).
-  local AC={[2000]=500,[2500]=500,[3000]=500,[3500]=500,[4000]=500,[4500]=480,[5000]=441,[5500]=415,[6000]=406,[6500]=357}
+  check('unladen_mass_within_three_percent',math.abs(r.mass_kg-CAR.mass_kg)/CAR.mass_kg<0.03)
+  check('power_and_torque_target',math.abs((r.specs.peak_hp or 0)*0.745699872-CAR.power_kw)<5 and math.abs((r.specs.peak_nm or 0)-CAR.torque_nm)<12)
+  check('fuel_capacity_target',math.abs((r.specs.fuel_capacity_l or 0)-CAR.fuel_l)<0.01)
   local worst,at=nil,nil
-  for _,p in ipairs(r.specs.curve or {}) do local ref=AC[p[1]]
+  for _,p in ipairs(r.specs.curve or {}) do local ref=CAR.curve[tostring(p[1])]
     if ref then local err=math.abs(p[2]-ref)/ref;if not worst or err>worst then worst,at=err,p[1] end end end
   result.torque_curve={curve=r.specs.curve,name=r.specs.curve_name,worst_error=worst,worst_rpm=at,idle_rpm=r.specs.idle_rpm,max_rpm=r.specs.max_rpm}
   check('torque_curve_matches_ac',worst~=nil and worst<0.05)
-  check('verified_first_and_sixth_ratios',r.specs.ratios and math.abs((r.specs.ratios['1'] or r.specs.ratios[1] or 0)-4.11)<0.001 and math.abs((r.specs.ratios['6'] or r.specs.ratios[6] or 0)-0.846)<0.001)
-  check('verified_final_drive',math.abs((r.specs.final_drive or 0)-3.154)<0.001)
+  local ratios,last=r.specs.ratios or {},tostring(CAR.gears)
+  check('verified_first_and_top_ratios',math.abs((ratios['1'] or ratios[1] or 0)-CAR.ratio_first)<0.001 and math.abs((ratios[last] or ratios[CAR.gears] or 0)-CAR.ratio_last)<0.001)
+  check('verified_final_drive',math.abs((r.specs.final_drive or 0)-CAR.final_drive)<0.001)
   -- Optional C005 benchmark. Existing 45 C004 regression checks remain intact.
   if FS:fileExists('/acng-handling-plan.json') then
     extensions.load('acng_handlinglab')
     local function simDelay(s) local finish=simElapsed+s;while simElapsed<finish do coroutine.yield() end end
-    result.handling=extensions.acng_handlinglab.run(veh,function() return simElapsed end,simDelay)
+    result.handling=extensions.acng_handlinglab.run(veh,function() return simElapsed end,simDelay,CAR.mass_kg)
     save();vcmd('obj:requestReset(RESET_PHYSICS)');delay(5)
     spawn.safeTeleport(veh,vec3(0,0,1),quat(0,0,0,1));delay(4)
   end
   check('lamp_glow_registered',(r.glow or 0)>=5)
-  check('ac_engine_sound_loaded',r.sound and tostring(r.sound.engine):find('acng_1m_engine',1,true)~=nil and tostring(r.sound.exhaust):find('acng_1m_exhaust',1,true)~=nil and r.sound.id~=nil)
-  check('native_top_speed_limit_configured',r.limiter and math.abs((r.limiter.configured_m_s or 0)*3.6-250)<0.1)
+  check('ac_engine_sound_loaded',r.sound and tostring(r.sound.engine):find(CAR.prefix..'engine',1,true)~=nil and tostring(r.sound.exhaust):find(CAR.prefix..'exhaust',1,true)~=nil and r.sound.id~=nil)
+  check('native_top_speed_limit_configured',r.limiter and math.abs((r.limiter.configured_m_s or 0)*3.6-CAR.top_speed_kmh)<0.1)
   r=probe('native event sound sources',EVENT_SOUNDS);result.event_sounds=r.event_sounds
-  local es=r.event_sounds or {}
-  check('native_turbo_samples_loaded',es.turbo and es.turbo.loaded and es.flutter_4 and es.flutter_4.loaded)
-  check('native_shift_samples_loaded',es.gearup and es.gearup.loaded and es.geardn and es.geardn.loaded)
+  local es,loaded=r.event_sounds or {},true
+  for _,e in ipairs(CAR.events) do local s=es[e[1]..'.'..e[2]];loaded=loaded and s~=nil and s.loaded==true end
+  check('native_event_samples_loaded',#CAR.events>0 and loaded)
   testSpeedLimiter()
   r=probe('fitment',FIT);result.fitment=r.fit
-  -- AC tire centres sit at |x| 0.754 (kn5 WHEEL_* pivots); C008 measured 0.770 front, 0.805 rear.
+  -- AC tire centres sit at the kn5 WHEEL_* pivot |x| (1M 0.754); C008 measured 0.770 front, 0.805 rear.
   local centred=r.fit and true or false
   for _,name in ipairs({'FL','FR','RL','RR'}) do local f=r.fit and r.fit[name]
-    if not (f and f.n>0 and math.abs(math.abs((f.xmin+f.xmax)/2)-0.754)<0.012) then centred=false end end
+    local x=CAR.wheel_x[name:sub(1,1)=='F' and 1 or 2]
+    if not (f and f.n>0 and math.abs(math.abs((f.xmin+f.xmax)/2)-x)<0.012) then centred=false end end
   check('tires_centred_on_ac_wheels',centred)
   sampleJitter(3);r=probe('idle_jitter');result.idle_jitter=r.jitter
   -- worst is nil when nothing was measured; never pass on an empty sample.
@@ -395,7 +434,10 @@ local function run()
   local first=probe('shifter_first')
   vcmd("controller.mainController.shiftToGearIndex(2)");delay(2)
   local second=probe('shifter_second')
-  check('native_shifter_moves',first.shifter_position and second.shifter_position and vec3(unpack(first.shifter_position)):distance(vec3(unpack(second.shifter_position)))>0.005)
+  -- Cars without an animated shifter prop (M3: DCT, no AC shifter mesh) skip this check.
+  if CAR.shifter_node then
+    check('native_shifter_moves',first.shifter_position and second.shifter_position and vec3(unpack(first.shifter_position)):distance(vec3(unpack(second.shifter_position)))>0.005)
+  end
   vcmd("input.event('steering',0,1);input.event('brake',0,1);input.event('clutch',0,1)")
   -- ACNG on this car: master, Road tires, wear, ABS and TC.
   extensions.acng_core.setEnabled(true)

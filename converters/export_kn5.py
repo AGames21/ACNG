@@ -52,19 +52,24 @@ LIGHT_FUNCTIONS = (('front_light', 'headlight'), ('rear_light', 'taillight'),
                    ('retro_light', 'reverselight'))
 GLOW_FUNCTIONS = {'headlight': {'lowbeam': 0.49, 'highbeam': 1}, 'taillight': {'lowhighbeam': 0.49},
                   'brakelight': {'brakelights': 0.49}, 'chmsl': {'brakelights': 0.49},
-                  'reverselight': {'reverse': 1}}
+                  'reverselight': {'reverse': 1}, 'highbeam': {'highbeam': 1},
+                  'position': {'drl': 1, 'lowhighbeam': 1}}
+# Lamp meshes routed by their AC parent node (cars whose lamps share one material).
+LIGHT_PARENTS = {}
 # Two lit levels, as vanilla etkc_lights_on / _on_intense (15000 / 20000 nits). A tail lamp is
 # dim and a brake lamp several times brighter; the old single level made both look the same.
 # Brake lamps go straight to the intense level, like vanilla etkc_brakelight.
 GLOW_NITS = {'headlight': (15000, 30000), 'taillight': (8000, 8000), 'brakelight': (30000, 30000),
-             'chmsl': (30000, 30000), 'reverselight': (15000, 15000)}
-GLOW_INTENSE_ONLY = {'brakelight', 'chmsl'}
+             'chmsl': (30000, 30000), 'reverselight': (15000, 15000), 'highbeam': (30000, 30000),
+             'position': (12000, 12000)}
+GLOW_INTENSE_ONLY = {'brakelight', 'chmsl', 'highbeam'}
 # Red lenses glow with the AC lens texture's own reflector and bulb pattern instead of a flat
 # colour, so lit lamps show structure like vanilla etkc_lights_g. Floor keeps the lens readable.
 PATTERNED_GLOW = {'taillight', 'brakelight', 'chmsl'}
 PATTERN_FLOOR = 0.25
 GLOW_COLOURS = {'headlight': (255, 248, 235), 'reverselight': (255, 255, 255),
-                'taillight': (255, 18, 8), 'brakelight': (255, 18, 8), 'chmsl': (255, 18, 8)}
+                'taillight': (255, 18, 8), 'brakelight': (255, 18, 8), 'chmsl': (255, 18, 8),
+                'highbeam': (255, 248, 235), 'position': (236, 242, 255)}
 # AC lights its red lenses with low ksDiffuse; BeamNG has no equivalent, so unlit lenses
 # looked switched on in daylight. Dim their albedo instead.
 UNLIT_LENS_FACTOR = 0.45
@@ -82,6 +87,11 @@ PAINT_PAD_PX = 16  # trim colour grown into the paint area, so mip levels to 1/1
 # opacity, drop the hue.
 GLASS_MATERIALS = {'VETRI_Texture', 'VETRI_defrost_interno'}
 VANILLA_MIRROR = 'mirror'  # vehicles/common: emissive, metallic 1, roughness 0, mirror_n normal
+MIRROR_MATERIAL = 'MIRROR'  # the AC car's mirror-face material
+# AC inner-glass overlays (dirt/reflection layers), compared case-insensitively.
+INTERIOR_GLASS = {'int_vetro_interno'}
+PLATE_MESHES = {'Plate_LODA'}
+CHMSL_MESHES = {'brake_light_2'}
 
 
 def light_function(mesh):
@@ -99,11 +109,12 @@ def route(mesh, materials):
     # Broken-glass overlays, AC-only LOD/cockpit duplicates, needles and the worn seat belt.
     if shader == 'ksBrokenGlass' or any(p.startswith('DAMAGE_GLASS') for p in parents):
         return SKIP
+    # Before the interior grouping: the M3's milky windscreen overlay sits under COCKPIT_HR.
+    if mesh['material'].lower() in INTERIOR_GLASS:
+        return SKIP
     if mesh.get('acng_group'):
         return mesh['acng_group']
     if any(p.startswith(('WHEEL_', 'SUSP_', 'DISC_', 'COCKPIT_LR', 'CINTURE_ON', 'ARROW_')) for p in parents):
-        return SKIP
-    if mesh['material'] == 'INT_VETRO_INTERNO':
         return SKIP
     if 'DOOR_L1' in parents or 'DOOR_L' in parents:
         return 'door_L'
@@ -121,10 +132,13 @@ def route(mesh, materials):
         return mesh['acng_group']
     if 'COCKPIT_HR' in parents or 'CINTURE_OFF' in parents:
         return 'cabin'
-    if name == 'Plate_LODA':
+    if name in PLATE_MESHES:
         return SKIP  # printed "ASSETTO CORSA"; the native BeamNG plate replaces it
-    if name == 'brake_light_2':
+    if name in CHMSL_MESHES:
         return 'trunk'
+    lamp = next((LIGHT_PARENTS[p] for p in parents if p in LIGHT_PARENTS), None)
+    if lamp:
+        return lamp
     front = _center_y(mesh) > 0
     if mesh['material'] in HEADLIGHT_MATERIALS or name.startswith('front_light'):
         return 'lights_F'
@@ -244,6 +258,8 @@ def write_collada(groups, path, material_names):
 
 
 METALLIC = {'INT_Cromato', 'MIRROR', 'Chassis_METAL', 'LOGHI_RIM', 'RT_rim'}
+# Optional fixed roughness per material (otherwise derived from ksSpecular / METALLIC).
+ROUGHNESS = {}
 
 
 def _texture_file(name):
@@ -306,6 +322,8 @@ def material_entry(prefix, vehicle_dir, mat, opacity_file=None, paint=None, file
         'metallicFactor': 1.0 if mat['name'] in METALLIC else 0.0,
         'roughnessFactor': 0.15 if mat['name'] in METALLIC else max(0.25, min(0.9, 0.85 - 0.35 * min(spec, 2.0))),
     }
+    if mat['name'] in ROUGHNESS:
+        stage['roughnessFactor'] = ROUGHNESS[mat['name']]
     if 'txDiffuse' in tex:
         stage['baseColorMap'] = f'/vehicles/{vehicle_dir}/{files.get(tex["txDiffuse"], _texture_file(tex["txDiffuse"]))}'
     normal = tex.get('txNormal', '')
@@ -520,15 +538,16 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             if g is not None:  # spill into a lettered continuation mesh
                 name = name + '_' + 'abcdefgh'[sum(1 for k in groups if k.startswith(name))]
             g = groups[name] = Group(name)
-        func = light_function(mesh) if target.startswith('lights_') or target == 'trunk' else None
+        lamp = target.startswith('lights_') or target == 'trunk' or mesh.get('acng_glow')
+        func = light_function(mesh) if lamp else None
         g.add(mesh['material'] + ('@' + func if func else ''), pos, nrm, uvs, tris)
         report['meshes'][label] = name
     used = sorted({m for g in groups.values() for m in g.tris})
-    material_names = {m: VANILLA_MIRROR if m == 'MIRROR' else prefix + m.replace('@', '_') for m in used}
+    material_names = {m: VANILLA_MIRROR if m == MIRROR_MATERIAL else prefix + m.replace('@', '_') for m in used}
     write_collada(list(groups.values()), out / f'{prefix.rstrip("_")}.dae', material_names)
     written, mats, converted, glow = {}, {}, [], {}
     for m in used:
-        if m == 'MIRROR':
+        if m == MIRROR_MATERIAL:
             continue  # the vanilla common material makes BeamNG's mirror render target visible
         m, _, func = m.partition('@')
         mat = materials[m]

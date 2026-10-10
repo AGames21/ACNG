@@ -2,7 +2,7 @@
 
 How ACNG turns a car you own in another game into a drivable local BeamNG car, what
 is automated, what changes for a new car, and which games can be sources.
-The BMW 1M write-up is [AC-CAR-CONVERSION.md](AC-CAR-CONVERSION.md).
+The per-car write-ups (BMW 1M, BMW M3 E92) are in [AC-CAR-CONVERSION.md](AC-CAR-CONVERSION.md).
 
 ## What an import is
 
@@ -12,7 +12,7 @@ The other game supplies the look and the sound. BeamNG supplies everything physi
   turbo, blow-off and gear sounds, and published specifications such as gearing,
   torque curve and top speed.
 - **Native BeamNG:** chassis, suspension, damage, tires, gauges, mirrors, plate,
-  brakes and controls. They come from a stock donor car (the ETK K-Series for the 1M)
+  brakes and controls. They come from a stock donor car (the ETK K-Series for both BMWs)
   that is reshaped to the imported car's wheelbase and roof.
 
 The imported meshes are attached to the donor's damage groups, so doors, hood and
@@ -36,13 +36,14 @@ converted. They only serve as a reference for specifications.
 Close BeamNG, then run:
 
 ```
-python scripts/car_pipeline.py --install
+python scripts/car_pipeline.py --car bmw_m3_e92 --install
 ```
 
-The script does four things:
+`--car` names a profile in `converters/cars/` and defaults to `bmw_1m`. The script does
+four things:
 
-1. **Build:** runs `converters/build_ac_car.py` into the next `ACNG-car/bmw1m-fix-NNN`
-   folder in the workspace.
+1. **Build:** runs `converters/build_ac_car.py` into the next `ACNG-car/<car>-fix-NNN`
+   folder in the workspace (`bmw1m-fix-NNN`, `bmwm3e92-fix-NNN`).
 2. **Lab:** starts the CarLab harness in the next fresh `ACNG-car-NNN` profile with
    that exact ZIP.
 3. **Wait:** follows the lab stages, then stops only the lab game it started.
@@ -55,6 +56,7 @@ Other options:
 - Leave out `--install` to only build and test.
 - `--zip <file>` tests an existing ZIP instead of building one.
 - `--skin <name>` picks the default paint.
+- `--timeout <seconds>` limits the wait for the lab (default 1800).
 
 The script refuses to start while any BeamNG is running.
 
@@ -78,21 +80,23 @@ Two steps are still manual:
 | Wheels, brakes, plate | `car_details.py` (track, brake disc sizes, plate position) | **Per car** |
 | Sound | `car_sounds.py` reads the FMOD bank, extracts loops and events, and copies the source game's crossfade windows and volumes | Bank reading is generic; `AC_LAYOUT` and the idle rpm are **per car** |
 | Package | ZIP writer in `build_ac_car.py` (stores incompressible files so BeamNG reads them) | Generic |
-| Lab | `tests/beamng-carlab` (spawn, drive, crash, puncture, reset, gauges, mirrors, lamps, mass, torque, sound, limiter) | Generic checks; the target numbers are **per car** |
-| Install | `scripts/install_car_normal.py` | Generic logic. The model name is currently fixed to `acng_bmw1m` |
+| Lab | `tests/beamng-carlab` (spawn, drive, crash, puncture, reset, gauges, mirrors, lamps, mass, torque, sound, limiter, shift sounds) | Generic checks. The build writes the car's targets to `acng_car/<model>.json` inside the ZIP and the lab reads them |
+| Install | `scripts/install_car_normal.py` | Generic. Takes the model from the ZIP, needs a C014 or later run of that same model, and keeps one install record per car |
 
 ## Adding another Assetto Corsa car
 
-Today the per-car values are constants in the converter files, written for the 1M.
-For a second car, the plan is to move them into one car profile file per car
-(for example `converters/cars/<car>.json`). `build_ac_car.py --car <profile>`
-would then build any car that has a profile.
+Every per-car value lives in a **car profile**: one Python module per car in
+`converters/cars/` (`bmw_1m.py`, `bmw_m3_e92.py`). A profile holds up to five dicts, one
+per converter module: `BUILD_AC_CAR`, `EXPORT_KN5`, `CAR_UPGRADES`, `CAR_DETAILS` and
+`CAR_SOUNDS`. `cars.load()` sets each entry on its module before the build. Only names that
+module already defines can be set, so a typo fails loudly instead of quietly building with
+the 1M's value. Values may be functions, for example the M3's `spec_parts`, which clones
+native ETK parts and edits their numbers.
 
-That refactor should happen together with the second real car. Each value has to be
-checked against an actual model in the lab, and doing it blind would risk breaking
-the working 1M.
+The 1M profile is empty because the module defaults are the 1M. Its build is checked to stay
+byte-identical after converter changes.
 
-For a new car, fill in:
+To add a car, copy `bmw_m3_e92.py` and fill in:
 
 1. **Donor.** Choose a stock BeamNG car with the same layout and similar size
    (front or rear engine, driven wheels, body style). The ETK K-Series suits
@@ -101,17 +105,35 @@ For a new car, fill in:
    overhang values and the ground offset. Run `converters/inspect_kn5.py` on the KN5
    to read its node tree and sizes.
 3. **Routing.** Check the KN5's node names against `route()`. Add the car's light
-   materials and any odd names.
+   materials, mirror material and any odd names. `LAMP_MOVES` splits tail lamps that sit
+   partly on the trunk lid.
 4. **Interior.** Set the seat box, pedal x positions, steering column, gauge needle
-   names and the mirror meshes.
+   names and the mirror meshes. A car with a paddle-shift gearbox sets `SHIFTER_NODE`
+   to `None`.
 5. **Specs.** Use the maker's official sheet for gearing, power, torque, mass, tires,
    fuel tank and top speed. Use the source game's engine data to shape the torque curve.
+   Use the final-drive ratio of the native part you pick (for example
+   `etk_finaldrive_R_315` is 3.154).
 6. **Sound.** Decode the bank's loop rpm tags, crossfade windows and volumes into
-   the car's sound layout. Map the turbo, blow-off and gear events.
+   the car's sound layout, and set the idle rpm near the idle loop's recorded rpm.
+   Map gear events with `EVENT_HOOKS` to the `acng_shiftSound` controller (see below).
 7. **Identity.** Set the vehicle name, brand, years, default config, paint finish
    per skin and plate position.
-8. **Lab targets.** Set the expected mass, torque table and top speed, then run the
-   pipeline until every check passes.
+8. **Lab targets.** Set `LAB_TARGETS` (mass, power, torque table, gearing, top speed,
+   wheel track, controls and gauges), then run the pipeline until every check passes.
+
+### Gear-change sounds
+
+BeamNG's native lever controllers play their shift sound with `playSFXOnceCT`, which only
+plays FMOD events. A WAV path given to them is never heard; the game log shows "profile was
+not found" on each shift. Converted cars therefore use ACNG's own
+`converters/vehicle_lua/acng_shiftSound.lua`. It plays the car's upshift and downshift
+recordings through a file sound source, cuts each one at its recorded length and counts
+plays in `electrics.values.acngShiftSounds`. The build copies it to
+`vehicles/<model>/lua/controller/`, and the lab checks that it fires on every gear change.
+Its `soundNode:` must be a node of the shifter part itself (`sh_b3` on the manual lever,
+`f7` on the automatic selector). A missing node only shows in the game log as
+"link target not found ... DATA DISCARDED", and the sound then plays from node 0.
 
 Each of the 1M's issues produced a fix the next car inherits. Examples are brake
 centring, the loop tagging that caused the 2500 rpm sound jump, panel tearing at

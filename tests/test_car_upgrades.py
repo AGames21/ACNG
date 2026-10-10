@@ -228,6 +228,8 @@ class UpgradeContracts(unittest.TestCase):
         self.assertAlmostEqual(parts['acng_1m_engine']['vehicleController']['topSpeedLimit']*3.6,250)
         self.assertEqual(parts['acng_1m_turbo']['turbocharger'],stock['etk_intake_i6_3.0_petrol_turbo']['turbocharger'])
         self.assertEqual(parts['acng_1m_shifter']['hPattern'],stock['etkc_shifter_M']['hPattern'])
+        self.assertIn(['acng_shiftSound',{'name':'acng_shiftSound'}],parts['acng_1m_shifter']['controller'])
+        self.assertEqual(parts['acng_1m_shifter']['acng_shiftSound']['soundNode:'],['sh_b3'])
         config=u.spec_config({'parts':{'etk_engine_ecu_speedlimit':'etk_engine_ecu_speedlimit_off'}})
         self.assertEqual(config['parts']['etk_engine_ecu_speedlimit'],'etk_engine_ecu_speedlimit_250')
         self.assertEqual(config['parts']['etk_intake_i6_3.0_petrol'],'acng_1m_turbo')

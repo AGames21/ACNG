@@ -1,4 +1,4 @@
-# Personal AC car conversion (BMW 1M)
+# Personal AC car conversions (BMW 1M, BMW M3 E92)
 
 The user asked on 2026-10-08 for their own Assetto Corsa BMW 1M as a drivable
 BeamNG car that keeps BeamNG damage. This is a personal, local build. The output
@@ -108,3 +108,33 @@ Working dashboard needles and mirrors; BMW wheel visuals fitted to the existing
 native hubs; then a repeatable road benchmark for brakes, steering and suspension.
 Keep pressure/puncture warnings and optional roadside service on the freeroam
 roadmap. See the maintainer's engineering notebook for prioritization.
+
+## BMW M3 E92 (second car, 2026-10-10)
+
+Built from the `bmw_m3_e92` profile in `converters/cars/` onto the same ETK K-Series donor:
+
+```
+python scripts/car_pipeline.py --car bmw_m3_e92 --install
+```
+
+- **Fit.** Wheelbase 2.761 m, roof raised to the AC roof line and a shorter nose. Tires
+  are centred on the AC wheel pivots (front 0.758 m, rear 0.746 m from the centre line).
+- **Powertrain.** The native ETK 4.4 V8 and 7-speed DCT, cloned and set to BMW's public
+  figures: 309 kW at 8300 rpm, 400 Nm, 8400 rpm limiter, ratios 4.78 / 2.933 / 2.153 /
+  1.678 / 1.39 / 1.203 / 1.000, 63 L tank, 250 km/h governed. The torque table follows the
+  AC power curve after BeamNG's friction and exhaust terms are cancelled. Final drive is
+  the native 3.154 part (BMW quotes 3.15).
+- **Interior.** M3 gauges (rpm, speed, fuel, oil temperature), three native mirrors, steering
+  wheel and two pedals. There is no animated gear lever because the car has paddles.
+- **Sound.** AC V8 loops with the AC crossfades; idle at 1000 rpm to suit the idle
+  recordings; AC gear-up and gear-down recordings through the ACNG shift-sound controller.
+- **Look.** Default paint Monte Carlo Blue; solid colours use a non-metallic finish. The
+  third brake lamp inside the tail-lamp mesh moves with the body. Floating brake calipers
+  are unpainted grey.
+
+C014 passed 53/53 in an isolated lab and is installed as "BMW M3 E92 (local)". See
+[C014](test-results/C014-m3-e92-generic-carlab.md).
+
+Known limits are the same kind as the 1M's: donor suspension, collision shell and steering;
+measured mass 1,604.5 kg. The AC M3 rims sit on native 18-inch wheels and tires.
+

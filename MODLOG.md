@@ -1,3 +1,15 @@
+## 2026-10-10 - C014 BMW M3 E92, car profiles, generic CarLab, shift sounds (installed)
+
+Per-car profiles in `converters/cars/`. A 1M build after the refactor matches the old build
+(186 entries, 0 differences). The AC M3 E92 is fitted to the ETK K-Series with the 4.4 V8
+cloned to BMW figures. CarLab reads `acng_car/<model>.json` targets, and the installer
+keeps one record per car. New original `acng_shiftSound` vehicle controller: native lever
+hooks only play FMOD events, so a WAV there was never heard. The controller plays AC
+gearup / geardn by engaged-gear direction, and its sound node must be on the shifter part
+(1M `sh_b3`, M3 `f7`). The final-drive target is now the native part's 3.154. CarLab M3
+ACNG-car-032 53/53 and 1M ACNG-car-034 54/54; both installed. 247 Python tests pass.
+[Evidence](docs/test-results/C014-m3-e92-generic-carlab.md).
+
 ## 2026-10-09 - Car import pipeline and guide
 
 `scripts/car_pipeline.py`: build, fresh isolated CarLab run, report, optional gated install, one command; refuses while BeamNG runs (confirmed live). `docs/CAR-IMPORT.md`: stages, generic vs per-car values, new-car checklist, new-source reader interface; Forza excluded (encrypted assets). End-to-end game run pending a closed BeamNG.

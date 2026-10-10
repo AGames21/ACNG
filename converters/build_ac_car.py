@@ -10,7 +10,9 @@ user's AC car meshes/textures and copies of the user's own BeamNG etkc mesh file
 
 Usage:
   python converters/build_ac_car.py --ac-car <assettocorsa>/content/cars/bmw_1m \
-      --beamng <BeamNG.drive install> --out <folder outside the repo> [--skin valencia_orange]
+      --beamng <BeamNG.drive install> --out <folder outside the repo> [--car bmw_1m] [--skin <skin>]
+
+Per-car values live in converters/cars/<profile>.py; the module defaults are the BMW 1M.
 """
 import argparse
 import copy
@@ -30,10 +32,27 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import export_kn5  # noqa: E402
 import jbeam_io  # noqa: E402
 import kn5_model  # noqa: E402
+import cars  # noqa: E402
 
 VEHICLE = 'acng_bmw1m'
 CONFIG = 'acng_bmw1m_M'
 BASE_CONFIG = 'kc6_360_M'
+# Identity and per-car build choices (converters/cars/ profiles override these).
+PREFIX = 'acng_1m_'
+NAME = 'BMW 1M (local)'
+INFO = {'Brand': 'BMW', 'Body Style': 'Coupe', 'Country': 'Germany', 'Years': {'min': 2011, 'max': 2012}}
+CONFIG_LABEL = '1M specifications target (experimental)'
+TRANSMISSION = 'Manual'
+PAINT_MATERIAL = 'LIVREA'
+BADGE_SLOTS = ('etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F')  # the AC skin carries the BMW ones
+LOCAL_DONORS = ('etkc_fueltank', 'etkc_brake_F_tt', 'etkc_brake_R_tt', 'etkc_shifter_M')  # transformed local parts
+UNMAPPED_EVENTS = {'bmw_6cyl_limiter': 'No standalone native engine sample slot in BeamNG 0.39.4'}
+SHIFT_SEMANTICS = 'ACNG acng_shiftSound controller: AC gearup when a higher gear engages, geardn for a lower one; native lever clicks kept'
+DEFAULT_SKIN = 'valencia_orange'
+# Lab targets written into the ZIP (acng_car/<vehicle>.json) for CarLab and the installer.
+LAB_TARGETS = None
+# Extra vehicles/common JBeam files (by name) to load besides the etk ones, e.g. a non-ETK rim donor.
+EXTRA_COMMON_FILES = ()
 
 # Node transform: stretch length to the 1M wheelbase (ETK 2.588 m -> 1M 2.660 m, wheel centres
 # re-centred on the AC body) and raise the roof (ETK roof ~1.35 m -> 1M ~1.42 m). Width unchanged.
@@ -349,11 +368,12 @@ def build(ac_car, beamng, out_root, skin):
                 stripped += r['stripped']
                 if pname == 'etkc':
                     data[pname]['information'] = {'authors': 'ACNG local build (personal use)',
-                                                  'name': 'BMW 1M (local)'}
+                                                  'name': NAME}
         pc = json.loads(z.read(f'vehicles/etkc/{BASE_CONFIG}.pc'))
         clouds = flexbody_clouds(files, pc)
         materials={m['name']:m for m in model['materials']}
         model=car_upgrades.split_fenders(model,MESH_LIFT,lambda m:export_kn5.route(m,materials)=='body')
+        model=car_upgrades.move_lamp_parts(model,MESH_LIFT)
         model=car_upgrades.split_lamps(model,MESH_LIFT,lambda m:export_kn5.route(m,materials))
         model,report['rerouted_lamp_triangles']=car_upgrades.reroute_lamps(
             model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
@@ -361,7 +381,7 @@ def build(ac_car, beamng, out_root, skin):
             model,MESH_LIFT,lambda m:export_kn5.route(m,materials),clouds)
         model,report['rerouted_nose_triangles']=car_upgrades.reroute_nose(
             model,MESH_LIFT,lambda m:export_kn5.route(m,materials))
-        report['mesh'] = export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT)
+        report['mesh'] = export_kn5.export(model, vdir, VEHICLE, VEHICLE + '_', MESH_LIFT, PAINT_MATERIAL)
         groups = report['mesh']['groups']
         # Native light switching: electrics swap each AC lamp to its emissive copy.
         next(d['etkc'] for d in files.values() if 'etkc' in d).setdefault('glowMap', {}).update(report['mesh']['glow'])
@@ -397,19 +417,19 @@ def build(ac_car, beamng, out_root, skin):
         (vdir / 'etkc_base.materials.json').write_bytes(z.read('vehicles/etkc/main.materials.json'))
 
     pc['model'] = VEHICLE
-    for slot in ('etkc_lettering_trunk', 'etkc_lettering_kc6', 'etkc_logo_F'):
-        pc['parts'][slot] = ''  # ETK badges; the AC skin carries the BMW ones
-    pc['parts']['etkc_licenseplate_R'] = 'acng_1m_licenseplate_R'
+    for slot in BADGE_SLOTS:
+        pc['parts'][slot] = ''  # ETK badges
+    pc['parts']['etkc_licenseplate_R'] = PREFIX + 'licenseplate_R'
     pc=car_details.wheel_config(pc)
     old_pc=copy.deepcopy(pc)
     (vdir / 'acng_etk_baseline.pc').write_text(json.dumps(old_pc,indent=2),encoding='ascii')
     stock={}
     with zipfile.ZipFile(common_zip) as common:
         for name in common.namelist():
-            if name.endswith('.jbeam') and '/etk' in name.lower():
+            if name.endswith('.jbeam') and ('/etk' in name.lower() or name.rsplit('/', 1)[-1] in EXTRA_COMMON_FILES):
                 try: stock.update(jbeam_io.loads(common.read(name).decode('utf-8','replace')))
                 except ValueError: pass
-    for name in ('etkc_fueltank', 'etkc_brake_F_tt', 'etkc_brake_R_tt', 'etkc_shifter_M'):  # transformed local parts
+    for name in LOCAL_DONORS:
         stock[name]=next(data[name] for data in files.values() if name in data)
     parts=car_upgrades.spec_parts(stock)
     pc=car_upgrades.spec_config(pc)
@@ -421,39 +441,47 @@ def build(ac_car, beamng, out_root, skin):
         donors.update(parts)  # selected cloned turbo still contributes the donor EQ
         offsets = car_sounds.donor_offsets(donors, pc['parts'].values())
         report['sound_eq_offsets'] = offsets
-        car_sounds.apply(parts['acng_1m_engine'], car_sounds.write(bank, vdir, VEHICLE), offsets)
+        car_sounds.apply(parts[PREFIX + 'engine'], car_sounds.write(bank, vdir, VEHICLE), offsets)
         report['event_sounds'] = car_sounds.write_events(bank, vdir, VEHICLE)
-        car_sounds.apply_events(parts, report['event_sounds'])
-        report['unmapped_event_sounds'] = {'bmw_6cyl_limiter': 'No standalone native engine sample slot in BeamNG 0.39.4'}
-        report['shift_sound_semantics'] = 'Native H-pattern gear-in / gear-out, not directional upshift / downshift'
+        car_sounds.apply_events(parts, report['event_sounds'], vdir)
+        report['unmapped_event_sounds'] = dict(UNMAPPED_EVENTS)
+        report['shift_sound_semantics'] = SHIFT_SEMANTICS
     parts.update(car_details.wheel_parts(stock,VEHICLE+'_'))
     parts.update(car_details.plate_part())
     parts.update(car_details.brake_parts(stock))
-    pc['parts'].update(etkc_brake_F='acng_1m_brake_F', etkc_brake_R='acng_1m_brake_R')
-    (vdir / 'acng_1m_specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
+    pc['parts'].update(etkc_brake_F=PREFIX + 'brake_F', etkc_brake_R=PREFIX + 'brake_R')
+    (vdir / f'{PREFIX}specs.jbeam').write_text(jbeam_io.dumps(parts),encoding='ascii')
     (vdir / f'{CONFIG}.pc').write_text(json.dumps(pc, indent=2), encoding='ascii')
     (vdir / 'info_acng_etk_baseline.json').write_text(json.dumps({'Configuration':'ETK donor baseline','Config Type':'Custom','Drivetrain':'RWD','Transmission':'Manual'}),encoding='ascii')
 
     paints = ac_paints(ac_car)
     default_paint = paint_label(skin)
     info = {'Author': 'ACNG local build (personal use only)',
-            'Brand': 'BMW', 'Body Style': 'Coupe', 'Country': 'Germany', 'Name': 'BMW 1M (local)',
-            'Type': 'Car', 'Years': {'min': 2011, 'max': 2012}, 'default_pc': CONFIG,
+            'Brand': INFO['Brand'], 'Body Style': INFO['Body Style'], 'Country': INFO['Country'], 'Name': NAME,
+            'Type': 'Car', 'Years': INFO['Years'], 'default_pc': CONFIG,
             'defaultPaintName1': default_paint if default_paint in paints else next(iter(paints), ''),
             'paints': paints}
     (vdir / 'info.json').write_text(json.dumps(info, indent=2), encoding='ascii')
     (vdir / f'info_{CONFIG}.json').write_text(json.dumps(
-        {'Configuration': '1M specifications target (experimental)', 'Config Type': 'Custom', 'Drivetrain': 'RWD',
-         'Transmission': 'Manual', 'defaultPaintName1': info['defaultPaintName1']}, indent=2), encoding='ascii')
+        {'Configuration': CONFIG_LABEL, 'Config Type': 'Custom', 'Drivetrain': 'RWD',
+         'Transmission': TRANSMISSION, 'defaultPaintName1': info['defaultPaintName1']}, indent=2), encoding='ascii')
     preview = ac_car / 'skins' / skin / 'preview.jpg'
     if preview.is_file():
         shutil.copyfile(preview, vdir / 'default.jpg')
         shutil.copyfile(preview, vdir / f'{CONFIG}.jpg')
+    targets = out_root / 'acng_car' / f'{VEHICLE}.json'
+    if LAB_TARGETS:
+        targets.parent.mkdir(exist_ok=True)
+        # The native sound hooks CarLab must find loaded: [jbeam section, field, sample name].
+        events = sorted({(section, field, sample) for _, section, field, sample in car_sounds.EVENT_HOOKS})
+        targets.write_text(json.dumps(dict(LAB_TARGETS, model=VEHICLE, config=CONFIG, prefix=PREFIX,
+                                           events=[list(e) for e in events]), indent=1),
+                           encoding='ascii')
 
     zpath = out_root / f'{VEHICLE}.zip'
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zout:
-        for f in sorted(vdir.rglob('*')):
+        for f in sorted(vdir.rglob('*')) + ([targets] if LAB_TARGETS else []):
             if f.is_file():
                 data = f.read_bytes()
                 # BeamNG misreads a deflated entry whose compressed size equals its size (C001:
@@ -474,9 +502,11 @@ def main():
     ap.add_argument('--ac-car', required=True)
     ap.add_argument('--beamng', required=True)
     ap.add_argument('--out', required=True)
-    ap.add_argument('--skin', default='valencia_orange')
+    ap.add_argument('--car', default='bmw_1m', help='car profile in converters/cars/')
+    ap.add_argument('--skin', default=None, help='default paint (AC skin folder); profile default if omitted')
     a = ap.parse_args()
-    r = build(a.ac_car, a.beamng, a.out, a.skin)
+    cars.load(a.car)
+    r = build(a.ac_car, a.beamng, a.out, a.skin or DEFAULT_SKIN)
     print(json.dumps({'zip': r['zip'], 'zip_bytes': r['zip_bytes'], 'flexbodies': len(r['added_flexbodies']),
                       'stripped': len(r['stripped_meshes']), 'centroids': r['common_centroids']}, indent=1))
 

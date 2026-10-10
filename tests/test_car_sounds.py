@@ -49,17 +49,19 @@ class SoundContracts(unittest.TestCase):
                 self.assertEqual(struct.unpack_from('<H',data,22)[0],1)
             parts={'acng_1m_engine':{'mainEngine':{'torque':[[1000,300]]}},
                    'acng_1m_turbo':{'turbocharger':{'wastegateStart':5,'pressurePSI':[[60000,3]]}},
-                   'acng_1m_shifter':{'hPattern':{'gearCoordinates':[[1,0,1]]}}}
-            s.apply_events(parts,files)
+                   'acng_1m_shifter':{'hPattern':{'gearCoordinates':[[1,0,1]]},'acng_shiftSound':{'volume':0.5}}}
+            s.apply_events(parts,files,root)
             self.assertEqual(parts['acng_1m_engine'],{'mainEngine':{'torque':[[1000,300]]}})
             turbo=parts['acng_1m_turbo']['turbocharger']
             self.assertEqual(turbo['whineLoopEvent'],files['turbo'])
             self.assertEqual(turbo['bovSoundFileName'],files['flutter_4'])
             self.assertEqual(turbo['pressurePSI'],[[60000,3]])
-            shifter=parts['acng_1m_shifter']['hPattern']
-            self.assertEqual(shifter['shiftSoundEventHPatternGearIn'],files['gearup'])
-            self.assertEqual(shifter['shiftSoundEventHPatternGearOut'],files['geardn'])
-            self.assertEqual(shifter['gearCoordinates'],[[1,0,1]])
+            # The native lever keeps its own FMOD clicks; the AC recordings go to ACNG's controller.
+            self.assertEqual(parts['acng_1m_shifter']['hPattern'],{'gearCoordinates':[[1,0,1]]})
+            sound=parts['acng_1m_shifter']['acng_shiftSound']
+            self.assertEqual((sound['upSample'],sound['downSample']),(files['gearup'],files['geardn']))
+            self.assertGreater(sound['upSeconds'],0)
+            self.assertTrue((root/'lua'/'controller'/'acng_shiftSound.lua').is_file())
 
     def test_missing_events_fail_without_partial_export(self):
         with tempfile.TemporaryDirectory() as tmp:
