@@ -137,6 +137,9 @@ def wheel_config(pc):
 # scales the 520 mm plate to the 446 mm recess in the 1M trunk lid.
 PLATE = {'pos': {'x': 0.0, 'y': 2.156, 'z': 0.804}, 'rot': {'x': 11, 'y': 0, 'z': 180},
          'scale': {'x': 0.86, 'y': 0.86, 'z': 0.86}}
+# Node group the plate flexbody rides. The painted trunk-lid recess is part of the body mesh, so a
+# plate on etkc_trunk can settle into it at spawn (the M3 showed only the plate's top half).
+PLATE_GROUP = 'etkc_trunk'
 
 
 def plate_part():
@@ -145,7 +148,7 @@ def plate_part():
         'slotType': 'etkc_licenseplate_R',
         'licenseplateFormat': '52-11',
         'flexbodies': [['mesh', '[group]:', 'nonFlexMaterials'],
-                       ['licenseplate-52-11-r2', ['etkc_trunk'], [], copy.deepcopy(PLATE)]],
+                       ['licenseplate-52-11-r2', [PLATE_GROUP], [], copy.deepcopy(PLATE)]],
     }}
 
 

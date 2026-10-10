@@ -112,6 +112,9 @@ def route(mesh, materials):
     # Before the interior grouping: the M3's milky windscreen overlay sits under COCKPIT_HR.
     if mesh['material'].lower() in INTERIOR_GLASS:
         return SKIP
+    # The worn belt sits under COCKPIT_HR too, so interior grouping would otherwise keep it.
+    if any(p.startswith('CINTURE_ON') for p in parents):
+        return SKIP
     if mesh.get('acng_group'):
         return mesh['acng_group']
     if any(p.startswith(('WHEEL_', 'SUSP_', 'DISC_', 'COCKPIT_LR', 'CINTURE_ON', 'ARROW_')) for p in parents):
@@ -165,11 +168,11 @@ def _dot(a, b):
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
-def convert_mesh(mesh, lift):
+def convert_mesh(mesh, lift, uv_scale=1.0):
     """Return (positions, normals, uvs, triangles, flipped) in BeamNG frame."""
     pos = [to_beamng(p, lift) for p in mesh['positions']]
     nrm = [to_beamng(n, 0.0) for n in mesh['normals']]
-    uvs = [(u, 1.0 - v) for u, v in mesh['uvs']]
+    uvs = [(u * uv_scale, 1.0 - v * uv_scale) for u, v in mesh['uvs']]
     frame = mesh.get('prop_frame')
     if frame:
         pivot,axes=frame['pivot'],frame['axes']
@@ -335,7 +338,13 @@ def material_entry(prefix, vehicle_dir, mat, opacity_file=None, paint=None, file
     entry = {'name': mname, 'mapTo': mname, 'class': 'Material', 'version': 1.5,
              'materialTag0': 'beamng', 'materialTag1': 'vehicle', 'dynamicCubemap': True,
              'Stages': [stage, {}, {}, {}]}
-    if paint:
+    if paint == 'stencil':
+        layer0 = {'colorPaletteMap': '/vehicles/common/nullcolormaskR.color.png', 'instanceDiffuse': True,
+                  'metallicFactor': 1, 'clearCoatFactor': 1, **PAINT_DETAIL}
+        if 'normalMap' in stage:
+            layer0['normalMap'] = stage['normalMap']
+        entry['Stages'] = [layer0, {}, {}, {}]
+    elif paint:
         # Layer 0: car paint from the BeamNG colour picker. Layer 1: AC trim/decal texture on top.
         layer0 = {'colorPaletteMap': '/vehicles/common/nullcolormaskR.color.png', 'instanceDiffuse': True,
                   'metallicFactor': 1, 'clearCoatFactor': 1, **PAINT_DETAIL}
@@ -381,6 +390,45 @@ def _opacity_source(mat, textures):
             and _alpha_range(textures[diffuse])[0] >= 250 and _alpha_range(textures[normal])[0] < 128):
         return normal
     return diffuse
+
+
+def _rgba_stats(dds_bytes):
+    from PIL import Image, ImageStat
+    im = Image.open(io.BytesIO(dds_bytes))
+    im.load()
+    im = im.convert('RGBA')
+    return ImageStat.Stat(im).mean, im.getchannel('A').getextrema()
+
+
+def detail_bakes(materials, textures, paint_material):
+    """{material: (detail UV multiplier, diffuse RGB factor)} for multimaps that show only their detail.
+
+    AC multimap colour is diffuse * lerp(detail(uv * mult), 1, diffuse alpha). With the diffuse alpha
+    near zero everywhere (the M3's seats_base.dds) that is the tiled detail map alone: carbon roof,
+    black leather. Exporting the diffuse instead left those parts plain white.
+    """
+    bakes = {}
+    for name, mat in materials.items():
+        tex, props = mat['textures'], mat['props']
+        diffuse, detail = tex.get('txDiffuse'), tex.get('txDetail')
+        if (name == paint_material or not props.get('useDetail') or props.get('detailUVMultiplier', 0) <= 0
+                or diffuse not in textures or detail not in textures):
+            continue
+        mean, (_, alpha_max) = _rgba_stats(textures[diffuse])
+        if alpha_max < 128:
+            bakes[name] = (props['detailUVMultiplier'], [round(c / 255, 3) for c in mean[:3]])
+    return bakes
+
+
+def paint_stencils(materials, paint_material):
+    """Alpha-blended overlays whose diffuse is the paint's flake detail map (AC CAR_stencil).
+
+    On the M3 these are the bumper parking-sensor and tow-hook discs: painted body colour with a
+    ring normal map. As translucent white flake noise they showed as white dots.
+    """
+    flake = materials.get(paint_material, {}).get('textures', {}).get('txDetail')
+    return {name for name, mat in materials.items()
+            if flake and name != paint_material and mat['blend'] == 1 and mat['textures'].get('txDiffuse') == flake}
 
 
 def _grey_png(dds_bytes):
@@ -523,13 +571,15 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
     (out / 'textures').mkdir(parents=True, exist_ok=True)
     materials = {m['name']: m for m in model['materials']}
     groups, report = {}, {'meshes': {}, 'skipped': [], 'flipped': []}
+    bakes = detail_bakes(materials, model['textures'], paint_material)
+    stencils = paint_stencils(materials, paint_material)
     for mesh in model['meshes']:
         target = route(mesh, materials)
         label = '/'.join(mesh['path'])
         if target == SKIP:
             report['skipped'].append(label)
             continue
-        pos, nrm, uvs, tris, flipped = convert_mesh(mesh, lift)
+        pos, nrm, uvs, tris, flipped = convert_mesh(mesh, lift, bakes.get(mesh['material'], (1.0,))[0])
         if flipped:
             report['flipped'].append(label)
         name = f'{prefix}{target}'
@@ -551,7 +601,7 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             continue  # the vanilla common material makes BeamNG's mirror render target visible
         m, _, func = m.partition('@')
         mat = materials[m]
-        for slot in ('txDiffuse', 'txNormal'):
+        for slot in ('txDiffuse', 'txNormal') + (('txDetail',) if m in bakes else ()):
             t = mat['textures'].get(slot)
             if t and t not in written and t in model['textures']:
                 data = model['textures'][t]
@@ -568,7 +618,9 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
                 written[t] = rel
         opacity = paint = None
         diffuse = mat['textures'].get('txDiffuse')
-        if m == paint_material and diffuse in model['textures']:
+        if m in stencils:
+            paint = 'stencil'
+        elif m == paint_material and diffuse in model['textures']:
             # AC multimap: diffuse alpha 1 = trim/decal, 0 = paint shows through.
             paint = {'base': f'textures/{prefix}paint_b.color.png', 'opacity': f'textures/{prefix}paint_o.data.png',
                      'ao': f'textures/{prefix}paint_ao.data.png'}
@@ -580,6 +632,12 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
             (out / opacity).write_bytes(_alpha_png(model['textures'][source]))
         key, entry = material_entry(prefix, vehicle_dir, mat, opacity, paint, written)
         stage = entry['Stages'][0]
+        if m in bakes:
+            # The normal map belongs to the untiled UVs; the M3's is flat (Flat-NM.dds) anyway.
+            stage['baseColorMap'] = f'/vehicles/{vehicle_dir}/{written[mat["textures"]["txDetail"]]}'
+            stage.pop('normalMap', None)
+            if min(bakes[m][1]) < 0.98:
+                stage['baseColorFactor'] = bakes[m][1] + [1]
         if opacity and source != diffuse:
             # The cutout lives in the normal map's alpha (AC ksPerPixelNM); its RGB is not a
             # tangent-space normal map, which showed as a blue-green square on the gas cap.
@@ -632,6 +690,8 @@ def export(model, out_vehicle_dir, vehicle_dir, prefix, lift, paint_material='LI
     report['groups'] = {g.name: {'vertices': len(g.pos), 'triangles': sum(len(t) for t in g.tris.values()),
                                  'materials': sorted(g.tris)} for g in groups.values()}
     report['glow'] = glow
+    report['detail_bakes'] = {m: b[0] for m, b in sorted(bakes.items()) if m in used}
+    report['paint_stencils'] = sorted(s for s in stencils if s in used)
     report['textures_written'] = len(written)
     report['textures_converted_png'] = sorted(converted)
     return report

@@ -73,6 +73,7 @@ Two steps are still manual:
 |---|---|---|
 | Read the source model | `converters/kn5_model.py` returns `{textures, materials, nodes, meshes}` in world space | Generic for any AC KN5 v5/v6 |
 | Route meshes to panels | `export_kn5.route()` sorts meshes into body, doors, hood, bumpers, lights, interior and so on | Mostly generic. It relies on AC's usual node names (`DOOR_L`, `MOTORHOOD`, `FRONT_BUMPER`, `WHEEL_`...) plus some 1M material and mesh names |
+| Translate materials | `export_kn5.material_entry`, `detail_bakes`, `paint_stencils` | Generic. AC multimaps whose diffuse alpha is below 0.5 everywhere show their tiled detail map, so the detail map becomes the base colour at the detail UV scale. Stencils that use the paint's detail map as diffuse become paint. Worn seatbelts (`CINTURE_ON`) are skipped |
 | Fit the donor | `build_ac_car.py` `tf_y`/`tf_z`, `MESH_LIFT` | **Per car:** wheelbase stretch, roof raise, front overhang knee, ground offset |
 | Bind to damage | `FLEXBODIES` table, lamp, fender and nose rerouting in `car_upgrades.py` | The table is generic; the zone limits are **per car** |
 | Interior and controls | `car_upgrades.prepare_model`, `car_details.prepare` (seats, pedals, steering wheel, gauges, mirrors) | **Per car:** seat box, pedal positions, gauge and mirror frames |
@@ -118,7 +119,9 @@ To add a car, copy `bmw_m3_e92.py` and fill in:
    the car's sound layout, and set the idle rpm near the idle loop's recorded rpm.
    Map gear events with `EVENT_HOOKS` to the `acng_shiftSound` controller (see below).
 7. **Identity.** Set the vehicle name, brand, years, default config, paint finish
-   per skin and plate position.
+   per skin and plate position. If the plate sits in a recess that belongs to the body
+   mesh, set `PLATE_GROUP` to the body's flexbody group so both move together (on the
+   M3 the plate rode the boot lid and sank into the body recess).
 8. **Lab targets.** Set `LAB_TARGETS` (mass, power, torque table, gearing, top speed,
    wheel track, controls and gauges), then run the pipeline until every check passes.
 

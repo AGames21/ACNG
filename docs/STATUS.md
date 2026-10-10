@@ -1,4 +1,16 @@
-# Latest checkpoint - 2026-10-10: C014 BMW M3 E92 and 1M shift sounds installed
+# Latest checkpoint - 2026-10-10: C015 M3 visual fixes and rigid gauge needles
+
+Player-reported M3 issues fixed: plate clipping (the plate now rides the body), white
+bumper sensor dots (now paint), white seats, trim and roof (AC detail-only multimaps now
+export their carbon and leather detail maps), worn seatbelt shown over the seat (skipped),
+and bouncing needles. Needles on both cars now move rigidly with the body on the vanilla
+ETK nodes; M3 idle needle jitter fell from 0.153 mm to below 0.002 mm. The roof is bare
+carbon on the real E92 M3, so it is not paintable by design. CarLab: M3 ACNG-car-035
+53/53, 1M ACNG-car-036 54/54. Both installed; hashes match the tested ZIPs. 250 Python
+tests and 10 Node suites pass. See [C015](test-results/C015-m3-visual-gauge-fixes.md).
+Open: the player's look at both cars. Dash paused.
+
+# Previous checkpoint - 2026-10-10: C014 BMW M3 E92 and 1M shift sounds installed
 
 Second converted car: the AC BMW M3 E92 (DCT) on the ETK K-Series with the native 4.4 V8
 cloned to BMW figures (309 kW, 400 Nm, 8400 rpm, 7-speed M DCT, 250 km/h). Per-car values

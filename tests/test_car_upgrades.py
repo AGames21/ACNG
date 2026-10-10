@@ -52,6 +52,19 @@ class UpgradeContracts(unittest.TestCase):
         u.add_prop(part,'gauge_rpm',frame,'test_')
         self.assertEqual(part['props'][1][-1]['baseRotationGlobal']['x'],84)
 
+    def test_gauge_needles_ride_stock_body_nodes_not_sprung_mounts(self):
+        # 0.15 kg sprung triangles made the needles bounce; vanilla ETK uses f1l/f1r/f6l.
+        part={};frame={'pivot':[.3,-.4,1.1],'axes':[(1,0,0),(0,1,0),(0,0,1)],'rest_x':-20,
+                       'func':'oiltemp','rate':-.98,'min':50,'max':150,'offset':-50}
+        u.add_prop(part,'gauge_oil',frame,'test_')
+        prop=part['props'][1]
+        self.assertEqual(prop[:5],['oiltemp','test_gauge_oil','f1l','f1r','f6l'])
+        self.assertEqual(prop[6],{'x':0,'y':0,'z':-.98})
+        self.assertEqual(prop[8:12],[50,150,-50,1])
+        self.assertEqual(prop[-1]['baseTranslationGlobalRigid'],{'x':.3,'y':-.4,'z':1.1})
+        self.assertEqual(prop[-1]['baseRotationGlobal'],{'x':20,'y':0,'z':0})
+        self.assertNotIn('nodes',part); self.assertNotIn('beams',part)
+
     def test_cosmetic_mounts_are_damped_not_ringing(self):
         import math
         for kg,spring,damp in ((u.PROP_NODE_KG,u.PROP_SPRING,u.PROP_DAMP),):

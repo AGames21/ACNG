@@ -30,7 +30,7 @@ class DetailContracts(unittest.TestCase):
         part={};car_upgrades.add_prop(part,'gauge_speed',frames['gauge_speed'],'local_')
         self.assertEqual(part['props'][1][0],'wheelspeed')
         self.assertAlmostEqual(part['props'][1][6]['z']*(300/3.6),256)
-        self.assertEqual(part['props'][1][-1]['baseTranslation'],{'x':0,'y':0,'z':0})
+        self.assertEqual(part['props'][1][-1]['baseTranslationGlobalRigid'],{'x':1,'y':-3,'z':2.016})
         self.assertEqual(mirrors,{})
 
     def test_rim_override_keeps_tire_and_blur_excluded(self):

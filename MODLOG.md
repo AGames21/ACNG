@@ -1,3 +1,14 @@
+## 2026-10-10 - C015 M3 visual fixes and rigid gauge needles (installed)
+
+Player report on the M3: plate clipping, white bumper dots, white seats and roof, bouncing
+needles, worn belt over the seat. Needles now ride the vanilla ETK nodes `f1l`/`f1r`/`f6l`
+rigidly instead of 0.15 kg sprung triangles (diagnosis by Codex); both cars. AC multimaps
+whose diffuse alpha is below 0.5 export their tiled detail map (carbon, leather). Stencils
+using the paint's detail map become paint. `CINTURE_ON` is always skipped. New per-car
+`PLATE_GROUP`: the M3 plate rides the body. The roof is carbon on the real car. CarLab M3
+ACNG-car-035 53/53 and 1M ACNG-car-036 54/54; both installed. 250 Python tests pass.
+[Evidence](docs/test-results/C015-m3-visual-gauge-fixes.md).
+
 ## 2026-10-10 - C014 BMW M3 E92, car profiles, generic CarLab, shift sounds (installed)
 
 Per-car profiles in `converters/cars/`. A 1M build after the refactor matches the old build

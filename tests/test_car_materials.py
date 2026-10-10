@@ -24,6 +24,12 @@ def png(colour, size=(4, 4), alpha=None):
     return buf.getvalue()
 
 
+def flat_png(rgba, size=(4, 4)):
+    buf = io.BytesIO()
+    Image.new('RGBA', size, rgba).save(buf, 'PNG')
+    return buf.getvalue()
+
+
 def tail_png():
     """Red lens texels with one grey reflector texel at (0, 0)."""
     im = Image.new('RGB', (2, 2), (250, 10, 10))
@@ -185,6 +191,45 @@ class Materials(unittest.TestCase):
                 self.assertEqual(base.convert('RGB').getpixel((0, 0)), (20, 30, 40))
             with Image.open(out / trim['opacityMap'][len('/vehicles/v/'):]) as op:
                 self.assertEqual((op.getpixel((0, 0)), op.getpixel((35, 1))), (0, 255))
+
+    def test_detail_only_multimap_uses_tiled_detail_not_white_diffuse(self):
+        # M3 seats/roof: white diffuse with alpha ~0 shows only the tiled leather/carbon detail.
+        carbon = mat('INT_carbon', 'ksPerPixelMultiMap', 0, 'base.png', 'flat_nm.png')
+        carbon['textures']['txDetail'] = 'carbon.png'
+        carbon['props'].update(useDetail=1.0, detailUVMultiplier=2.0)
+        chassis = mat('CAR_chassis', 'ksPerPixelMultiMap', 0, 'skin.png')
+        chassis['textures']['txDetail'] = 'flake.png'
+        chassis['props'].update(useDetail=1.0, detailUVMultiplier=20.0)
+        model = {'materials': [carbon, chassis, mat('CAR_stencil', 'ksPerPixelNM', 1, 'flake.png', 'ring_nm.png')],
+                 'textures': {'base.png': flat_png((255, 255, 255, 1)), 'flat_nm.png': png((128, 128, 255)),
+                              'carbon.png': png((26, 26, 26)), 'skin.png': png((240, 240, 240), alpha=0),
+                              'flake.png': png((234, 234, 234), alpha=100), 'ring_nm.png': png((128, 128, 255))},
+                 'meshes': [mesh('roof', 'INT_carbon'), mesh('body', 'CAR_chassis'), mesh('pdc', 'CAR_stencil')]}
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            report = export_kn5.export(model, out, 'v', 't_', 0, paint_material='CAR_chassis')
+            mats = json.loads((out / 'main.materials.json').read_text())
+            dae = (out / 't.dae').read_text()
+        self.assertEqual(report['detail_bakes'], {'INT_carbon': 2.0})  # the paint keeps its own path
+        roof = mats['t_INT_carbon']['Stages'][0]
+        self.assertEqual(roof['baseColorMap'], '/vehicles/v/textures/carbon.png')
+        self.assertNotIn('baseColorFactor', roof)
+        self.assertNotIn('normalMap', roof)
+        self.assertIn('0 1 2 1 0 -1', dae)  # AC UVs x 2, then V flipped: (1, 0) -> (2, 1), (0, 1) -> (0, -1)
+        # Parking-sensor discs: opaque body paint keeping the ring normal map, not white flake noise.
+        self.assertEqual(report['paint_stencils'], ['CAR_stencil'])
+        pdc = mats['t_CAR_stencil']
+        self.assertTrue(pdc['Stages'][0]['instanceDiffuse'])
+        self.assertEqual(pdc['Stages'][0]['normalMap'], '/vehicles/v/textures/ring_nm.png')
+        self.assertNotIn('translucent', pdc)
+        self.assertNotIn('opacityMap', pdc['Stages'][0])
+
+    def test_worn_seat_belt_is_skipped_even_inside_cabin_group(self):
+        belt = mesh('CINTURE_ON_SUB0', 'INT_belt', group='cabin')
+        belt['path'] = ['root', 'COCKPIT_HR', 'CINTURE_ON', 'CINTURE_ON_SUB0']
+        self.assertEqual(export_kn5.route(belt, {'INT_belt': mat('INT_belt')}), export_kn5.SKIP)
+        belt['path'] = ['root', 'COCKPIT_HR', 'CINTURE_OFF', 'CINTURE_OFF_SUB2']
+        self.assertEqual(export_kn5.route(belt, {'INT_belt': mat('INT_belt')}), 'cabin')
 
     def test_solid_glow_maps_are_at_least_16_px(self):
         with Image.open(io.BytesIO(export_kn5._solid_png((255, 0, 0)))) as im:

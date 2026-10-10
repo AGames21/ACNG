@@ -7,6 +7,7 @@ FINAL_DRIVE = 3.154
 # Light cosmetic mounts: about 15% of critical damping, well inside the 2 kHz step limit.
 # Keep node weights light; heavier mounts pushed the car past the 3% mass target.
 PROP_NODE_KG, PROP_SPRING, PROP_DAMP = 0.15, 40000, 24
+GAUGE_REF_NODES = ('f1l', 'f1r', 'f6l')  # vanilla ETK needle reference nodes
 STEER_REST_X = 70  # fallback column frame: X rotation of 70 degrees (20 degrees above horizontal)
 # Front seat shells, whole bounding box (BeamNG frame, left side; mirrored for the right).
 # Wider pieces are sill trims, B-pillar plastics, belts and rear-panel fabric: those are cabin.
@@ -329,6 +330,17 @@ def reroute_nose(model, lift, route_of):
 def add_prop(part, name, frame, prefix):
     """Damage-attached native prop with an explicit orthonormal reference frame."""
     pivot, axes = frame['pivot'], frame['axes']
+    if name.startswith('gauge_'):
+        # Needles ride the stock body nodes like vanilla ETK (etkc.jbeam: f1l/f1r/f6l). Their
+        # own 0.15 kg sprung triangles shook the needles visibly. The needle turns about its own
+        # mesh Z, so only the vehicle-space pivot and rest tilt are needed here.
+        part.setdefault('props', [PROP_HEADER]).append([
+            frame['func'], prefix+name, *GAUGE_REF_NODES, {'x': 0, 'y': 0, 'z': 0},
+            {'x': 0, 'y': 0, 'z': frame['rate']}, {'x': 0, 'y': 0, 'z': 0},
+            frame['min'], frame['max'], frame['offset'], 1,
+            {'baseTranslationGlobalRigid': dict(zip('xyz', (round(v, 6) for v in pivot))),
+             'baseRotationGlobal': {'x': prop_rest_x(name, frame), 'y': 0, 'z': 0}}])
+        return
     ids = [prefix+name+'_ref', prefix+name+'_x', prefix+name+'_y']
     nodes = part.setdefault('nodes', [['id', 'posX', 'posY', 'posZ']])
     nodes.append({'nodeWeight': PROP_NODE_KG, 'collision': False, 'selfCollision': False,

@@ -189,10 +189,13 @@ CAR_DETAILS = {
     'TRACK': {'F': 0.248, 'R': 0.246},
     'WHEEL_DONORS': {'F': 'etk_wheel_06a_18x9_F', 'R': 'wheel_02a_18x10_R'},
     'RIM_LABEL': '18-inch rims',
-    # The AC plate's centre (with mesh lift) and 11.7 degree lean; 0.86 scales the 520 mm native
-    # plate to the 447 mm AC plate.
-    'PLATE': {'pos': {'x': 0.0, 'y': 2.19, 'z': 0.805}, 'rot': {'x': 12, 'y': 0, 'z': 180},
+    # The AC plate's centre (with mesh lift, plus 3 mm rearward: the recess bulges 1 mm past the
+    # plate face at its bottom centre) and 11.7 degree lean; 0.86 scales the 520 mm native plate to
+    # the 447 mm AC plate. On etkc_trunk nodes it sank into the body-mesh recess (lab 032: only the
+    # top half showed), so it rides the body nodes like the recess does.
+    'PLATE': {'pos': {'x': 0.0, 'y': 2.193, 'z': 0.805}, 'rot': {'x': 12, 'y': 0, 'z': 180},
               'scale': {'x': 0.86, 'y': 0.86, 'z': 0.86}},
+    'PLATE_GROUP': 'etkc_body',
     'BRAKE_CALIPER': 'brake_caliper_standard_plain',  # the E92 M3's floating calipers are unpainted grey
 }
 
