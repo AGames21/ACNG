@@ -1,4 +1,13 @@
-# Latest checkpoint - 2026-10-10: C015 M3 visual fixes and rigid gauge needles
+# Latest checkpoint - 2026-10-10: GUI004 minimal transparent HUD
+
+The in-game HUD is now minimal: a small translucent `ACNG` ON/OFF pill top right (expands
+for settings) and four transparent tire tiles bottom right that only appear while the tire
+model is on. `scripts/minimal_hud.py --confirm-normal` removes the native speedometer, boost
+gauge, powertrain buttons, drag app and ACNG racing HUD from the player's freeroam layout,
+with a backup. Lab GUI004 37/37; 252 Python tests and the Node suites pass. See
+[GUI004](test-results/GUI004-minimal-hud.md). Open: the player's verdict on the new HUD.
+
+# Previous checkpoint - 2026-10-10: C015 M3 visual fixes and rigid gauge needles
 
 Player-reported M3 issues fixed: plate clipping (the plate now rides the body), white
 bumper sensor dots (now paint), white seats, trim and roof (AC detail-only multimaps now

@@ -1,3 +1,12 @@
+## 2026-10-10 - GUI004 minimal transparent HUD (installed)
+
+Player asked for no speedometer cluster and a minimal, transparent HUD. ACNG Control is now
+a 150 x 32 translucent pill that expands on Advanced; ACNG Tires is four small transparent
+tiles bottom right, hidden while the tire model is off. New `scripts/minimal_hud.py
+--confirm-normal` strips the tacho, boost, powertrain buttons, drag app and ACNG racing HUD
+from the freeroam layout after a backup. Lab GUI004 37/37. 252 Python tests pass.
+[Evidence](docs/test-results/GUI004-minimal-hud.md).
+
 ## 2026-10-10 - C015 M3 visual fixes and rigid gauge needles (installed)
 
 Player report on the M3: plate clipping, white bumper dots, white seats and roof, bouncing

@@ -30,12 +30,14 @@
   if(typeof angular==='undefined')return;
   angular.module('beamng.apps').directive('acngControl',['$interval',function($interval){
     return {restrict:'E',replace:true,scope:true,template:`
-      <section class="acng-control">
+      <section class="acng-control" ng-class="{open:p.advanced}">
         <style>
-          .acng-control{box-sizing:border-box;width:100%;max-height:100%;overflow:auto;color:#e6edf4;background:rgba(16,21,28,.92);border:1px solid #ffffff24;border-radius:8px;padding:6px 8px;font:12px 'Segoe UI',sans-serif;user-select:none}
-          .acng-control *{box-sizing:border-box}.acng-control header{display:flex;align-items:center;gap:8px;height:28px}.acng-control .brand{flex:1;font-size:13px;font-weight:700;letter-spacing:1.5px}
+          .acng-control{box-sizing:border-box;width:100%;max-height:100%;overflow:auto;color:#eef2f6;background:rgba(8,11,15,.32);border:1px solid #ffffff12;border-radius:15px;padding:2px 4px 2px 10px;font:12px 'Segoe UI',sans-serif;user-select:none;text-shadow:0 1px 2px #000a;opacity:.7;transition:opacity .2s,background .2s}
+          .acng-control:hover,.acng-control.open{opacity:1}.acng-control.open{background:rgba(10,13,18,.84);border-radius:10px;padding:6px 10px;text-shadow:none}
+          .acng-control *{box-sizing:border-box}.acng-control header{display:flex;align-items:center;gap:6px;height:26px}.acng-control .brand{flex:1;font-size:10px;font-weight:700;letter-spacing:2px;color:#c9d2dc}
           .acng-control button,.acng-control select{font:inherit;border:1px solid #ffffff25;border-radius:5px;background:#202a35;color:#e6edf4;cursor:pointer}.acng-control button:focus-visible,.acng-control select:focus-visible,.acng-control input:focus-visible{outline:2px solid #82baff;outline-offset:2px}.acng-control button:disabled{opacity:.4;cursor:default}
-          .acng-control .master{min-width:48px;height:26px;padding:0 10px;font-size:11px;font-weight:700}.acng-control .master.on{background:#244b3b;border-color:#569d78;color:#9de7bd}.acng-control .advanced{height:26px;min-width:30px;padding:0 7px;background:transparent;color:#a8b8c9;font-size:16px}.acng-control .note{font-size:11px;line-height:1.4;color:#b2bfd1;margin-top:6px}
+          .acng-control .master{height:20px;padding:0 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;background:#ffffff14;border-color:transparent;color:#aeb8c4}.acng-control .master::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#6b7480;margin-right:5px;vertical-align:1px}.acng-control .master.on{color:#a6efc6}.acng-control .master.on::before{background:#4fdc8f;box-shadow:0 0 5px #4fdc8f}
+          .acng-control .advanced{height:20px;min-width:22px;padding:0 4px;background:transparent;border-color:transparent;color:#a8b8c9;font-size:12px}.acng-control .note{font-size:10px;line-height:1.3;color:#b2bfd1;margin:2px 0 4px}
           .acng-control fieldset{border:0;margin:10px 0 0;padding:0}.acng-control legend{display:none}.acng-control .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0}.acng-control .row label{flex:1}.acng-control input[type=checkbox]{width:16px;height:16px;accent-color:#80ceaa;cursor:pointer}.acng-control select{padding:4px;max-width:145px}.acng-control input[type=range]{width:95px;accent-color:#80ceaa}.acng-control small{display:block;color:#97a8ba;font-size:10px;line-height:1.4}.acng-control .value{font-variant-numeric:tabular-nums;min-width:32px;text-align:right}
           .acng-control .tabs{display:flex;gap:3px;margin:10px 0 12px}.acng-control .tabs button{flex:1;padding:5px 2px;font-size:10px;background:transparent;border-color:transparent}.acng-control .tabs button.on{border-bottom-color:#80ceaa;color:#9de7bd}.acng-control .footer{margin-top:10px;font-size:10px;color:#8295ad}
         </style>
@@ -91,7 +93,7 @@
           }
           if(host && host!==document.body){
             host.setAttribute('data-acng-control-host','true');
-            host.style.height=p.advanced?'410px':'44px';host.style.width=p.advanced?'290px':'220px';
+            host.style.height=p.advanced?'410px':'32px';host.style.width=p.advanced?'290px':'150px';
           }
         }
         p.toggleAdvanced=function(){p.advanced=!p.advanced;resizePanel();};

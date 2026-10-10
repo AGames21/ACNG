@@ -1,10 +1,10 @@
 -- Stationary control/UI test, no AI spawning or driving inputs.
 local M={};local real,sim,co=0,0,nil;local response
-local result={test='GUI003 compact controls and compound/wear failure',completed=false,checks={},vehicles={}}
+local result={test='GUI004 minimal transparent HUD, compact controls and compound/wear failure',completed=false,checks={},vehicles={}}
 local uiResponse
 local function uiProbe(label)
   uiResponse=nil
-  be:queueJS([[(()=>{var e=document.querySelector('.acng-control'),h=e&&e.closest('[data-acng-control-host]');var parents=[],n=e;while(n&&parents.length<5){parents.push({tag:n.tagName,cls:n.className,style:n.getAttribute('style')});n=n.parentElement;}var r=e?{width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,host:!!h,hostHeight:h&&h.getBoundingClientRect().height,parents:parents}:{};bngApi.engineLua('extensions.acng_controllab.uiReceive('+JSON.stringify(JSON.stringify(r))+')');})()]])
+  be:queueJS([[(()=>{var e=document.querySelector('.acng-control'),h=e&&e.closest('[data-acng-control-host]');var parents=[],n=e;while(n&&parents.length<5){parents.push({tag:n.tagName,cls:n.className,style:n.getAttribute('style')});n=n.parentElement;}var t=document.querySelector('.acng-tires'),tr=t&&t.getBoundingClientRect();var r=e?{width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,host:!!h,hostHeight:h&&h.getBoundingClientRect().height,background:getComputedStyle(e).backgroundColor,tiles:document.querySelectorAll('.acng-tires .tire').length,tiresWidth:tr&&tr.width,tiresHeight:tr&&tr.height,tiresBackground:t&&getComputedStyle(t).backgroundColor,parents:parents}:{};bngApi.engineLua('extensions.acng_controllab.uiReceive('+JSON.stringify(JSON.stringify(r))+')');})()]])
 end
 local function save() jsonWriteFile('/acng-control-test.json',result,true) end
 local function check(k,x) result.checks[k]=x==true;save();if not x then error(k) end end
@@ -32,18 +32,30 @@ local function run()
   core_vehicles.replaceVehicle('etkc',{config='vehicles/etkc/kc6_360_M.pc'});delay(8)
   check('startup_off',not status().enabled)
   extensions.load('ui_appLayouts')
-  local layout=ui_appLayouts.createLayout({title='ACNG Freeroam',type='freeroam',apps={{appName='acngControl',placement={right='24px',top='70px',width='220px',height='44px'}}}})
+  local layout=ui_appLayouts.createLayout({title='ACNG Freeroam',type='freeroam',apps={
+    -- The layout scripts/minimal_hud.py leaves: no speed, boost, powertrain or drag widgets.
+    {appName='damageApp',placement={left='0px',bottom='0px',width='168.75px',height='300px',position='absolute'}},
+    {appName='acngControl',placement={right='24px',top='70px',width='150px',height='32px',position='absolute'}},
+    {appName='acngTires',placement={right='16px',bottom='16px',width='210px',height='130px',position='absolute'}}}})
   ui_appLayouts.setUsedLayout(layout);guihooks.trigger('ChangeState',{state='play'});delay(5)
   uiProbe();waitFor(function() return uiResponse end);result.collapsed=uiResponse
-  check('compact_collapsed_size',uiResponse.width<=230 and uiResponse.height<=50)
-  createScreenshot2({filename='screenshots/acng_gui003_collapsed',writeJPG=true});delay(2)
+  check('compact_collapsed_size',uiResponse.width<=160 and uiResponse.height<=40)
+  local alpha=tonumber((uiResponse.background or ''):match('rgba%([^,]+,[^,]+,[^,]+,%s*([%d.]+)%)'))
+  check('collapsed_pill_translucent',alpha~=nil and alpha<0.5)
+  check('tires_hidden_while_off',uiResponse.tiles==0)
+  createScreenshot2({filename='screenshots/acng_gui004_collapsed',writeJPG=true});delay(2)
   click('Toggle ACNG master');waitFor(function() return status().enabled end)
   waitFor(function() local r=probe();return r and r.tires and r.state.heat and r.state.wear end)
   check('real_master_click_native_heat_and_wear',true)
+  delay(3);uiProbe();waitFor(function() return uiResponse end);result.minimal_on=uiResponse
+  check('tire_tiles_show_four',uiResponse.tiles==4)
+  check('tire_tiles_compact',uiResponse.tiresWidth<=215 and uiResponse.tiresHeight<=135)
+  check('tire_panel_transparent',uiResponse.tiresBackground=='rgba(0, 0, 0, 0)' or uiResponse.tiresBackground=='transparent')
+  createScreenshot2({filename='screenshots/acng_gui004_minimal_on',writeJPG=true});delay(2)
   click('Show advanced ACNG settings');delay(1)
   uiProbe();waitFor(function() return uiResponse end);result.expanded=uiResponse
   check('advanced_expands_host',uiResponse.host and uiResponse.hostHeight>=300 and uiResponse.height>100)
-  createScreenshot2({filename='screenshots/acng_gui003_expanded',writeJPG=true});delay(2)
+  createScreenshot2({filename='screenshots/acng_gui004_expanded',writeJPG=true});delay(2)
   screenshot.takeScreenShot();delay(1)
   click('ACNG tire wear');waitFor(function() return not status().features.tire_wear end)
   waitFor(function() local r=probe();return r and r.state and r.state.heat and not r.state.wear end)

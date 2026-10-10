@@ -57,34 +57,26 @@
   if (typeof angular === 'undefined') return;
   angular.module('beamng.apps').directive('acngTires', ['$interval', function ($interval) {
     return {restrict:'EA', replace:true, scope:true,
-      template: `<section class="acng-tires">
+      template: `<section class="acng-tires" ng-class="{off:!tires.on}">
         <style>
-          .acng-tires{box-sizing:border-box;width:100%;height:100%;font:13px 'Segoe UI',sans-serif;color:#f5f6f8;background:rgba(13,17,24,.94);border:1px solid #414650;border-top:3px solid #5fe39a;border-radius:12px;padding:10px 14px;box-shadow:0 8px 26px #0006;font-variant-numeric:tabular-nums;user-select:none}
-          .acng-tires *{box-sizing:border-box}.acng-tires header{display:flex;align-items:center;gap:6px;height:24px}.acng-tires .brand{font-weight:800;letter-spacing:3px;margin-right:auto}.acng-tires .brand small{font-weight:600;letter-spacing:1.5px;color:#9ca7b8;margin-left:6px}
-          .acng-tires button{font:600 10px 'Segoe UI',sans-serif;letter-spacing:.8px;border:1px solid #58606c;border-radius:5px;padding:4px 7px;color:#cad0da;background:#252c36;cursor:pointer}.acng-tires button.active{color:#8ceac7;border-color:#44806c}
-          .acng-tires .window{margin:4px 0 6px;font-size:11px;letter-spacing:1px;color:#9ca7b8}
-          .acng-tires .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
-          .acng-tires .tire{display:flex;gap:8px;align-items:stretch;background:#1d232c;border-radius:8px;padding:6px;min-width:0;overflow:hidden}
-          .acng-tires .swatch{width:18px;border-radius:6px;transition:background .3s}
-          .acng-tires .info{flex:1;min-width:0}.acng-tires .top{display:flex;justify-content:space-between;align-items:baseline}
-          .acng-tires .name{font-size:10px;letter-spacing:1px;color:#7f8a9b}.acng-tires .state{font-size:9px;letter-spacing:1px;color:#7f8a9b;text-transform:uppercase}
-          .acng-tires .state.cold{color:#6fb0ff}.acng-tires .state.window{color:#5fe39a}.acng-tires .state.hot{color:#ff8a6a}
-          .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:22px;font-weight:700;line-height:1.1}.acng-tires .grip{font-size:13px;font-weight:700;color:#cad0da}.acng-tires .grip b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px;margin-right:3px}
-          .acng-tires .meta{display:flex;justify-content:space-between;font-size:11px;color:#aeb8c6}.acng-tires .meta b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px;margin-right:3px}
-          .acng-tires .tread{display:flex;align-items:center;gap:5px;font-size:11px;color:#aeb8c6;margin-top:2px}.acng-tires .tread b{font-weight:600;color:#7f8a9b;font-size:9px;letter-spacing:.8px}
-          .acng-tires .bar{flex:1;height:5px;border-radius:3px;background:#2c343f;overflow:hidden}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
-          .acng-tires .idle{color:#aeb8c6;text-align:center;padding:40px 12px;font-size:13px;line-height:1.5}
+          .acng-tires{box-sizing:border-box;width:100%;height:100%;font:12px 'Segoe UI',sans-serif;color:#f2f5f8;font-variant-numeric:tabular-nums;user-select:none;text-shadow:0 1px 2px #000c}
+          .acng-tires *{box-sizing:border-box}.acng-tires header{display:flex;align-items:center;gap:4px;height:20px;opacity:.55;transition:opacity .2s}.acng-tires:hover header{opacity:1}
+          .acng-tires .brand{font-size:9px;font-weight:700;letter-spacing:2px;color:#c9d2dc;margin-right:auto}
+          .acng-tires button{font:700 9px 'Segoe UI',sans-serif;letter-spacing:.8px;border:0;border-radius:9px;padding:2px 7px;color:#aeb8c4;background:rgba(8,11,15,.35);cursor:pointer;text-shadow:none}.acng-tires button.active{color:#a6efc6;background:rgba(40,110,75,.4)}.acng-tires button:disabled{opacity:.4;cursor:default}
+          .acng-tires.off header{opacity:.3}.acng-tires.off:hover header{opacity:.9}
+          .acng-tires .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;margin-top:3px}
+          .acng-tires .tire{min-width:0;overflow:hidden;background:rgba(8,11,15,.32);border-left:4px solid #3a414c;border-radius:6px;padding:3px 7px 4px;transition:border-color .3s}
+          .acng-tires .top{display:flex;justify-content:space-between;align-items:baseline;font-size:9px;letter-spacing:1px;color:#aab4c1}
+          .acng-tires .state{text-transform:uppercase}.acng-tires .state.cold{color:#7db8ff}.acng-tires .state.window{color:#6fe8a6}.acng-tires .state.hot{color:#ff9478}.acng-tires .state.failed{color:#ff6b5e}
+          .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:18px;font-weight:700;line-height:1.15}.acng-tires .grip{font-size:11px;font-weight:600;color:#d5dce4}
+          .acng-tires .bar{height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:2px}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
         </style>
-        <header><span class="brand">ACNG<small>TIRES</small></span><button ng-click="tires.toggle('tire_temperature')" ng-class="{active:tires.heat}" ng-disabled="!tires.available" aria-label="Toggle tire heat and grip window">HEAT {{tires.heat?'ON':'OFF'}}</button><button ng-click="tires.toggle('tire_wear')" ng-class="{active:tires.wear}" ng-disabled="!tires.available" aria-label="Toggle tire wear">WEAR {{tires.wear?'ON':'OFF'}}</button></header>
-        <div ng-if="!tires.on" class="idle"><span ng-if="tires.available">Tire model OFF \u2014 stock BeamNG tires.<br>HEAT adds tire heat and a grip window.<br>WEAR wears the tread as you slide.</span><span ng-if="!tires.available">Waiting for ACNG\u2026</span></div>
-        <div ng-if="tires.on"><div class="window">{{tires.view.window}}</div>
-        <div class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index">
-          <div class="swatch" ng-style="{background:t.color}"></div>
-          <div class="info"><div class="top"><span class="name">{{t.name}} {{t.compound}}</span><span class="state" ng-class="t.state">{{t.failed?'PUNCTURED':t.state}}</span></div>
-          <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread"><b>GRIP</b>{{t.grip}}</span></div>
-          <div class="meta"><span><b>CORE</b>{{t.core}}</span><span><b>PSI</b>{{t.psi}}</span></div>
-          <div class="tread" ng-if="tires.view.wear"><b>TREAD</b><span class="bar"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></span><span>{{t.tread}}</span></div></div>
-        </div></div></div>
+        <header title="{{tires.view.window}}"><span class="brand">TIRES</span><button ng-click="tires.toggle('tire_temperature')" ng-class="{active:tires.heat}" ng-disabled="!tires.available" aria-label="Toggle tire heat and grip window">HEAT</button><button ng-click="tires.toggle('tire_wear')" ng-class="{active:tires.wear}" ng-disabled="!tires.available" aria-label="Toggle tire wear">WEAR</button></header>
+        <div ng-if="tires.on" class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index" ng-style="{'border-left-color':t.color}" title="{{t.compound}} core {{t.core}} · {{t.psi}} psi · tread {{t.tread}}">
+          <div class="top"><span>{{t.name}}</span><span class="state" ng-class="t.failed?'failed':t.state">{{t.failed?'PUNCTURED':t.state}}</span></div>
+          <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread">{{t.grip}}</span><span class="grip" ng-if="!tires.view.heat">{{t.psi}}</span></div>
+          <div class="bar" ng-if="tires.view.wear"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></div>
+        </div></div>
       </section>`,
       link:function (scope) {
         var alive = true, latest = null, lastUpdate = 0;

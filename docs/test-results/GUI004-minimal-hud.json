@@ -1,0 +1,451 @@
+{
+  "checks": {
+    "advanced_expands_host": true,
+    "auto_detects_native_sport_tires": true,
+    "bolide_reset_fresh_tread": true,
+    "bolide_road_heat_and_wear_attached": true,
+    "collapsed_pill_translucent": true,
+    "compact_collapsed_size": true,
+    "etkc_reset_fresh_tread": true,
+    "etkc_road_heat_and_wear_attached": true,
+    "master_off_does_not_repair_damage": true,
+    "master_off_unloads_all_effects_and_stream": true,
+    "master_on_keeps_custom_choices": true,
+    "native_broken_wheel_survives_acng": true,
+    "native_puncture_survives_acng": true,
+    "native_reload_preferences_master_off": true,
+    "native_reload_road_preset": true,
+    "native_reset_repairs_puncture": true,
+    "no_physics_modules_left_active": true,
+    "pickup_reset_fresh_tread": true,
+    "pickup_road_heat_and_wear_attached": true,
+    "preferences_saved": true,
+    "puncture_pressure_remains_low": true,
+    "race_preset_has_own_window": true,
+    "real_abs_selector": true,
+    "real_advanced_wear_switch": true,
+    "real_factory_restore_selector": true,
+    "real_ffb_strength_slider": true,
+    "real_ffb_switch": true,
+    "real_master_click_native_heat_and_wear": true,
+    "real_road_preset_selector": true,
+    "real_sport_preset_selector": true,
+    "real_telemetry_switch": true,
+    "startup_off": true,
+    "tire_panel_transparent": true,
+    "tire_tiles_compact": true,
+    "tire_tiles_show_four": true,
+    "tires_hidden_while_off": true,
+    "zero_tread_caused_native_puncture": true
+  },
+  "collapsed": {
+    "background": "rgba(8, 11, 15, 0.32)",
+    "height": 32,
+    "host": true,
+    "hostHeight": 32,
+    "parents": [
+      {
+        "cls": "acng-control",
+        "tag": "SECTION"
+      },
+      {
+        "cls": "ui-angular-app-slot",
+        "tag": "DIV"
+      },
+      {
+        "cls": "ui-app-host ui-app-host--interactive",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item__content",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item uses-relative-units",
+        "style": "font-size: 1rem; width: 9.38em; height: 2em; right: 1.5em; top: 4.38em;",
+        "tag": "DIV"
+      }
+    ],
+    "tiles": 0,
+    "tiresBackground": "rgba(0, 0, 0, 0)",
+    "tiresHeight": 130.078125,
+    "tiresWidth": 210.078125,
+    "width": 150.078125
+  },
+  "completed": true,
+  "expanded": {
+    "background": "rgba(10, 13, 18, 0.84)",
+    "height": 350,
+    "host": true,
+    "hostHeight": 410,
+    "parents": [
+      {
+        "cls": "acng-control open",
+        "tag": "SECTION"
+      },
+      {
+        "cls": "ui-angular-app-slot",
+        "tag": "DIV"
+      },
+      {
+        "cls": "ui-app-host ui-app-host--interactive",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item__content",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item uses-relative-units",
+        "style": "font-size: 1rem; width: 290px; height: 410px; right: 1.5em; top: 4.38em;",
+        "tag": "DIV"
+      }
+    ],
+    "tiles": 4,
+    "tiresBackground": "rgba(0, 0, 0, 0)",
+    "tiresHeight": 130.078125,
+    "tiresWidth": 210.078125,
+    "width": 290
+  },
+  "layout": "/settings/ui_apps/layouts/acng_freeroam.uilayout.json",
+  "minimal_on": {
+    "background": "rgba(8, 11, 15, 0.32)",
+    "height": 32,
+    "host": true,
+    "hostHeight": 32,
+    "parents": [
+      {
+        "cls": "acng-control",
+        "tag": "SECTION"
+      },
+      {
+        "cls": "ui-angular-app-slot",
+        "tag": "DIV"
+      },
+      {
+        "cls": "ui-app-host ui-app-host--interactive",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item__content",
+        "tag": "DIV"
+      },
+      {
+        "cls": "overlay-item uses-relative-units",
+        "style": "font-size: 1rem; width: 9.38em; height: 2em; right: 1.5em; top: 4.38em;",
+        "tag": "DIV"
+      }
+    ],
+    "tiles": 4,
+    "tiresBackground": "rgba(0, 0, 0, 0)",
+    "tiresHeight": 130.078125,
+    "tiresWidth": 210.078125,
+    "width": 150.078125
+  },
+  "ready": true,
+  "status": {
+    "assist_levels": {
+      "abs": 0,
+      "tc": 2
+    },
+    "control_panel_initialized": true,
+    "enabled": false,
+    "features": {
+      "abs": false,
+      "ffb": false,
+      "pits": false,
+      "race_sessions": false,
+      "tc": false,
+      "tire_temperature": true,
+      "tire_wear": true
+    },
+    "ffb_settings": {
+      "car_gain": 1,
+      "car_model": "etkc",
+      "gain": 1,
+      "kerb": 0.3,
+      "min_force": 0,
+      "road": 0.5,
+      "slip": 0.3
+    },
+    "implemented_physics_features": [
+      "tire_temperature",
+      "tire_wear",
+      "abs",
+      "tc",
+      "ffb"
+    ],
+    "physics_writes": 0,
+    "schema_version": 1,
+    "settings_pending": false,
+    "telemetry_enabled": false,
+    "tire_profile": "road"
+  },
+  "test": "GUI004 minimal transparent HUD, compact controls and compound/wear failure",
+  "vehicles": {
+    "bolide": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 24.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 24.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 24,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 24,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        }
+      ]
+    },
+    "etkc": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 26.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 26.5,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 28.3,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 28.4,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        }
+      ]
+    },
+    "pickup": {
+      "state": {
+        "heat": true,
+        "mode": "on",
+        "profile": "road",
+        "schema_version": 1,
+        "tires": [
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RL",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "RR",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FL",
+            "psi": 28.7,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          },
+          {
+            "compound": "road",
+            "core_c": 24.2,
+            "grip": 0.989,
+            "name": "FR",
+            "psi": 28.6,
+            "state": "cold",
+            "surface_c": 24.2,
+            "tread": 1,
+            "window_high_c": 75,
+            "window_low_c": 35,
+            "worn_through": false
+          }
+        ],
+        "wear": true,
+        "wear_rate": 1,
+        "window_high_c": 75,
+        "window_low_c": 35
+      },
+      "wheels": [
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "RR"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FL"
+        },
+        {
+          "broken": false,
+          "deflated": false,
+          "name": "FR"
+        }
+      ]
+    }
+  }
+}
