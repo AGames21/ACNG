@@ -1,3 +1,10 @@
+## 2026-10-11 - Releases are betas
+
+Maintainer request: ACNG is not finished, so every GitHub release is a pre-release with a
+beta version tag (first: `v0.3.0-beta`), and the two older date-tagged builds became
+pre-releases too. The README now links to the releases list, since GitHub's "latest" link
+skips pre-releases. Policy in [PUBLISHING](docs/PUBLISHING.md).
+
 ## 2026-10-10 - T009b tire model lab, ideal pressure recalibrated (installed)
 
 New harness `tests/beamng-tirephys` (`-Experiment TirePhys`). It covers:

@@ -6,7 +6,7 @@
 
 [Start driving](#start-driving) · [Features](#what-you-can-use-today) · [Evidence](#measured-progress) · [Roadmap](docs/ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**FREEROAM FIRST** · **MODULAR** · **OFF BY DEFAULT** · **EARLY PROTOTYPE**
+**FREEROAM FIRST** · **MODULAR** · **OFF BY DEFAULT** · **BETA**
 
 </div>
 
@@ -32,6 +32,7 @@ starts OFF. Master OFF stops active ACNG modules and its telemetry stream.
 
 | System | What it adds | Verification |
 |---|---|---|
+| **Tire model** | Inner/middle/outer tread temperatures, a pressure window around each compound's ideal hot pressure, graining when sliding cold, blistering when sliding hot, dirt off tarmac | Native T009b 28/28 on a skidpad; road feel and dirt in game pending |
 | **Tire compounds** | Auto (from fitted tires), Road, Sport or Race: own heat window, grip and wear rate; heat capped near 250 °C | Native auto-detection and race-window checks; heat cap unit-tested |
 | **Tire wear** | Slip- and heat-driven tread loss; a fully worn tire punctures; fresh tread on reset | Controlled-circle tests and native zero-tread puncture; wider road validation pending |
 | **ABS / traction control** | Factory, Off or three intervention levels | Native tests; throttle-cut TC for cars without factory TC |
@@ -46,7 +47,7 @@ Pressure currently follows heat. Auto reads the fitted tire part; unknown tires 
 
 ## Measured progress
 
-**187 Python checks + 7 Node app suites passed locally.**
+**262 Python checks + 10 Node app suites passed locally.**
 **Native in-game checks in BeamNG 0.39.4, all in isolated profiles:**
 
 - Six stock models (FWD, RWD, 3-wheel, van, 10-tire semi) driven, crashed,
@@ -54,6 +55,8 @@ Pressure currently follows heat. Auto reads the fitted tire part; unknown tires 
   reset repairs and gives fresh tread.
 - Sustained limit driving (16 lap cycles): Road preset +1.7 psi with flat 50 °C peaks;
   Sport +8.5 psi.
+- Tire model (T009b): tread zones, pressure window, grain, blister, reset, flat tire
+  and master OFF restore, 28/28, 0.008 ms per update.
 - Pit service 13/13, control panel, presets, saved preferences, lap timer and
   car switching/reset checks.
 
@@ -75,8 +78,9 @@ pressure rise. Native rolling/deformation also affects pressure.
 Requires your own BeamNG.drive installation. Tested on **0.39.4**; other builds
 and third-party vehicles need verification. Use an isolated profile while experimental.
 
-**Easiest:** open [Releases](https://github.com/AGames21/ACNG/releases/latest)
-and download `acng-freeroam.zip`. No Python or Git needed.
+**Easiest:** open [Releases](https://github.com/AGames21/ACNG/releases)
+and download `acng-freeroam.zip` from the newest build. No Python or Git needed.
+Every build is a beta pre-release: playable, but still changing.
 
 **Or build it yourself:**
 
