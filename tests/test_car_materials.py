@@ -70,7 +70,8 @@ class Materials(unittest.TestCase):
                          'grey.png': png((90, 93, 90)), 'cap_nm.png': png((244, 59, 253), alpha=0),
                          'olive.png': png((29, 31, 10), alpha=125), 'tail.png': tail_png(),
                          'tail_OS.png': png((128, 128, 255))},
-            'meshes': [mesh('front_light_1', 'lamp'), mesh('brake_light_1', 'Fanali_POSTERIORI_TS', -2),
+            'meshes': [mesh('front_light_2', 'lamp'), mesh('front_light_1', 'lamp'), mesh('front_light_3', 'lamp'),
+                       mesh('brake_light_1', 'Fanali_POSTERIORI_TS', -2),
                        mesh('rear_light_1', 'Fanali_POSTERIORI_TS', -2), mesh('m', 'MIRROR', group='mirror_L'),
                        mesh('cap', 'cap'), mesh('glass', 'VETRI_Texture'),
                        mesh('polymsh263_SUB0', 'Fanali_POSTERIORI_OS', -2), mesh('rear_light_2', 'Fanali_POSTERIORI_OS', -2)]}
@@ -85,6 +86,9 @@ class Materials(unittest.TestCase):
         out, report, mats = self.export()
         self.assertEqual(report['glow']['t_lamp_headlight']['simpleFunction'], {'lowbeam': 0.49, 'highbeam': 1})
         self.assertEqual(report['glow']['t_Fanali_POSTERIORI_TS_brakelight']['simpleFunction'], {'brakelights': 0.49})
+        # 1M headlamp split (C016): rings are DRL/position lights, the inner lamp is high beam only.
+        self.assertEqual(report['glow']['t_lamp_position']['simpleFunction'], {'drl': 1, 'lowhighbeam': 1})
+        self.assertEqual(report['glow']['t_lamp_highbeam']['simpleFunction'], {'highbeam': 1})
         self.assertEqual(report['glow']['t_Fanali_POSTERIORI_TS_taillight']['on'], 't_Fanali_POSTERIORI_TS_taillight_on')
         lit = mats['t_lamp_headlight_on']['Stages'][0]
         self.assertEqual(lit['emissiveIntensityNits'], 15000)

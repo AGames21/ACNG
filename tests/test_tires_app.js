@@ -53,7 +53,7 @@ assert.equal(view({mode:'off',wear:true}).wear,false);
 assert.equal(v.heat,false);
 assert.equal(view({mode:'on',heat:true,wear:false,tires:[]}).heat,true);
 assert.equal(view({mode:'off',heat:true}).heat,false);
-// T008 model readouts: tread zones drawn from behind the car (outer edge outside), pressure vs ideal, damage tags.
+// T009 model readouts: tread zones drawn from behind the car (outer edge outside), pressure vs ideal, damage tags.
 v=view({mode:'on',heat:true,window_low_c:75,window_high_c:105,tires:[
  {name:'FL',surface_c:90,zones_c:[120,90,60],psi:24.2,ideal_psi:26.3,grain:0.2,blister:0.01,dirt:0.3},
  {name:'FR',surface_c:90,zones_c:{1:120,2:90,3:60},psi:26.4,ideal_psi:26.3,blister:0.4},

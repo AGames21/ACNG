@@ -48,7 +48,7 @@ local GRIP_INTERVAL_S = 0.1
 --   race  slick behaviour: poor grip cold, warms fast under load, narrow hot side and
 --         wears fastest (wear x1.7).
 -- press is the grip lost per psi away from the ideal hot pressure and damage scales
--- graining and blistering (T008, below): a street tire barely cares, a slick does.
+-- graining and blistering (T009, below): a street tire barely cares, a slick does.
 local profile = 'sport'
 local PROFILES = {
   road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,wear=0.6,press=0.003,damage=0.5,
@@ -139,7 +139,7 @@ M.WEAR_RATE = 1
 -- WEAR_GRIP_LOSS lost}, so WEAR_GRIP_LOSS stays the grip left on a bald tire.
 M.WEAR_CURVE = {{0, 1}, {0.25, 1/3}, {0.5, 1/6}, {0.98, 0}, {1, 1/15}}
 
--- T008 tire model, run with the heat part. An original ACNG model shaped after the tire
+-- T009 tire model, run with the heat part. An original ACNG model shaped after the tire
 -- behaviours Kunos documents in the public AC SDK (tyres.ini: ideal pressure and its grip
 -- gain, grain and blister gamma/gain, dirt pickup); ACNG values, no AC code or data:
 --   zones    inner, middle and outer tread temperatures from BeamNG's own tread nodes.
@@ -303,7 +303,9 @@ end
 
 -- Split each tire's tread nodes into inner, middle and outer thirds across the tread,
 -- by their rest offset along the hub axis; inner is the hub end nearer the car's centre.
--- Tires without usable tread nodes keep no zones and use their average temperature.
+-- Stock BeamNG tires have tread nodes on the two tread edges only (T009a: 16 + 16 on the
+-- etkc), so the middle third is usually empty. Tires without usable tread nodes keep no
+-- zones and use their average temperature.
 local function buildZones()
   zones, zoneC = {}, {}
   if not obj.getNodePosition or not obj.getNodeTemperature then return end
@@ -337,24 +339,30 @@ local function buildZones()
       local k = t < 1 / 3 and 1 or t > 2 / 3 and 3 or 2
       z[k][#z[k] + 1] = e[1]
     end
-    if #z[1] > 0 and #z[2] > 0 and #z[3] > 0 then zones[wd.wheelID] = z end
+    if #z[1] > 0 and #z[3] > 0 then zones[wd.wheelID] = z end
   end)
 end
 
-local function zoneTemps(id)
+-- Zone temperatures keep the wheel's average temperature as their level and take only the
+-- spread across the tread from the tread nodes. Raw tread nodes run far hotter than the
+-- average the grip windows were calibrated on (T009a: 99 C edge vs 53 C average after a
+-- launch) and cool much faster. An empty middle zone reads the average itself.
+local function zoneTemps(id, avg)
   local z = zones[id]
-  if not z then return nil end
-  local out = {}
+  if not z or type(avg) ~= 'number' then return nil end
+  local means, all, count = {}, 0, 0
   for k = 1, 3 do
     local sum, n = 0, 0
     for _, nid in ipairs(z[k]) do
       local t = obj:getNodeTemperature(nid)
       if type(t) == 'number' and t == t then sum, n = sum + t, n + 1 end
     end
-    if n == 0 then return nil end
-    out[k] = sum / n - K
+    if n == 0 and k ~= 2 then return nil end
+    means[k] = n > 0 and sum / n or nil
+    all, count = all + sum, count + n
   end
-  return out
+  local tread = all / count
+  return {avg + means[1] - tread, means[2] and avg + means[2] - tread or avg, avg + means[3] - tread}
 end
 
 -- The car's default cold pressure for this tire: the default of its tire pressure
@@ -491,7 +499,7 @@ local function applyAcng()
   return eachTire(function(wd, wobj)
     local c = surfaceC(wd)
     ideal[wd.wheelID] = idealPsi(wd)
-    zoneC[wd.wheelID] = zoneTemps(wd.wheelID)
+    zoneC[wd.wheelID] = zoneTemps(wd.wheelID, c)
     heatScale[wd.wheelID] = heatFade(c)
     local t = parts.heat and acngThermal(wd, heatScale[wd.wheelID]) or stockThermal(wd)
     wobj:setThermal(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
@@ -508,7 +516,7 @@ local function updateGrip()
   eachTire(function(wd, wobj)
     local c = surfaceC(wd)
     lastC[wd.wheelID] = c
-    zoneC[wd.wheelID] = zoneTemps(wd.wheelID)
+    zoneC[wd.wheelID] = zoneTemps(wd.wheelID, c)
     if parts.heat then
       local fade = heatFade(c)
       if fade ~= heatScale[wd.wheelID] then
@@ -599,7 +607,7 @@ local function wearState()
   return out
 end
 
--- Raw T008 state for lab harnesses: zone node counts and every grip factor per tire.
+-- Raw T009 state for lab harnesses: zone node counts and every grip factor per tire.
 local function modelState()
   local out = {}
   eachTire(function(wd)

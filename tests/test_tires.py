@@ -423,7 +423,7 @@ class TireContracts(unittest.TestCase):
             self.assertNotIn(write, source)
 
 
-# T008 additions to the fake VM: a small vec3, hub and tread node positions across the
+# T009 additions to the fake VM: a small vec3, hub and tread node positions across the
 # FL tire (inner end nearer the car's centre), per-node temperatures, the car's default
 # tire pressure variable, and rolling speed and ground material per wheel.
 MODEL = """
@@ -485,11 +485,28 @@ class TireModelContracts(unittest.TestCase):
             self.g.nodeT[nid] = 273.15 + 130
         self.drive(0.2)
         snap = self.mod.snapshot().tires[1]
-        self.assertEqual(list(snap.zones_c.values()), [130, 90, 90])
+        # Level from the 90 C average, spread from the nodes (tread mean 103.3 C).
+        spread = 130 - (3 * 130 + 6 * 90) / 9
+        self.assertEqual(list(snap.zones_c.values()), [round(90 + spread, 1), round(90 + spread - 40, 1), round(90 + spread - 40, 1)])
         self.assertEqual(snap.surface_c, 90)             # the average still looks fine
         m = self.mod
-        self.assertAlmostEqual(self.state("FL").heat_grip, (m.gripAt(130) + 2) / 3)
+        z = [90 + spread, 90 + spread - 40, 90 + spread - 40]
+        self.assertAlmostEqual(self.state("FL").heat_grip, sum(m.gripAt(t) for t in z) / 3)
         self.assertLess(self.state("FL").heat_grip, m.gripAt(90))
+
+    def test_edge_only_tread_nodes_read_the_average_in_the_middle(self):
+        # Stock BeamNG tires: tread nodes on the two edges only (T009a etkc: 16 + 16).
+        for i in range(9):
+            self.g.pos[100 + i] = self.lua.eval("vec3")(-0.6 if i < 5 else -0.85, 1.3, 0)
+        self.mod.onReset()
+        self.assertEqual(list(self.state("FL").zone_nodes.values()), [5, 0, 4])
+        for i in range(5):
+            self.g.nodeT[100 + i] = 273.15 + 110             # inner edge 20 C over the outer
+        self.drive(0.2)
+        zc = list(self.mod.snapshot().tires[1].zones_c.values())
+        self.assertEqual(zc[1], 90)                       # middle reads the average
+        self.assertAlmostEqual(zc[0] - zc[2], 20, places=0)
+        self.assertAlmostEqual((zc[0] * 5 + zc[2] * 4) / 9, 90, places=0)
 
     def test_ideal_pressure_is_the_default_warmed_to_mid_window(self):
         fl = self.state("FL")

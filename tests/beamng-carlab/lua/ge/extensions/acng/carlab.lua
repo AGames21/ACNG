@@ -61,7 +61,7 @@ r.limiter={configured_m_s=v.data.vehicleController and v.data.vehicleController.
 local events=rawget(_G,'acngEventSounds');if events then r.event_sounds=events;rawset(_G,'acngEventSounds',nil) end
 -- rawget/rawset: plain globals trip BeamNG's undeclared-global warning.
 local fit=rawget(_G,'acngFit');if fit then r.fit=fit;rawset(_G,'acngFit',nil) end
-r.lights={lowbeam=electrics.values.lowbeam,brakelights=electrics.values.brakelights,reverse=electrics.values.reverse}
+r.lights={lowbeam=electrics.values.lowbeam,highbeam=electrics.values.highbeam,drl=electrics.values.drl,brakelights=electrics.values.brakelights,reverse=electrics.values.reverse}
 local J=rawget(_G,'acngJ')
 if J then
   local worst,wname,base=0,nil,0
@@ -403,11 +403,20 @@ local function run()
   localShot('brake_RR',{-1.1,1.75,0.15},{-1.35,0.7,0.08})
   localShot('plate_rear',{-4.0,0.3,0.75},{-2.15,0,0.45})
   -- Realistic gearbox: in arcade mode a held brake at rest selects reverse instead.
-  vcmd(STOP..";electrics.setLightsState(1)");delay(2)
+  -- Each front lamp mode on its own: daytime running lights, low beam, high beam (C016: the 1M
+  -- had one mesh for all three, so DRLs never lit and high beam only brightened everything).
+  vcmd(STOP..";electrics.setLightsState(0)");delay(2)
+  r=probe('lights_drl');result.lights_drl=r.lights
+  localShot('lights_drl',{5.5,1.8,0.6},{1.8,0,0.35})
+  vcmd("electrics.setLightsState(1)");delay(2)
   r=probe('lights_on')
   check('lowbeam_and_brake_signals',(r.lights.lowbeam or 0)>0.4 and (r.lights.brakelights or 0)>0.4)
   localShot('lights_front',{5.5,1.8,0.6},{1.8,0,0.35})
   localShot('lights_rear',{-5.5,1.8,0.8},{-2,0,0.5})
+  vcmd("electrics.setLightsState(2)");delay(2)
+  r=probe('lights_high');result.lights_high=r.lights
+  check('highbeam_signal',(r.lights.highbeam or 0)>0.4)
+  localShot('lights_high',{5.5,1.8,0.6},{1.8,0,0.35})
   vcmd("electrics.setLightsState(0);input.event('brake',0,1);input.event('clutch',0,1)");delay(2)
   r=probe('controls_neutral');result.wheel_yaw_neutral=r.wheel_yaw
   shot('cockpit_neutral',0.36,0.18,1.14,'wheel')

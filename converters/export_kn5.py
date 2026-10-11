@@ -47,7 +47,12 @@ TAILLIGHT_MATERIALS = {'Fanali_POSTERIORI_OS', 'Fanali_POSTERIORI_TS', 'FARI_Pos
 
 # Lamp meshes by AC object name -> BeamNG electrics function. The glowMap swaps each one's
 # material for an emissive '_on' copy, the same way vanilla etkc_*light materials work.
-LIGHT_FUNCTIONS = (('front_light', 'headlight'), ('rear_light', 'taillight'),
+# The 1M headlamp is three meshes: front_light_1 the corona rings and accents (daytime running
+# and position light), front_light_2 the outer projector lens (low beam), front_light_3 the inner
+# lamp (high beam). Mapped as one 'headlight' they never lit as DRLs and high beam only made all
+# of it brighter (C016).
+LIGHT_FUNCTIONS = (('front_light_1', 'position'), ('front_light_2', 'headlight'),
+                   ('front_light_3', 'highbeam'), ('front_light', 'headlight'), ('rear_light', 'taillight'),
                    ('brake_light_2', 'chmsl'), ('brake_light', 'brakelight'),
                    ('retro_light', 'reverselight'))
 GLOW_FUNCTIONS = {'headlight': {'lowbeam': 0.49, 'highbeam': 1}, 'taillight': {'lowhighbeam': 0.49},

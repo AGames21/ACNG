@@ -1,4 +1,4 @@
--- T008a exploratory probe for the AC-style tire model; not distributed in the mod.
+-- T009a exploratory probe for the AC-style tire model; not distributed in the mod.
 -- Records, on the stock etkc at smallgrid: the tread node layout across each tire (for
 -- inner/middle/outer zone temperatures), the native tire pressure variables, how native
 -- strain (rolling flex) heat scales with its coefficient and with tire pressure, and
@@ -7,7 +7,7 @@
 -- default (strain 0), so each straight-line segment has its own control.
 local M={}
 local elapsed,stageTime,phase,simTime,controlTime=0,0,0,0,0
-local result={test='T008a tire model probe',model='etkc',config='kc6_360_M',completed=false,
+local result={test='T009a tire model probe',model='etkc',config='kc6_360_M',completed=false,
   structure=nil,segments={},samples={},events={}}
 local SEGMENTS={
   {name='strain_0.001',strainR=0.001,speed=25,steer=0,time=45},
@@ -19,7 +19,7 @@ local SEGMENTS={
 }
 local seg,segIndex,driving,sampleN=nil,0,false,0
 local function save() jsonWriteFile('/acng-tireprobe-test.json',result,true) end
-local function event(name) result.events[#result.events+1]={name=name,sim_time_s=simTime};log('I','ACNG_T008A',name);save() end
+local function event(name) result.events[#result.events+1]={name=name,sim_time_s=simTime};log('I','ACNG_T009A',name);save() end
 local function command(veh,cmd) veh:queueLuaCommand(cmd) end
 local HELPER=[[
 rawset(_G,"acngTP",{zones={}})

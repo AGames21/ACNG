@@ -1,3 +1,28 @@
+## 2026-10-10 - C016 1M headlamp functions (installed)
+
+Player report: DRLs never showed on the 1M, and high beam only made the whole lamp brighter,
+while the M3 shows each mode. The 1M mapped all three front lamp meshes to `headlight`; the
+M3 profile splits them. Now `front_light_1` (rings) is `position` (DRL), `front_light_2` is
+`headlight` and `front_light_3` is `highbeam`. CarLab also shoots DRL and high beam. CarLab
+ACNG-car-037 55/55, installed. [Evidence](docs/test-results/C016-1m-headlamp-functions.md).
+
+## 2026-10-10 - T009 AC-style tire model, T009a probe (not installed)
+
+Original model (no decompiling, no REA) behind `tire_temperature`:
+
+- inner/middle/outer zone temperatures
+- a pressure window around the tuning default warmed to the grip window
+- graining when sliding cold, permanent blistering when sliding hot
+- dirt pickup off tarmac, and scrub-in wear
+
+T009a on the stock etkc:
+
+- 32 tread nodes per wheel, on the two edges only, so zones are anchored on the average.
+- Native strain heat is about +1 C per unit at 25 m/s, so rolling strain stays 0.
+- Native edges split by up to 47 C in a corner.
+
+Renamed from T008, which is the FFB record. [Evidence](docs/test-results/T009-tire-model.md).
+
 ## 2026-10-10 - GUI004 minimal transparent HUD (installed)
 
 Player asked for no speedometer cluster and a minimal, transparent HUD. ACNG Control is now

@@ -1,4 +1,19 @@
-# Latest checkpoint - 2026-10-10: GUI004 minimal transparent HUD
+# Latest checkpoint - 2026-10-10: C016 1M headlamps, T009a tire probe
+
+The 1M headlamps now work like the M3's: DRL rings, low beam and high beam are separate
+lamp functions instead of one lamp that only got brighter. CarLab ACNG-car-037 55/55,
+installed. See [C016](test-results/C016-1m-headlamp-functions.md).
+
+The AC-style tire model (T009) has unit contracts and a native structure probe (T009a):
+
+- Stock tires have tread nodes on the two edges only.
+- Native strain heat is about +1 C per unit.
+- Native node temperatures split across the tread in a corner.
+
+The model is not installed. The in-game T009b lab has to run first (AGENTS.md). Rolling
+strain stays 0 until a probe at strain 10 to 25. See [T009](test-results/T009-tire-model.md).
+
+# Previous checkpoint - 2026-10-10: GUI004 minimal transparent HUD
 
 The in-game HUD is now minimal: a small translucent `ACNG` ON/OFF pill top right (expands
 for settings) and four transparent tire tiles bottom right that only appear while the tire
