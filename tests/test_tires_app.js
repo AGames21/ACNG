@@ -53,7 +53,25 @@ assert.equal(view({mode:'off',wear:true}).wear,false);
 assert.equal(v.heat,false);
 assert.equal(view({mode:'on',heat:true,wear:false,tires:[]}).heat,true);
 assert.equal(view({mode:'off',heat:true}).heat,false);
+// T008 model readouts: tread zones drawn from behind the car (outer edge outside), pressure vs ideal, damage tags.
+v=view({mode:'on',heat:true,window_low_c:75,window_high_c:105,tires:[
+ {name:'FL',surface_c:90,zones_c:[120,90,60],psi:24.2,ideal_psi:26.3,grain:0.2,blister:0.01,dirt:0.3},
+ {name:'FR',surface_c:90,zones_c:{1:120,2:90,3:60},psi:26.4,ideal_psi:26.3,blister:0.4},
+ {name:'RL',surface_c:90,psi:30,ideal_psi:26.3},{name:'RR',surface_c:90}]});
+assert.deepEqual(v.tires[0].zones.map(z=>z.color),[c(60,75,105),c(90,75,105),c(120,75,105)]);  // left: outer, middle, inner
+assert.deepEqual(v.tires[1].zones.map(z=>z.color),[c(120,75,105),c(90,75,105),c(60,75,105)]);  // right: inner, middle, outer
+assert.equal(v.tires[0].zones[2].title,'inner 120'+DEG);
+assert.deepEqual(v.tires[2].zones,[]);
+assert.deepEqual(v.tires.map(t=>t.pressure&&t.pressure.text),['24.2/26.3 psi','26.4/26.3 psi','30.0/26.3 psi',null]);
+assert.deepEqual(v.tires.slice(0,3).map(t=>t.pressure.state),['low','ok','high']);
+assert.deepEqual(v.tires.map(t=>t.flags),[['GRAIN','DIRT'],['BLISTER'],[],[]]);
+v=view({mode:'on',heat:false,wear:true,tires:[{name:'FL',zones_c:[90,90,90],psi:20,ideal_psi:26,grain:1}]});
+assert.deepEqual([v.tires[0].zones,v.tires[0].pressure,v.tires[0].flags],[[],null,[]]);  // heat off: none of it
 const src=require('node:fs').readFileSync(require.resolve('../beamng-mod/ui/modules/apps/ACNGTires/app.js'),'utf8');
 assert.match(src,/class="grip" ng-if="tires\.view\.heat"[^>]*>\{\{t\.grip\}\}/);  // grip % only with heat on
 assert.match(src,/class="bar" ng-if="tires\.view\.wear"/);  // tread bar only with wear on
-console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, labelled grip only with heat, temperature colours, missing data, object tables, extra wheels, tread and wear line.');
+assert.match(src,/class="zones" ng-if="t\.zones\.length"/);  // zone strip only when the tire has zones
+assert.match(src,/class="sub" ng-if="t\.pressure \|\| t\.flags\.length"/);
+assert.match(src,/class="zones" ng-if="t\.zones\.length"/);
+assert.match(src,/class="sub" ng-if="t\.pressure \|\| t\.flags\.length"/);
+console.log('Tire view checks passed: idle/off, front-first order, rounding, unknown states, labelled grip only with heat, temperature colours, missing data, object tables, extra wheels, tread and wear line, tread zones, pressure vs ideal, damage tags.');

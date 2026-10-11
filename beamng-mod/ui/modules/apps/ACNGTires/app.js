@@ -1,4 +1,4 @@
-/* Original ACNG tire app; shows the tire heat, grip window and wear that the acng_tires vehicle extension runs. */
+/* Original ACNG tire app; shows the tire heat, tread zones, pressure, grip window, surface damage and wear that the acng_tires vehicle extension runs. */
 (function () {
   'use strict';
   var DASH = '\u2014';
@@ -28,6 +28,31 @@
     if (t === null) return '#3a414c';
     return t > 0.5 ? mix(AMBER, GREEN, (t - 0.5) / 0.5) : mix(RED, AMBER, t / 0.5);
   }
+  // Inner/middle/outer tread heat as seen from behind the car: a left tire's outer edge
+  // is on the left, a right tire's on the right.
+  function zoneStrip(t, low, high) {
+    var z = Array.isArray(t.zones_c) ? t.zones_c : t.zones_c ? [t.zones_c[1], t.zones_c[2], t.zones_c[3]] : null;
+    if (!z || z.length !== 3 || low === null || high === null) return [];
+    var labels = ['inner', 'middle', 'outer'], order = String(t.name || '').toUpperCase()[1] === 'L' ? [2, 1, 0] : [0, 1, 2];
+    return order.map(function (i) {
+      var c = number(z[i]);
+      return {color: tempColor(c, low, high), title: labels[i] + ' ' + fixed(c, 0, '°')};
+    });
+  }
+  // Pressure against the ideal hot pressure; low/high once more than 1.5 psi off.
+  function pressure(t) {
+    var psi = number(t.psi), ideal = number(t.ideal_psi);
+    if (psi === null || ideal === null) return null;
+    var d = psi - ideal;
+    return {text: psi.toFixed(1) + '/' + ideal.toFixed(1) + ' psi', state: d < -1.5 ? 'low' : d > 1.5 ? 'high' : 'ok'};
+  }
+  function flags(t) {
+    var out = [];
+    if ((number(t.grain) || 0) >= 0.05) out.push('GRAIN');
+    if ((number(t.blister) || 0) >= 0.05) out.push('BLISTER');
+    if ((number(t.dirt) || 0) >= 0.1) out.push('DIRT');
+    return out;
+  }
   // GRIP shows only with heat on: with wear alone it would just repeat the TREAD readout.
   function view(snapshot) {
     var s = snapshot || {}, on = s.mode === 'on', wear = on && s.wear === true, heat = on && s.heat === true;
@@ -37,10 +62,12 @@
       .sort(function (a, b) { return rank(a.t.name) - rank(b.t.name) || a.i - b.i; })
       .map(function (e) {
         var t = e.t, c = number(t.surface_c), tread = number(t.tread);
+        var tLow = number(t.window_low_c) === null ? low : t.window_low_c, tHigh = number(t.window_high_c) === null ? high : t.window_high_c;
         if (tread !== null) tread = Math.max(0, Math.min(1, tread));
         return {name: String(t.name || '?'), surface: fixed(c, 0, '\u00b0'), core: fixed(t.core_c, 0, '\u00b0'),
           psi: fixed(t.psi, 1, ''), state: t.state === 'cold' || t.state === 'hot' || t.state === 'window' ? t.state : '',
-          color: low === null || high === null ? '#3a414c' : tempColor(c, number(t.window_low_c)===null?low:t.window_low_c, number(t.window_high_c)===null?high:t.window_high_c),
+          color: tLow === null || tHigh === null ? '#3a414c' : tempColor(c, tLow, tHigh),
+          zones: heat ? zoneStrip(t, tLow, tHigh) : [], pressure: heat ? pressure(t) : null, flags: heat ? flags(t) : [],
           compound: ['road','sport','race'].indexOf(t.compound)>=0?t.compound:'', failed:t.worn_through===true,
           grip: percent(t.grip), tread: percent(tread), treadWidth: tread === null ? '0%' : (tread * 100).toFixed(1) + '%',
           treadColor: treadColor(tread)};
@@ -69,12 +96,16 @@
           .acng-tires .top{display:flex;justify-content:space-between;align-items:baseline;font-size:9px;letter-spacing:1px;color:#aab4c1}
           .acng-tires .state{text-transform:uppercase}.acng-tires .state.cold{color:#7db8ff}.acng-tires .state.window{color:#6fe8a6}.acng-tires .state.hot{color:#ff9478}.acng-tires .state.failed{color:#ff6b5e}
           .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:18px;font-weight:700;line-height:1.15}.acng-tires .grip{font-size:11px;font-weight:600;color:#d5dce4}
+          .acng-tires .zones{display:flex;gap:2px;height:4px;margin-top:2px}.acng-tires .zones i{flex:1;border-radius:2px;transition:background .3s}
+          .acng-tires .sub{display:flex;justify-content:space-between;gap:4px;font-size:9px;letter-spacing:.5px;color:#aab4c1;margin-top:2px;white-space:nowrap}.acng-tires .sub .low{color:#7db8ff}.acng-tires .sub .high{color:#ffb070}.acng-tires .sub .flag{color:#ffcf6e;font-weight:700}
           .acng-tires .bar{height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:2px}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
         </style>
         <header title="{{tires.view.window}}"><span class="brand">TIRES</span><button ng-click="tires.toggle('tire_temperature')" ng-class="{active:tires.heat}" ng-disabled="!tires.available" aria-label="Toggle tire heat and grip window">HEAT</button><button ng-click="tires.toggle('tire_wear')" ng-class="{active:tires.wear}" ng-disabled="!tires.available" aria-label="Toggle tire wear">WEAR</button></header>
         <div ng-if="tires.on" class="grid"><div class="tire" ng-repeat="t in tires.view.tires track by $index" ng-style="{'border-left-color':t.color}" title="{{t.compound}} core {{t.core}} · {{t.psi}} psi · tread {{t.tread}}">
           <div class="top"><span>{{t.name}}</span><span class="state" ng-class="t.failed?'failed':t.state">{{t.failed?'PUNCTURED':t.state}}</span></div>
           <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread">{{t.grip}}</span><span class="grip" ng-if="!tires.view.heat">{{t.psi}}</span></div>
+          <div class="zones" ng-if="t.zones.length" title="Tread heat across the tire, outer edge to the outside"><i ng-repeat="z in t.zones track by $index" ng-style="{background:z.color}" title="{{z.title}}"></i></div>
+          <div class="sub" ng-if="t.pressure || t.flags.length"><span ng-class="t.pressure.state" title="Pressure now / ideal hot pressure">{{t.pressure.text}}</span><span class="flag">{{t.flags.join(' ')}}</span></div>
           <div class="bar" ng-if="tires.view.wear"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></div>
         </div></div>
       </section>`,

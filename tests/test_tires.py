@@ -305,9 +305,12 @@ class TireContracts(unittest.TestCase):
 
     def test_wear_grip_and_heat_multiplier_shape(self):
         m = self.mod
-        self.assertEqual(m.wearGrip(1), 1)
+        self.assertAlmostEqual(m.wearGrip(1), 1 - m.WEAR_GRIP_LOSS / 15)  # new: not scrubbed in yet
+        self.assertEqual(m.wearGrip(0.98), 1)                              # scrubbed in: peak
         self.assertAlmostEqual(m.wearGrip(0), 1 - m.WEAR_GRIP_LOSS)
-        self.assertAlmostEqual(m.wearGrip(0.5), 1 - m.WEAR_GRIP_LOSS / 2)
+        self.assertAlmostEqual(m.wearGrip(0.5), 1 - m.WEAR_GRIP_LOSS / 6)
+        self.assertGreater(m.wearGrip(0.5) - m.wearGrip(0.75), -0.03)      # flat mid life
+        self.assertGreater(m.wearGrip(0.25) - m.wearGrip(0), m.wearGrip(0.5) - m.wearGrip(0.25))  # steep at the end
         self.assertAlmostEqual(m.wearGrip(-1), m.wearGrip(0))
         self.assertEqual(m.wearGrip(None), 1)
         self.assertEqual(m.wearGrip(float("nan")), 1)
@@ -376,7 +379,7 @@ class TireContracts(unittest.TestCase):
         self.mod.onReset()
         self.assertEqual(self.tread()["FL"], (1, 0))
         curve = {c[0]: c[2] for c in self.calls() if c[1] == "curve"}
-        self.assertEqual(curve[0][5], 1)                   # FL back to full grip at 90 C
+        self.assertAlmostEqual(curve[0][5], self.mod.wearGrip(1))  # FL fresh: heat window full, scrub-in only
 
     def test_toggling_wear_keeps_tread(self):
         self.mod.onExtensionLoaded()
@@ -402,7 +405,8 @@ class TireContracts(unittest.TestCase):
         curve = {c[0]: c[2] for c in loaded if c[1] == "curve"}
         self.assertEqual(thermal[0], [0, 0.4, 20, 0, 0, 0, 0, 0, 0, 1e18, 1e19, False])
         self.assertEqual(thermal[1][6], 0.02)              # FR keeps its own jbeam heat
-        self.assertEqual(curve[1][5:], [1, 1, 1])          # cold FR, but no heat window
+        fresh = self.mod.wearGrip(1)
+        self.assertEqual(curve[1][5:], [fresh, fresh, fresh])  # cold FR, but no heat window
         snap = self.mod.snapshot()
         self.assertFalse(snap.heat)
         self.assertIsNone(snap.window_low_c)
@@ -418,6 +422,178 @@ class TireContracts(unittest.TestCase):
         for write in ("input.event", "applyForce", "queueLuaCommand", "setGroupPressure", "setGearboxMode"):
             self.assertNotIn(write, source)
 
+
+# T008 additions to the fake VM: a small vec3, hub and tread node positions across the
+# FL tire (inner end nearer the car's centre), per-node temperatures, the car's default
+# tire pressure variable, and rolling speed and ground material per wheel.
+MODEL = """
+local mt = {}
+mt.__index = mt
+function vec3(x, y, z) return setmetatable({x=x or 0, y=y or 0, z=z or 0}, mt) end
+mt.__add = function(a, b) return vec3(a.x + b.x, a.y + b.y, a.z + b.z) end
+mt.__sub = function(a, b) return vec3(a.x - b.x, a.y - b.y, a.z - b.z) end
+mt.__mul = function(a, k) return vec3(a.x * k, a.y * k, a.z * k) end
+mt.__div = function(a, k) return vec3(a.x / k, a.y / k, a.z / k) end
+function mt:dot(b) return self.x * b.x + self.y * b.y + self.z * b.z end
+function mt:length() return math.sqrt(self:dot(self)) end
+function mt:normalized() return self / self:length() end
+pos = {[1]=vec3(-0.6, 1, 0), [2]=vec3(-0.85, 1, 0), [3]=vec3(0.6, 1, 0), [4]=vec3(0.85, 1, 0)}
+nodeT = {}
+local tread = {}
+for i = 0, 8 do
+  local nid = 100 + i
+  pos[nid] = vec3(-0.6 - 0.25 * i / 8, 1.3, 0)
+  nodeT[nid] = 363.15
+  tread[#tread + 1] = nid
+end
+local fl, fr = v.data.wheels[0], v.data.wheels[1]
+fl.node1, fl.node2, fl.treadNodes, fl.pressurePSI = 1, 2, tread, 20
+fr.node1, fr.node2 = 3, 4
+obj.getNodePosition = function(self, n) return pos[n] end
+obj.getNodeTemperature = function(self, n) return nodeT[n] end
+v.data.variables = {['$tirepressure_F']={val=20, default=30}, ['$brakebias']={val=0.6, default=0.6}}
+for cid = 0, 1 do wheels.wheels[cid].wheelSpeed = 20; wheels.wheels[cid].contactMaterialID1 = 10 end
+"""
+
+
+@unittest.skipIf(LuaRuntime is None, "Install Lupa in isolated toolchain for LuaJIT contracts")
+class TireModelContracts(unittest.TestCase):
+    def setUp(self):
+        self.lua = LuaRuntime(unpack_returned_tuples=True)
+        self.lua.execute(VEHICLE)
+        self.lua.execute(MODEL)
+        self.mod = self.lua.execute(TIRES.read_text())
+        self.g = self.lua.globals()
+        self.mod.onExtensionLoaded()
+
+    def state(self, name):
+        s = self.mod.modelState()
+        return next(s[i] for i in range(1, len(s) + 1) if s[i].name == name)
+
+    def drive(self, seconds, step=0.1):
+        for _ in range(round(seconds / step)):
+            self.mod.updateGFX(step)
+
+    def ideal(self, cold=30, mid=90):
+        return ((cold * 6894.757 + 101325) * (mid + 273.15) / 293.15 - 101325) / 6894.757
+
+    def test_tread_nodes_split_into_inner_middle_outer(self):
+        fl = self.state("FL")
+        self.assertEqual(list(fl.zone_nodes.values()), [3, 3, 3])
+        self.assertIsNone(self.state("FR").zone_nodes)  # no tread nodes: average temperature
+        for nid in (100, 101, 102):                      # inner third, next to the hub's inner end
+            self.g.nodeT[nid] = 273.15 + 130
+        self.drive(0.2)
+        snap = self.mod.snapshot().tires[1]
+        self.assertEqual(list(snap.zones_c.values()), [130, 90, 90])
+        self.assertEqual(snap.surface_c, 90)             # the average still looks fine
+        m = self.mod
+        self.assertAlmostEqual(self.state("FL").heat_grip, (m.gripAt(130) + 2) / 3)
+        self.assertLess(self.state("FL").heat_grip, m.gripAt(90))
+
+    def test_ideal_pressure_is_the_default_warmed_to_mid_window(self):
+        fl = self.state("FL")
+        self.assertAlmostEqual(fl.ideal_psi, self.ideal())  # tuning default 30, not the tuned 20
+        expected = 1 - 0.005 * abs(26 - self.ideal())       # sport press gain, FL runs 26 psi
+        self.assertAlmostEqual(fl.pressure_grip, expected)
+        snap = self.mod.snapshot().tires[1]
+        self.assertAlmostEqual(snap.grip, round(expected, 3), delta=0.002)
+        self.assertAlmostEqual(snap.ideal_psi, round(self.ideal(), 1))
+        flat = self.lua.eval("{name='FL',wheelID=0}")
+        self.assertEqual(self.mod.pressureGrip(flat, 0, 40), 1 - self.mod.PRESSURE_MAX_LOSS)
+        self.mod.setProfile("race")                         # slicks: hotter ideal, steeper loss
+        race = self.state("FL")
+        self.assertAlmostEqual(race.ideal_psi, self.ideal(mid=100))
+        self.assertLess(race.pressure_grip, expected)
+
+    def test_jbeam_pressure_is_the_fallback_without_a_tuning_variable(self):
+        self.g.v.data.variables = self.lua.eval("{}")
+        self.mod.onReset()
+        self.assertAlmostEqual(self.state("FL").ideal_psi, self.ideal(cold=20))
+
+    def test_cold_sliding_grains_and_rolling_in_the_window_cleans(self):
+        self.g.wheels.wheels[1].slipEnergy = 5000           # FR at 15 C, one tire at the limit
+        self.drive(10)
+        fr = self.state("FR")
+        self.assertAlmostEqual(fr.grain, 10 / 40, places=3)
+        self.assertAlmostEqual(fr.damage_grip, 1 - 0.06 * fr.grain)
+        self.assertEqual(self.state("FL").grain, 0)         # FL in its window does not grain
+        self.g.wheels.wheels[1].slipEnergy = 0
+        self.g.temps[1] = 273.15 + 90
+        self.g.wheels.wheels[1].wheelSpeed = 0
+        self.drive(10)
+        self.assertAlmostEqual(self.state("FR").grain, fr.grain)  # parked: no cleaning
+        self.g.wheels.wheels[1].wheelSpeed = 20
+        self.drive(10)
+        self.assertAlmostEqual(self.state("FR").grain, fr.grain - 10 / 90, places=3)
+        self.drive(30)
+        self.assertEqual(self.state("FR").grain, 0)
+
+    def test_hot_sliding_blisters_for_good(self):
+        self.g.temps[0] = 273.15 + 145                      # FL a full hot range over the window
+        self.g.wheels.wheels[0].slipEnergy = 5000
+        self.drive(15)
+        b = self.state("FL").blister
+        self.assertAlmostEqual(b, 15 / 150, delta=0.2 / 150)  # a grip update of lag on the new temperature
+        self.g.wheels.wheels[0].slipEnergy = 0
+        self.g.temps[0] = 273.15 + 90
+        self.drive(30)
+        self.assertEqual(self.state("FL").blister, b)       # blisters stay
+        self.assertEqual(self.state("FL").grain, 0)
+        self.g.wheels.wheels[0].slipEnergy = 1e9            # burnout: slip load is capped
+        self.g.temps[0] = 273.15 + 145
+        self.drive(1)
+        self.assertAlmostEqual(self.state("FL").blister, b + 3 * 0.9 / 150, places=4)  # x3 cap; first 0.1 s still at 90 C
+        self.mod.onReset()
+        fl = self.state("FL")
+        self.assertEqual((fl.blister, fl.grain, fl.dirt), (0, 0, 0))
+
+    def test_dirt_costs_grip_only_back_on_tarmac(self):
+        rt = self.g.wheels.wheels[0]
+        rt.contactMaterialID1 = 15                          # FL on dirt at 20 m/s
+        self.drive(1)
+        fl = self.state("FL")
+        self.assertAlmostEqual(fl.dirt, 20 / 40)
+        self.assertEqual(fl.damage_grip, 1)                 # native dirt grip rules off tarmac
+        rt.contactMaterialID1 = -1                          # airborne: last surface is kept
+        self.drive(1)
+        self.assertEqual(self.state("FL").surface, 15)
+        rt.contactMaterialID1 = 10
+        self.drive(1)
+        fl = self.state("FL")
+        self.assertAlmostEqual(fl.dirt, 0.5 - 20 / 600, places=4)
+        self.assertAlmostEqual(fl.damage_grip, 1 - 0.08 * fl.dirt)
+        self.assertGreater(self.mod.snapshot().tires[1].dirt, 0)
+
+    def test_heat_off_runs_none_of_the_model(self):
+        self.mod.configure(False, True)
+        self.g.wheels.wheels[1].slipEnergy = 5000
+        self.g.wheels.wheels[0].contactMaterialID1 = 15
+        self.drive(5)
+        self.assertEqual((self.state("FR").grain, self.state("FL").dirt), (0, 0))
+        snap = self.mod.snapshot().tires[1]
+        self.assertIsNone(snap.ideal_psi)
+        self.assertIsNone(snap.zones_c)
+        self.assertIsNone(snap.grain)
+        self.assertAlmostEqual(snap.grip, round(self.mod.wearGrip(1), 3))  # wear curve only
+
+    def test_grip_never_falls_below_the_floor(self):
+        m = self.mod
+        m.GRAIN_GRIP_LOSS, m.BLISTER_GRIP_LOSS = 0.5, 0.5
+        self.g.temps[1] = 273.15 - 60
+        self.g.wheels.wheels[1].slipEnergy = 1e9
+        self.drive(20)
+        self.assertAlmostEqual(self.state("FR").grip, m.MIN_GRIP, delta=m.GRIP_STEP)
+
+    def test_unload_restores_stock_curve_after_model_damage(self):
+        self.g.temps[0] = 273.15 + 145
+        self.g.wheels.wheels[0].slipEnergy = 5000
+        self.drive(5)
+        self.g.calls = self.lua.eval("{}")
+        self.mod.onExtensionUnloaded()
+        curves = [c for c in self.g.calls.values() if c.kind == "curve"]
+        self.assertEqual([c.args[6] for c in curves], [1, 0.9])  # FL stock 1, FR its own jbeam 0.9
+        self.assertEqual(self.g.sent[len(self.g.sent)].data.mode, "off")
 
 @unittest.skipIf(LuaRuntime is None, "Install Lupa in isolated toolchain for LuaJIT contracts")
 class CoreTireFeature(unittest.TestCase):
