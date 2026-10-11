@@ -35,4 +35,4 @@ Circle (steer 0.5 at 10 m/s, 60 s), after 60 s:
 - Native node temperatures do split across the tread in a corner, so zone grip has a real signal to read. The driven rears show a hot inner edge (negative camber plus wheelspin).
 
 ## Status
-The model (zones, pressure window, grain, blister, dirt, scrub-in) is unit-tested in `tests/test_tires.py` and shown in the ACNG Tires app. The in-game T009b harness (OFF baseline, corner zones, pressure grip, grain, blister, dirt, reset/OFF restore, puncture, timing) has not run yet, so the model is not claimed working in game and stays behind the existing `tire_temperature` feature (OFF by default).
+T009b passed 28/28 in game on 2026-10-10 and the model is installed behind `tire_temperature` (OFF by default). The ideal hot pressure is the car's cold tuning pressure warmed to each compound's `idealCore` (Road 30, Sport 60, Race 75 C), the core temperature native pressure follows; run 1 of T009b showed the old mid-window ideal was unreachable. See [T009b](T009b-tirephys.md). Dirt and rolling strain heat are not covered in game yet.

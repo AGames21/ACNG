@@ -49,15 +49,21 @@ local GRIP_INTERVAL_S = 0.1
 --         wears fastest (wear x1.7).
 -- press is the grip lost per psi away from the ideal hot pressure and damage scales
 -- graining and blistering (T009, below): a street tire barely cares, a slick does.
+-- idealCore is the core temperature the ideal hot pressure is set for. Native pressure
+-- follows the slow core, not the surface: after 11 minutes at the limit the core reached
+-- 26 C on Road and 76 C on Sport (FR001c), and a 60 s Sport circle raised pressure only
+-- 2.7 psi with the surface at 117 C (T009b). An ideal warmed to mid-window was out of
+-- reach and cost grip all the time, so each compound's ideal sits at a core its own
+-- heat setup reaches in hard driving.
 local profile = 'sport'
 local PROFILES = {
-  road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,wear=0.6,press=0.003,damage=0.5,
+  road={low=35,high=75,cold=0.98,hot=0.85,coldRange=20,hotRange=40,wear=0.6,press=0.003,damage=0.5,idealCore=30,
     heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.001,
       coreToNodes=0.001,nodeToSurface=0,friction=0.03,flashFriction=0,strain=0,heatAffectsPressure=true}},
-  sport={low=75,high=105,cold=0.85,hot=0.85,coldRange=60,hotRange=40,wear=1,press=0.005,damage=1,
+  sport={low=75,high=105,cold=0.85,hot=0.85,coldRange=60,hotRange=40,wear=1,press=0.005,damage=1,idealCore=60,
     heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.005,
       coreToNodes=0.005,nodeToSurface=0,friction=0.06,flashFriction=0,strain=0,heatAffectsPressure=true}},
-  race={low=85,high=115,cold=0.70,hot=0.75,coldRange=65,hotRange=30,wear=1.7,press=0.008,damage=1.5,
+  race={low=85,high=115,cold=0.70,hot=0.75,coldRange=65,hotRange=30,wear=1.7,press=0.008,damage=1.5,idealCore=75,
     heat={nodeToEnv=0.10,envMultStationary=0.3,envTerminalSpeed=40,nodeToCore=0.006,
       coreToNodes=0.006,nodeToSurface=0,friction=0.08,flashFriction=0,strain=0,heatAffectsPressure=true}}
 }
@@ -146,8 +152,9 @@ M.WEAR_CURVE = {{0, 1}, {0.25, 1/3}, {0.5, 1/6}, {0.98, 0}, {1, 1/15}}
 --            Grip is the mean of each zone's window grip, so a tire cooked on one edge
 --            (camber, pressure) loses grip even when its average looks fine.
 --   pressure grip falls by the compound's press per psi away from the ideal hot
---            pressure: the car's default cold pressure warmed to mid-window. Native heat
---            raises pressure, so cold tires sit under it and set-up changes move it.
+--            pressure: the car's default cold pressure warmed to the compound's idealCore.
+--            Native heat raises pressure, so cold tires sit under it and set-up changes
+--            move it.
 --   grain    sliding a tire below its window tears the surface; grain cleans off again
 --            while the tire rolls inside its window.
 --   blister  sliding above the window blisters the tread; blisters stay until fresh tires.
@@ -381,13 +388,13 @@ local function defaultPsi(wd)
   return any or (type(wd.pressurePSI) == 'number' and wd.pressurePSI) or nil
 end
 
--- Ideal hot pressure: the default cold pressure warmed from PRESSURE_REF_C to the middle
--- of the compound's window at constant volume.
+-- Ideal hot pressure: the default cold pressure warmed from PRESSURE_REF_C to the
+-- compound's idealCore at constant volume.
 local function idealPsi(wd)
   local cold = defaultPsi(wd)
   local p = PROFILES[compoundFor(wd)]
   if type(cold) ~= 'number' or cold <= 0 or not p then return nil end
-  return ((cold * PSI_PA + ATM_PA) * ((p.low + p.high) / 2 + K) / (M.PRESSURE_REF_C + K) - ATM_PA) / PSI_PA
+  return ((cold * PSI_PA + ATM_PA) * (p.idealCore + K) / (M.PRESSURE_REF_C + K) - ATM_PA) / PSI_PA
 end
 
 local function pressureGrip(wd, psi, target)

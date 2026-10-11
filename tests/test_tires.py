@@ -474,7 +474,7 @@ class TireModelContracts(unittest.TestCase):
         for _ in range(round(seconds / step)):
             self.mod.updateGFX(step)
 
-    def ideal(self, cold=30, mid=90):
+    def ideal(self, cold=30, mid=60):
         return ((cold * 6894.757 + 101325) * (mid + 273.15) / 293.15 - 101325) / 6894.757
 
     def test_tread_nodes_split_into_inner_middle_outer(self):
@@ -508,7 +508,7 @@ class TireModelContracts(unittest.TestCase):
         self.assertAlmostEqual(zc[0] - zc[2], 20, places=0)
         self.assertAlmostEqual((zc[0] * 5 + zc[2] * 4) / 9, 90, places=0)
 
-    def test_ideal_pressure_is_the_default_warmed_to_mid_window(self):
+    def test_ideal_pressure_is_the_default_warmed_to_the_compound_core(self):
         fl = self.state("FL")
         self.assertAlmostEqual(fl.ideal_psi, self.ideal())  # tuning default 30, not the tuned 20
         expected = 1 - 0.005 * abs(26 - self.ideal())       # sport press gain, FL runs 26 psi
@@ -520,7 +520,7 @@ class TireModelContracts(unittest.TestCase):
         self.assertEqual(self.mod.pressureGrip(flat, 0, 40), 1 - self.mod.PRESSURE_MAX_LOSS)
         self.mod.setProfile("race")                         # slicks: hotter ideal, steeper loss
         race = self.state("FL")
-        self.assertAlmostEqual(race.ideal_psi, self.ideal(mid=100))
+        self.assertAlmostEqual(race.ideal_psi, self.ideal(mid=75))
         self.assertLess(race.pressure_grip, expected)
 
     def test_jbeam_pressure_is_the_fallback_without_a_tuning_variable(self):

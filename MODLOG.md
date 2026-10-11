@@ -1,3 +1,18 @@
+## 2026-10-10 - T009b tire model lab, ideal pressure recalibrated (installed)
+
+New harness `tests/beamng-tirephys` (`-Experiment TirePhys`). It covers:
+
+- OFF baseline, profiles, low pressure
+- a 60 s circle, a straight and a stop
+- reset, a flat tire and timing
+- master OFF restore
+
+Run 1 found the ideal hot pressure unreachable. It was the cold pressure warmed to the grip window, but native
+pressure follows the slow core, so cold Sport lost about 6% grip, Race 11%, and a cooked Sport tire still 5%. Each compound now has
+an `idealCore` (Road 30, Sport 60, Race 75 C). Three over-strict harness checks were also fixed. Run 2: 28/28,
+0.008 ms per update. Dirt and rolling strain heat are not covered in game.
+[Evidence](docs/test-results/T009b-tirephys.md).
+
 ## 2026-10-10 - C016 1M headlamp functions (installed)
 
 Player report: DRLs never showed on the 1M, and high beam only made the whole lamp brighter,
@@ -6,12 +21,12 @@ M3 profile splits them. Now `front_light_1` (rings) is `position` (DRL), `front_
 `headlight` and `front_light_3` is `highbeam`. CarLab also shoots DRL and high beam. CarLab
 ACNG-car-037 55/55, installed. [Evidence](docs/test-results/C016-1m-headlamp-functions.md).
 
-## 2026-10-10 - T009 AC-style tire model, T009a probe (not installed)
+## 2026-10-10 - T009 AC-style tire model, T009a probe (installed after T009b)
 
 Original model (no decompiling, no REA) behind `tire_temperature`:
 
 - inner/middle/outer zone temperatures
-- a pressure window around the tuning default warmed to the grip window
+- a pressure window around the tuning default warmed to each compound's core temperature
 - graining when sliding cold, permanent blistering when sliding hot
 - dirt pickup off tarmac, and scrub-in wear
 

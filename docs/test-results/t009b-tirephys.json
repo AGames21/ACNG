@@ -1,0 +1,524 @@
+{
+ "schema_version": 1,
+ "test": "T009b tire model lab (TirePhys)",
+ "model": "etkc",
+ "config": "kc6_360_M",
+ "level": "smallgrid",
+ "game": "BeamNG.drive 0.39.4",
+ "env_c": 15.0,
+ "runs": [
+  {
+   "label": "run1",
+   "ideal_pressure": "cold tuning pressure warmed to the middle of the grip window (old)",
+   "completed": true,
+   "harness_passed": false,
+   "checks": {
+    "blisters_persist": true,
+    "cold_sliding_grains": true,
+    "cooked_tire_loses_heat_grip": true,
+    "core_reports_heat": true,
+    "core_reports_tires_off": true,
+    "corner_splits_zones": true,
+    "default_master_off": true,
+    "default_tires_off": true,
+    "deflated_tire_skipped": false,
+    "grain_cleans_in_window": false,
+    "grip_written_is_product": true,
+    "heat_grip_is_zone_mean": true,
+    "hot_sliding_blisters": true,
+    "ideal_psi_per_profile": true,
+    "loaded_with_heat": true,
+    "low_pressure_loses_grip": true,
+    "model_grip_reduces_lateral": true,
+    "no_helper_errors": true,
+    "off_again_matches_baseline": true,
+    "off_again_temps_flat": true,
+    "off_temps_flat": true,
+    "perf_standstill_no_damage": true,
+    "perf_under_0_1_ms": true,
+    "reset_gives_clean_tires": false,
+    "tires_not_loaded_while_off": true,
+    "tires_unloaded_after_disable": true,
+    "tread_zones_found": true,
+    "zones_anchored_on_average": true
+   },
+   "checks_passed": 25,
+   "checks_total": 28,
+   "errors": 0,
+   "note": "Calibration finding: the ideal hot pressure was unreachable (native pressure follows the slow core). Three harness checks were wrong (grain counted at a braking stop, reset settle grain, flat tire compared with 0); replaying the fixed checks on this data passes those three. Harness verdict below is the original one.",
+   "cold_FL_by_profile": {
+    "road": {
+     "ideal_psi_FL": 35.336,
+     "psi_FL": 28.417,
+     "pressure_grip": 0.979,
+     "heat_grip": 0.98,
+     "grip": 0.96
+    },
+    "sport": {
+     "ideal_psi_FL": 40.673,
+     "psi_FL": 28.417,
+     "pressure_grip": 0.939,
+     "heat_grip": 0.85,
+     "grip": 0.798
+    },
+    "race": {
+     "ideal_psi_FL": 42.197,
+     "psi_FL": 28.417,
+     "pressure_grip": 0.89,
+     "heat_grip": 0.7,
+     "grip": 0.623
+    }
+   },
+   "summary": {
+    "off_lateral": 9.35,
+    "circle_lateral": 8.911,
+    "off_again_lateral": 9.35,
+    "off_worst_temp_dev_k": 0.002,
+    "off_again_worst_temp_dev_k": 0.002,
+    "circle_max_zone_split_c": 46.155,
+    "worst_grip_product_error": 0.002,
+    "heat_on_tire_samples": 128,
+    "perf": {
+     "calls": 1200,
+     "damage_after": 0.0,
+     "damage_before": 0.0,
+     "per_call_ms": 0.006,
+     "total_ms": 7.195
+    },
+    "flat_tire": {
+     "blister": 0,
+     "grain": 0.0,
+     "grip": 0.808,
+     "name": "RR",
+     "psi": 1.901
+    },
+    "contact_materials": {
+     "10": true
+    },
+    "dirt_covered": false,
+    "ideal_psi": {
+     "auto": {
+      "FL": 40.673,
+      "FR": 40.673,
+      "RL": 38.195,
+      "RR": 38.195
+     },
+     "race": {
+      "FL": 42.197,
+      "FR": 42.197,
+      "RL": 39.652,
+      "RR": 39.652
+     },
+     "road": {
+      "FL": 35.336,
+      "FR": 35.336,
+      "RL": 33.098,
+      "RR": 33.098
+     },
+     "sport": {
+      "FL": 40.673,
+      "FR": 40.673,
+      "RL": 38.195,
+      "RR": 38.195
+     }
+    },
+    "auto_compound": {
+     "FL": "sport",
+     "FR": "sport",
+     "RL": "sport",
+     "RR": "sport"
+    },
+    "pressure": {
+     "F": {
+      "ideal": 40.673,
+      "left_grip": 0.902,
+      "left_psi": 21.072,
+      "right_grip": 0.939,
+      "right_psi": 28.377
+     },
+     "R": {
+      "ideal": 38.195,
+      "left_grip": 0.905,
+      "left_psi": 19.237,
+      "right_grip": 0.942,
+      "right_psi": 26.547
+     }
+    },
+    "zone_nodes": {
+     "FL": [
+      16,
+      0,
+      16
+     ],
+     "FR": [
+      16,
+      0,
+      16
+     ],
+     "RL": [
+      16,
+      0,
+      16
+     ],
+     "RR": [
+      16,
+      0,
+      16
+     ]
+    },
+    "circle_end": {
+     "FL": {
+      "avg": 117.442,
+      "blister": 0.008,
+      "grain": 0,
+      "grip": 0.908,
+      "heat_grip": 0.953,
+      "pressure_grip": 0.952,
+      "psi": 31.122,
+      "zones_c": [
+       114.058,
+       117.419,
+       120.781
+      ]
+     },
+     "FR": {
+      "avg": 38.919,
+      "blister": 0,
+      "grain": 0.239,
+      "grip": 0.842,
+      "heat_grip": 0.91,
+      "pressure_grip": 0.941,
+      "psi": 28.867,
+      "zones_c": [
+       32.469,
+       38.909,
+       45.35
+      ]
+     },
+     "RL": {
+      "avg": 65.355,
+      "blister": 0,
+      "grain": 0.115,
+      "grip": 0.911,
+      "heat_grip": 0.965,
+      "pressure_grip": 0.95,
+      "psi": 28.29,
+      "zones_c": [
+       88.43,
+       65.352,
+       42.275
+      ]
+     },
+     "RR": {
+      "avg": 36.956,
+      "blister": 0,
+      "grain": 0.16,
+      "grip": 0.848,
+      "heat_grip": 0.905,
+      "pressure_grip": 0.946,
+      "psi": 27.402,
+      "zones_c": [
+       42.917,
+       36.964,
+       31.01
+      ]
+     }
+    },
+    "after_straight": {
+     "FL": {
+      "avg": 52.966,
+      "blister": 0.008,
+      "grain": 0.068,
+      "grip": 0.897
+     },
+     "FR": {
+      "avg": 46.769,
+      "blister": 0,
+      "grain": 0.325,
+      "grip": 0.861
+     },
+     "RL": {
+      "avg": 30.849,
+      "blister": 0,
+      "grain": 0.173,
+      "grip": 0.838
+     },
+     "RR": {
+      "avg": 30.039,
+      "blister": 0,
+      "grain": 0.238,
+      "grip": 0.83
+     }
+    }
+   }
+  },
+  {
+   "label": "run2",
+   "ideal_pressure": "cold tuning pressure warmed to each compound idealCore (road 30, sport 60, race 75 C)",
+   "completed": true,
+   "harness_passed": true,
+   "checks": {
+    "blisters_persist": true,
+    "cold_sliding_grains": true,
+    "cooked_tire_loses_heat_grip": true,
+    "core_reports_heat": true,
+    "core_reports_tires_off": true,
+    "corner_splits_zones": true,
+    "default_master_off": true,
+    "default_tires_off": true,
+    "deflated_tire_skipped": true,
+    "grain_cleans_in_window": true,
+    "grip_written_is_product": true,
+    "heat_grip_is_zone_mean": true,
+    "hot_sliding_blisters": true,
+    "ideal_psi_per_profile": true,
+    "loaded_with_heat": true,
+    "low_pressure_loses_grip": true,
+    "model_grip_reduces_lateral": true,
+    "no_helper_errors": true,
+    "off_again_matches_baseline": true,
+    "off_again_temps_flat": true,
+    "off_temps_flat": true,
+    "perf_standstill_no_damage": true,
+    "perf_under_0_1_ms": true,
+    "reset_gives_clean_tires": true,
+    "tires_not_loaded_while_off": true,
+    "tires_unloaded_after_disable": true,
+    "tread_zones_found": true,
+    "zones_anchored_on_average": true
+   },
+   "checks_passed": 28,
+   "checks_total": 28,
+   "errors": 0,
+   "note": "Installed model and fixed harness.",
+   "cold_FL_by_profile": {
+    "road": {
+     "ideal_psi_FL": 31.525,
+     "psi_FL": 28.397,
+     "pressure_grip": 0.991,
+     "heat_grip": 0.98,
+     "grip": 0.971
+    },
+    "sport": {
+     "ideal_psi_FL": 36.099,
+     "psi_FL": 28.397,
+     "pressure_grip": 0.961,
+     "heat_grip": 0.85,
+     "grip": 0.817
+    },
+    "race": {
+     "ideal_psi_FL": 38.386,
+     "psi_FL": 28.397,
+     "pressure_grip": 0.92,
+     "heat_grip": 0.7,
+     "grip": 0.644
+    }
+   },
+   "summary": {
+    "off_lateral": 9.349,
+    "circle_lateral": 9.014,
+    "off_again_lateral": 9.351,
+    "off_worst_temp_dev_k": 0.002,
+    "off_again_worst_temp_dev_k": 0.002,
+    "circle_max_zone_split_c": 47.65,
+    "worst_grip_product_error": 0.002,
+    "heat_on_tire_samples": 128,
+    "perf": {
+     "calls": 1200,
+     "damage_after": 0.0,
+     "damage_before": 0.0,
+     "per_call_ms": 0.008,
+     "total_ms": 9.889
+    },
+    "flat_tire": {
+     "blister": 0,
+     "grain": 0.0,
+     "grip": 0.809,
+     "name": "RR",
+     "psi": 1.877
+    },
+    "contact_materials": {
+     "10": true
+    },
+    "dirt_covered": false,
+    "ideal_psi": {
+     "auto": {
+      "FL": 36.099,
+      "FR": 36.099,
+      "RL": 33.826,
+      "RR": 33.826
+     },
+     "race": {
+      "FL": 38.386,
+      "FR": 38.386,
+      "RL": 36.01,
+      "RR": 36.01
+     },
+     "road": {
+      "FL": 31.525,
+      "FR": 31.525,
+      "RL": 29.456,
+      "RR": 29.456
+     },
+     "sport": {
+      "FL": 36.099,
+      "FR": 36.099,
+      "RL": 33.826,
+      "RR": 33.826
+     }
+    },
+    "auto_compound": {
+     "FL": "sport",
+     "FR": "sport",
+     "RL": "sport",
+     "RR": "sport"
+    },
+    "pressure": {
+     "F": {
+      "ideal": 36.099,
+      "left_grip": 0.925,
+      "left_psi": 21.072,
+      "right_grip": 0.961,
+      "right_psi": 28.377
+     },
+     "R": {
+      "ideal": 33.826,
+      "left_grip": 0.927,
+      "left_psi": 19.237,
+      "right_grip": 0.964,
+      "right_psi": 26.548
+     }
+    },
+    "zone_nodes": {
+     "FL": [
+      16,
+      0,
+      16
+     ],
+     "FR": [
+      16,
+      0,
+      16
+     ],
+     "RL": [
+      16,
+      0,
+      16
+     ],
+     "RR": [
+      16,
+      0,
+      16
+     ]
+    },
+    "circle_end": {
+     "FL": {
+      "avg": 116.243,
+      "blister": 0.006,
+      "grain": 0,
+      "grip": 0.934,
+      "heat_grip": 0.958,
+      "pressure_grip": 0.975,
+      "psi": 31.076,
+      "zones_c": [
+       114.106,
+       116.224,
+       118.341
+      ]
+     },
+     "FR": {
+      "avg": 38.07,
+      "blister": 0,
+      "grain": 0.236,
+      "grip": 0.861,
+      "heat_grip": 0.908,
+      "pressure_grip": 0.964,
+      "psi": 28.829,
+      "zones_c": [
+       31.393,
+       38.065,
+       44.737
+      ]
+     },
+     "RL": {
+      "avg": 66.162,
+      "blister": 0,
+      "grain": 0.109,
+      "grip": 0.931,
+      "heat_grip": 0.965,
+      "pressure_grip": 0.972,
+      "psi": 28.305,
+      "zones_c": [
+       89.984,
+       66.159,
+       42.334
+      ]
+     },
+     "RR": {
+      "avg": 36.951,
+      "blister": 0,
+      "grain": 0.16,
+      "grip": 0.868,
+      "heat_grip": 0.905,
+      "pressure_grip": 0.968,
+      "psi": 27.399,
+      "zones_c": [
+       42.987,
+       36.954,
+       30.921
+      ]
+     }
+    },
+    "after_straight": {
+     "FL": {
+      "avg": 50.328,
+      "blister": 0.006,
+      "grain": 0.069,
+      "grip": 0.912
+     },
+     "FR": {
+      "avg": 43.654,
+      "blister": 0,
+      "grain": 0.321,
+      "grip": 0.874
+     },
+     "RL": {
+      "avg": 30.421,
+      "blister": 0,
+      "grain": 0.164,
+      "grip": 0.857
+     },
+     "RR": {
+      "avg": 28.475,
+      "blister": 0,
+      "grain": 0.231,
+      "grip": 0.845
+     }
+    },
+    "grain_cleaned": [
+     {
+      "avg": 86.602,
+      "from": 0.157,
+      "name": "FL",
+      "tag": "circle#5",
+      "to": 0.101
+     },
+     {
+      "avg": 94.825,
+      "from": 0.101,
+      "name": "FL",
+      "tag": "circle#6",
+      "to": 0.046
+     },
+     {
+      "avg": 101.148,
+      "from": 0.046,
+      "name": "FL",
+      "tag": "circle#7",
+      "to": 0
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,4 +1,19 @@
-# Latest checkpoint - 2026-10-10: C016 1M headlamps, T009a tire probe
+# Latest checkpoint - 2026-10-10: T009b tire model installed
+
+The AC-style tire model passed its in-game lab, T009b TirePhys: 28/28 on the stock etkc. It is installed behind
+`tire_temperature` (OFF by default). It covers:
+
+- inner/middle/outer zone grip
+- a pressure window
+- graining when cold, blistering when hot
+- grain cleaning, reset and puncture handling
+- master OFF restore, at 0.008 ms per update
+
+The first run found the ideal pressure unreachable, because native pressure follows the slow core. The ideal is now
+the cold tuning pressure warmed to each compound's core: Road 30, Sport 60, Race 75 C. Not covered in game: dirt
+(Small Grid is all tarmac) and rolling strain heat. See [T009b](test-results/T009b-tirephys.md).
+
+# Previous checkpoint - 2026-10-10: C016 1M headlamps, T009a tire probe
 
 The 1M headlamps now work like the M3's: DRL rings, low beam and high beam are separate
 lamp functions instead of one lamp that only got brighter. CarLab ACNG-car-037 55/55,
@@ -10,7 +25,7 @@ The AC-style tire model (T009) has unit contracts and a native structure probe (
 - Native strain heat is about +1 C per unit.
 - Native node temperatures split across the tread in a corner.
 
-The model is not installed. The in-game T009b lab has to run first (AGENTS.md). Rolling
+At this checkpoint the model was not installed yet; T009b (above) passed afterwards. Rolling
 strain stays 0 until a probe at strain 10 to 25. See [T009](test-results/T009-tire-model.md).
 
 # Previous checkpoint - 2026-10-10: GUI004 minimal transparent HUD
