@@ -1,0 +1,83 @@
+{
+  "title": "ACNG tire showcase v3 - West Coast after dark",
+  "segments": [
+    {
+      "kind": "card",
+      "seconds": 2
+    },
+    {
+      "kind": "clip",
+      "clip": "heat",
+      "start": 2,
+      "end": 54,
+      "speed": 3,
+      "inset": true,
+      "head": "TIRE TEMPERATURE",
+      "sub": "Stock car: cold, working window, hot"
+    },
+    {
+      "kind": "clip",
+      "clip": "cool",
+      "start": 2,
+      "end": 10,
+      "speed": 2,
+      "inset": true,
+      "head": "COOL DOWN",
+      "sub": "A straight cools the loaded front tire"
+    },
+    {
+      "kind": "clip",
+      "clip": "door",
+      "start": 2,
+      "end": 7,
+      "speed": 1,
+      "inset": false,
+      "head": "TIRE CAM",
+      "sub": "Same BeamNG steering and suspension"
+    },
+    {
+      "kind": "clip",
+      "clip": "dirt",
+      "start": 2,
+      "end": 30,
+      "speed": 4,
+      "inset": true,
+      "head": "DIRT PICKUP",
+      "sub": "Grass dirt costs grip on tarmac"
+    },
+    {
+      "kind": "clip",
+      "clip": "night_burn",
+      "start": 2,
+      "end": 8,
+      "speed": 1,
+      "inset": false,
+      "head": "NIGHT BURNOUT",
+      "sub": "Stock Barstow | WEAR x10 demonstration"
+    },
+    {
+      "kind": "clip",
+      "clip": "burn",
+      "start": 2,
+      "end": 11,
+      "speed": 2,
+      "inset": true,
+      "head": "TREAD WEAR",
+      "sub": "Burnout lab: WEAR x10, accelerated wear setting"
+    },
+    {
+      "kind": "clip",
+      "clip": "pop",
+      "start": 1.3,
+      "end": 6.3,
+      "speed": 1,
+      "inset": true,
+      "head": "WORN THROUGH",
+      "sub": "Zero tread triggers a native BeamNG puncture"
+    },
+    {
+      "kind": "card",
+      "seconds": 2
+    }
+  ]
+}

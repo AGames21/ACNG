@@ -47,7 +47,13 @@ def parse_clip(text):
 
 def lab_settings(width, height):
     """Settings for a new lab profile: a plain window of the film size."""
-    return {'GraphicDisplayModes': 'Fullscreen' if height >= 1440 else 'Window', 'GraphicDisplayResolutions': f'{width} {height}'}
+    # Explicit supported tiers avoid relying on missing first-run graphics values.
+    # Keep these in the fresh lab; never copy settings back to the normal profile.
+    return {'GraphicDisplayModes': 'Fullscreen' if height >= 1440 else 'Window',
+            'GraphicDisplayResolutions': f'{width} {height}',
+            'GraphicOverallQuality':'Custom', 'GraphicMeshQuality':'Ultra',
+            'GraphicLightingQuality':'Ultra', 'GraphicShaderQuality':'High',
+            'GraphicTextureQuality':'Normal'}
 
 
 # BeamNG 0.39.4 stock freeroam apps; used when the game's original layout can't be read.
@@ -78,13 +84,16 @@ def film_layout(original=None):
             'version': original.get('version', 0.54)}
 
 
-def prepare_profile(lab, width, height, original=None):
+def prepare_profile(lab, width, height, original=None, windowed=False):
     """Write the window size and HUD layout into a lab profile that does not exist yet."""
     if lab.exists():
         raise RuntimeError(f'{lab} exists; film in a fresh lab profile')
     settings = lab / 'settings' / 'settings.json'
     layout = lab / 'settings' / 'ui_apps' / 'layouts' / 'default' / 'freeroam.uilayout.json'
-    for path, data in ((settings, lab_settings(width, height)), (layout, film_layout(original))):
+    display=lab_settings(width, height)
+    if windowed:
+        display['GraphicDisplayModes']='Window'
+    for path, data in ((settings, display), (layout, film_layout(original))):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
 
@@ -183,6 +192,7 @@ def main(argv=None):
     ap.add_argument('--lab', type=Path, help='new lab profile (…\\current); default a stamped ACNG-film folder')
     ap.add_argument('--size', type=parse_size, default=(1920, 1080))
     ap.add_argument('--fps', type=int, default=60)
+    ap.add_argument('--windowed', action='store_true', help='window capture includes the full client area even offscreen')
     ap.add_argument('--obs-portable', type=Path, help='dedicated portable OBS root: game video + process audio')
     ap.add_argument('--clip', type=parse_clip, action='append', help='name=start_cue:end_cue (repeatable)')
     ap.add_argument('--pad-before', type=float, default=1.5)
@@ -205,7 +215,7 @@ def main(argv=None):
     if ROOT == lab or ROOT in lab.parents or Path(paths['beamng_user']).resolve() in lab.parents:
         raise RuntimeError('Film output must stay outside the repo and normal profile')
     out_dir = lab.parent / 'film'
-    prepare_profile(lab, *args.size, original=original_layout(paths['beamng']))
+    prepare_profile(lab, *args.size, original=original_layout(paths['beamng']), windowed=args.windowed)
     out_dir.mkdir(parents=True, exist_ok=True)
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
     launch = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
@@ -234,6 +244,7 @@ def main(argv=None):
         try:
             obs = ObsRecorder(args.obs_portable, out_dir, pid, *args.size, args.fps)
             obs.start()
+            window_rect(pid)  # Restore the owned game after OBS's setup window.
         except Exception:
             stop_lab(pid, lab)
             raise
@@ -242,10 +253,15 @@ def main(argv=None):
         rec = subprocess.Popen(record_args(args.ffmpeg, rect, args.fps, raw, encoder_args(args.ffmpeg)),
                                stdin=subprocess.PIPE)
     t0 = time.time()
+    last_game_check = t0
     cue_file, seen, times, log = lab / 'acng-film-cues.json', set(), {}, []
     try:
         while time.time() < deadline and args.end_cue not in times:
             time.sleep(0.1)
+            if time.time() - last_game_check >= 2:
+                last_game_check = time.time()
+                if pid not in game_pids():
+                    raise RuntimeError('The owned lab game closed; recording cancelled')
             if (obs and not obs.alive()) or (rec and rec.poll() is not None):
                 raise RuntimeError('ffmpeg stopped early')
             try:

@@ -56,9 +56,10 @@ def dismiss_setup(pid):
 
 
 def game_inputs(window):
-    # OBS native application capture uses executable matching (priority 2).
-    return [('ACNG Game', 'game_capture', {'capture_mode':'window', 'window':window,
-            'priority':2, 'capture_cursor':False, 'capture_overlays':False}),
+    # WGC captures this window without injecting OBS's game hook into BeamNG.
+    # Match its window class; process-audio capture follows the executable.
+    return [('ACNG Game', 'window_capture', {'window':window,
+            'priority':1, 'method':2, 'cursor':False, 'client_area':True}),
             ('ACNG Game Audio', 'wasapi_process_output_capture', {'window':window, 'priority':2})]
 
 

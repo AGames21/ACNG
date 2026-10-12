@@ -25,7 +25,9 @@ class FilmLabTests(unittest.TestCase):
             lab = Path(tmp) / 'ACNG-film-x' / 'current'
             film_lab.prepare_profile(lab, 1920, 1080)
             settings = json.loads((lab / 'settings' / 'settings.json').read_text(encoding='utf-8'))
-            self.assertEqual(settings, {'GraphicDisplayModes': 'Window', 'GraphicDisplayResolutions': '1920 1080'})
+            self.assertEqual(settings, film_lab.lab_settings(1920,1080))
+            self.assertEqual(settings['GraphicMeshQuality'],'Ultra')
+            self.assertEqual(settings['GraphicShaderQuality'],'High')
             layout = json.loads((lab / 'settings/ui_apps/layouts/default/freeroam.uilayout.json').read_text(encoding='utf-8'))
             self.assertEqual([a['appName'] for a in layout['apps']], ['acngControl', 'acngTires'])
             self.assertEqual(layout['type'], 'freeroam')
