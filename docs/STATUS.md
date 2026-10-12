@@ -1,3 +1,12 @@
+# Latest checkpoint - 2026-10-12: dev video v2
+
+Taller/raised tire HUD, wrapping damage tags and wear-only TREAD percentage are
+committed in06bb403; normal player profile is unchanged. Lab-only1440p portable
+OBS recording preserves game process audio. Exterior tire-camera shots, heat,
+dirt and real native wear/puncture footage are recorded:15/15,16/16,19/19,4/4.
+The57.9s short passed full decode and frame/audio review; only music selection remains.
+See [V002](test-results/V002-tire-showcase.md). No release or push.
+
 # Latest checkpoint - 2026-10-11: T009d tire heat lab and clip
 
 The tire temperature HUD is now checked in game (T009d TireHeat, 15/15, stock etkc on

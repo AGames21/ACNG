@@ -20,6 +20,18 @@ class CutShortTests(unittest.TestCase):
         self.assertEqual((segs[0]['kind'], segs[-1]['kind']), ('card', 'card'))
         self.assertLessEqual(sum(cut_short.seg_seconds(s) for s in segs), 60)  # fits a Short
 
+    def test_1440p_crop_and_speed_audio(self):
+        cut_short.configure_size(2560,1440)
+        self.assertEqual(cut_short.HUD_BOX,(2200,1040,349,320))
+        cut_short.configure_size(1920,1080)
+        self.assertEqual(cut_short.audio_tempo(2.5),'atempo=2,atempo=1.25')
+        self.assertEqual(cut_short.audio_tempo(0.25),'atempo=0.5,atempo=0.5')
+        seg={'kind':'clip','clip':'a','start':0,'end':10,'speed':2.5,'inset':False}
+        cmd=cut_short.clip_args('ffmpeg',seg,Path('a'),Path('b'),60,Path('c'),True)
+        self.assertIn('[a]',cmd)
+        self.assertNotIn('-an',cmd)
+        self.assertIn('title=BeamNG game audio',cmd)
+
     def test_validate_rejects_bad_segments(self):
         clips = {'a': Path('a')}
         for seg in ({'kind': 'card'}, {'kind': 'clip', 'clip': 'b', 'start': 0, 'end': 1, 'head': 'H', 'sub': 'S'},

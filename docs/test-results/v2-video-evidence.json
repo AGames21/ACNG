@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-12",
+  "schema_version": 1,
+  "experiments": {
+    "T009d": {
+      "profile_folder": "ACNG-film-tireheat-20261012-073445",
+      "passed": true,
+      "checks": {
+        "core_reports_heat": true,
+        "core_reports_tires_off": true,
+        "default_master_off": true,
+        "default_tires_off": true,
+        "grip_written_is_product": true,
+        "hud_state_matches_window": true,
+        "load_side_hotter": true,
+        "loaded_with_heat": true,
+        "no_helper_errors": true,
+        "outer_tire_heats": true,
+        "reaches_window": true,
+        "starts_cold": true,
+        "straight_cools_hot_tire": true,
+        "tires_not_loaded_while_off": true,
+        "tires_unloaded_after_disable": true
+      }
+    },
+    "T009e": {
+      "profile_folder": "ACNG-film-tirecam-20261012-074624",
+      "passed": true,
+      "checks": {
+        "camera_updated": true,
+        "core_reports_heat": true,
+        "core_reports_tires_off": true,
+        "default_master_off": true,
+        "default_tires_off": true,
+        "grip_written_is_product": true,
+        "hud_state_matches_window": true,
+        "load_side_hotter": true,
+        "loaded_with_heat": true,
+        "no_helper_errors": true,
+        "outer_tire_heats": true,
+        "reaches_window": true,
+        "starts_cold": true,
+        "straight_cools_hot_tire": true,
+        "tires_not_loaded_while_off": true,
+        "tires_unloaded_after_disable": true
+      }
+    },
+    "T009c": {
+      "profile_folder": "ACNG-film-tiredirt-20261012-074927",
+      "passed": true,
+      "checks": {
+        "clean_at_start": true,
+        "core_reports_heat": true,
+        "core_reports_tires_off": true,
+        "default_master_off": true,
+        "default_tires_off": true,
+        "dirt_builds_on_loose": true,
+        "dirt_cleans_on_tarmac": true,
+        "dirt_costs_grip_on_tarmac": true,
+        "drove_the_line": true,
+        "grip_written_is_product": true,
+        "heading_south": true,
+        "loaded_with_heat": true,
+        "loose_ground_seen": true,
+        "no_dirt_loss_off_tarmac": true,
+        "no_helper_errors": true,
+        "reset_clears_dirt": true,
+        "tarmac_seen": true,
+        "tires_not_loaded_while_off": true,
+        "tires_unloaded_after_disable": true
+      }
+    },
+    "T009f": {
+      "profile_folder": "ACNG-film-tireburn-v2-20261012-02",
+      "passed": true,
+      "checks": {
+        "native_pressure_lost": true,
+        "samples_collected": true,
+        "tread_wore_down": true,
+        "wear_reached_zero": true
+      }
+    }
+  },
+  "burnout": {
+    "wear_rate": 10,
+    "first_puncture_after_s": 9.547,
+    "first_punctured_wheel": "RL",
+    "rear_pressure": {
+      "RL": {
+        "initial_pa_abs": 300433.5,
+        "final_pa_abs": 128685.875,
+        "native_deflated": true,
+        "gauge_loss_percent": 86.26
+      },
+      "RR": {
+        "initial_pa_abs": 300421.5625,
+        "final_pa_abs": 124425.0078125,
+        "native_deflated": true,
+        "gauge_loss_percent": 88.4
+      }
+    }
+  },
+  "video": {
+    "duration_s": 57.854333,
+    "bytes": 246936218,
+    "width": 2560,
+    "height": 1440,
+    "fps": 60,
+    "audio": "AAC stereo48kHz, independent BeamNG game audio stream",
+    "audio_mean_dbfs": -31.0,
+    "audio_peak_dbfs": -9.4,
+    "sha256": "fec78006faa82e19c13a3475dcc304850c7896c762503d1ea047aadae81f0584",
+    "decode_check": "passed"
+  }
+}

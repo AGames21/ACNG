@@ -1,3 +1,11 @@
+# 2026-10-12 - taller tire HUD and dev video v2
+
+- Tire pressure/GRAIN tags stay visible; wear ON shows TREAD percent, OFF hides it.
+- Lab-only1440p recording, separate game audio, exterior front-tire cameras,
+  stock Barstow burnout/native wear puncture; accelerated wear explicitly labelled.
+- Native evidence: TireHeat15/15,TireCam16/16,TireDirt19/19,TireBurn4/4.
+- Normal profile/install unchanged. No release or push.
+
 ## 2026-10-11 - T009d tire heat lab and film layout fix
 
 New harness `tests/beamng-tireheat` (`-Experiment TireHeat`). It runs a stock etkc on Small

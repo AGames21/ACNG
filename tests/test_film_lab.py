@@ -33,6 +33,9 @@ class FilmLabTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 film_lab.prepare_profile(lab, 1920, 1080)
 
+    def test_1440p_has_no_window_title_bar(self):
+        self.assertEqual(film_lab.lab_settings(2560,1440)['GraphicDisplayModes'],'Fullscreen')
+
     def test_layout_follows_the_game_original(self):
         with tempfile.TemporaryDirectory() as tmp:
             orig = Path(tmp) / 'settings/ui_apps/originalLayouts/default/freeroam.uilayout.json'
@@ -45,6 +48,13 @@ class FilmLabTests(unittest.TestCase):
             self.assertEqual(layout['removedApps'], {'oldApp': 2, 'tacho2': True, 'newApp': True})
             self.assertEqual([a['appName'] for a in layout['apps']], ['acngControl', 'acngTires'])
             self.assertIsNone(film_lab.original_layout(Path(tmp) / 'missing'))
+
+    def test_stop_refuses_player_process(self):
+        from unittest.mock import patch
+        with patch.object(film_lab.subprocess,'check_output',return_value='BeamNG.drive.x64.exe -userpath player'):
+            with patch.object(film_lab.subprocess,'run') as run:
+                with self.assertRaises(RuntimeError):film_lab.stop_lab(1,Path('ACNG-film/current'))
+                run.assert_not_called()
 
     def test_new_cues_in_order_once(self):
         data = {'cues': [{'name': 'drive_end', 'seq': 2}, {'name': 'drive_start', 'seq': 1}]}
@@ -65,7 +75,11 @@ class FilmLabTests(unittest.TestCase):
         self.assertEqual(rec[rec.index('-video_size') + 1], '1920x1080')
         self.assertEqual((rec[rec.index('-offset_x') + 1], rec[rec.index('-offset_y') + 1]), ('10', '20'))
         self.assertEqual(rec[-1], 'raw.mp4')
-        cut = film_lab.cut_args('ffmpeg', Path('raw.mp4'), 1.25, 9.5, Path('clip.mp4'))
+        from unittest.mock import patch
+        with patch.object(film_lab, 'encoder_args', return_value=['-c:v','libx264']):
+            cut = film_lab.cut_args('ffmpeg', Path('raw.mp4'), 1.25, 9.5, Path('clip.mp4'))
+        self.assertIn('0:a:0?', cut)
+        self.assertIn('title=BeamNG game audio', cut)
         self.assertEqual((cut[cut.index('-ss') + 1], cut[cut.index('-to') + 1]), ('1.250', '9.500'))
         self.assertEqual(cut[-1], 'clip.mp4')
 

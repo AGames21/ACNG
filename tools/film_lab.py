@@ -47,7 +47,7 @@ def parse_clip(text):
 
 def lab_settings(width, height):
     """Settings for a new lab profile: a plain window of the film size."""
-    return {'GraphicDisplayModes': 'Window', 'GraphicDisplayResolutions': f'{width} {height}'}
+    return {'GraphicDisplayModes': 'Fullscreen' if height >= 1440 else 'Window', 'GraphicDisplayResolutions': f'{width} {height}'}
 
 
 # BeamNG 0.39.4 stock freeroam apps; used when the game's original layout can't be read.
@@ -128,7 +128,9 @@ def record_args(ffmpeg, rect, fps, out, encoder):
 
 def cut_args(ffmpeg, raw, start, end, out):
     return [ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-ss', f'{start:.3f}', '-to', f'{end:.3f}',
-            '-i', str(raw), '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p',
+            '-i', str(raw), *encoder_args(ffmpeg), '-pix_fmt', 'yuv420p',
+            '-map', '0:v:0', '-map', '0:a:0?', '-c:a', 'aac', '-b:a', '192k',
+            '-metadata:s:a:0', 'title=BeamNG game audio',
             '-movflags', '+faststart', str(out)]
 
 
@@ -138,6 +140,14 @@ def game_pids():
     rows = subprocess.run(['tasklist', '/FI', f'IMAGENAME eq {GAME_EXE}', '/FO', 'CSV', '/NH'],
                           capture_output=True, text=True).stdout
     return [int(r.split('","')[1]) for r in rows.splitlines() if r.lower().startswith(f'"{GAME_EXE.lower()}"')]
+
+
+def stop_lab(pid, lab):
+    identity = subprocess.check_output(['powershell', '-NoProfile', '-Command',
+        f'(Get-CimInstance Win32_Process -Filter "ProcessId={pid}").CommandLine'], text=True)
+    if str(lab.parent).lower() not in identity.lower() or GAME_EXE.lower() not in identity.lower():
+        raise RuntimeError('Refusing to stop an unverified lab game process')
+    subprocess.run(['taskkill', '/PID', str(pid), '/T', '/F'], capture_output=True)
 
 
 def window_rect(pid):
@@ -173,6 +183,7 @@ def main(argv=None):
     ap.add_argument('--lab', type=Path, help='new lab profile (…\\current); default a stamped ACNG-film folder')
     ap.add_argument('--size', type=parse_size, default=(1920, 1080))
     ap.add_argument('--fps', type=int, default=60)
+    ap.add_argument('--obs-portable', type=Path, help='dedicated portable OBS root: game video + process audio')
     ap.add_argument('--clip', type=parse_clip, action='append', help='name=start_cue:end_cue (repeatable)')
     ap.add_argument('--pad-before', type=float, default=1.5)
     ap.add_argument('--pad-after', type=float, default=1.5)
@@ -191,6 +202,8 @@ def main(argv=None):
     lab = (args.lab or Path(paths['lab_user']).parents[1] / f'ACNG-film-{args.experiment.lower()}-{stamp}' / 'current').resolve()
     if lab == Path(paths['beamng_user']).resolve():
         raise RuntimeError('Film in a lab profile, never the normal one')
+    if ROOT == lab or ROOT in lab.parents or Path(paths['beamng_user']).resolve() in lab.parents:
+        raise RuntimeError('Film output must stay outside the repo and normal profile')
     out_dir = lab.parent / 'film'
     prepare_profile(lab, *args.size, original=original_layout(paths['beamng']))
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -214,15 +227,26 @@ def main(argv=None):
     rect = window_rect(pid) or rect
     rect = (rect[0], rect[1], rect[2] // 2 * 2, rect[3] // 2 * 2)  # yuv420p wants even sizes
     raw = out_dir / f'{args.experiment.lower()}-raw.mp4'
+    obs = None
     print('recording', rect, '->', raw)
-    rec = subprocess.Popen(record_args(args.ffmpeg, rect, args.fps, raw, encoder_args(args.ffmpeg)),
-                           stdin=subprocess.PIPE)
+    if args.obs_portable:
+        from obs_capture import ObsRecorder
+        try:
+            obs = ObsRecorder(args.obs_portable, out_dir, pid, *args.size, args.fps)
+            obs.start()
+        except Exception:
+            stop_lab(pid, lab)
+            raise
+        rec = None
+    else:
+        rec = subprocess.Popen(record_args(args.ffmpeg, rect, args.fps, raw, encoder_args(args.ffmpeg)),
+                               stdin=subprocess.PIPE)
     t0 = time.time()
     cue_file, seen, times, log = lab / 'acng-film-cues.json', set(), {}, []
     try:
         while time.time() < deadline and args.end_cue not in times:
             time.sleep(0.1)
-            if rec.poll() is not None:
+            if (obs and not obs.alive()) or (rec and rec.poll() is not None):
                 raise RuntimeError('ffmpeg stopped early')
             try:
                 data = json.loads(cue_file.read_text(encoding='utf-8'))
@@ -230,21 +254,32 @@ def main(argv=None):
                 continue
             for c in new_cues(data, seen):
                 seen.add(c.get('seq'))
-                times[c['name']] = round(time.time() - t0, 3)
+                times[c['name']] = round(obs.rpc('GetRecordStatus')['outputDuration']/1000, 3) if obs else round(time.time() - t0, 3)
                 log.append({**c, 'video_s': times[c['name']]})
                 print(f"cue {c['name']} at {times[c['name']]:.1f}s")
         time.sleep(args.pad_after + 0.5)
     finally:
-        rec.communicate(b'q', timeout=30)
+        if obs:
+            try:
+                recorded = obs.stop()
+                raw = out_dir / f'{args.experiment.lower()}-raw.mkv'
+                shutil.copy2(recorded, raw)
+            finally:
+                obs.close()
+        else:
+            rec.communicate(b'q', timeout=30)
         if not args.keep_open and pid in game_pids():
-            subprocess.run(['taskkill', '/PID', str(pid), '/T', '/F'], capture_output=True)
-    length = time.time() - t0
+            stop_lab(pid, lab)
+    # Cues use recorder time with OBS, which includes the start handshake.
+    probe = Path(args.ffmpeg).with_name('ffprobe.exe' if os.name == 'nt' else 'ffprobe')
+    length = float(subprocess.check_output([str(probe), '-v', 'error', '-show_entries',
+                   'format=duration', '-of', 'default=nw=1:nk=1', str(raw)], text=True))
     windows = clip_windows(times, clips, args.pad_before, args.pad_after, length)
     for name, start, end in windows:
         out = out_dir / f'{args.experiment.lower()}-{name}.mp4'
         subprocess.run(cut_args(args.ffmpeg, raw, start, end, out), check=True)
         print('clip', out, f'{end - start:.1f}s')
-    (out_dir / 'film-cues.json').write_text(json.dumps({'lab': str(lab), 'rect': rect, 'cues': log,
+    (out_dir / 'film-cues.json').write_text(json.dumps({'lab': str(lab), 'rect': rect, 'size':args.size, 'recorder':'obs-game-process' if obs else 'gdigrab', 'cues': log,
                                                         'clips': windows}, indent=2) + '\n', encoding='utf-8')
     missing = [c[0] for c in clips if c[0] not in {w[0] for w in windows}]
     if missing:
