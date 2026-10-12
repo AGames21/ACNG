@@ -1,3 +1,25 @@
+## 2026-10-11 - T009c tire dirt lab and lab film tool
+
+New harness `tests/beamng-tiredirt` (`-Experiment TireDirt`). It runs a stock etkc on Grid
+Map v2, steered due south over grass, a dirt strip and asphalt. Result: 19/19.
+
+- Dirt builds to 1.0 on grass.
+- Dirt costs 8% x dirt on tarmac only, exact to 1e-6.
+- Dirt cleans at 1/600 per metre (within 0.6%).
+- Reset clears dirt; OFF unloads the tire model.
+
+Two harness findings, with no model change:
+- Wheels creep while the car settles on grass, so the start and reset thresholds allow a
+  trace of dirt.
+- Grip is written every 0.1 s, in 0.002 steps. A pressure swing at a surface edge can leave
+  one sample 0.007 behind the live product, so 2% of samples may lag (none over 0.015).
+
+`tools/film_lab.py` launches a lab with `-Visible` (new switch in `launch-lab.ps1`). It seeds
+the window size and an ACNG-only HUD into the new lab profile, records the window through
+ffmpeg gdigrab and cuts clips from `/acng-film-cues.json`. The harness switches the UI to
+play state so the main menu and the Steam name stay out of the footage. Lab profiles only;
+video stays outside the repo. See [T009c](docs/test-results/T009c-tiredirt.md).
+
 ## 2026-10-11 - Track teal brand kit
 
 Maintainer picked the Track teal colours: Carbon `#121417`, Teal `#00D1B2`, White `#F4F6F5`

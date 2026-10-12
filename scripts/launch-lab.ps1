@@ -1,4 +1,4 @@
-param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab','ControlLab','TireProbe','TirePhys')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod,[switch]$Handling)
+param([ValidateSet('Smoke','Benchmark','Lifecycle','Repeats','Damage','HUD','Thermal','Timer','Laps','Tires','Grip','TireModel','TireWear','AssistProbe','AssistLab','TirePlay','TireCool','FFBLab','PitLab','RoadHeat','StockLab','SpaLab','CarLab','ControlLab','TireProbe','TirePhys','TireDirt')][string]$Experiment='Smoke',[string]$LabUser,[string]$ExtraMod,[switch]$Handling,[switch]$Visible)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path $PSScriptRoot -Parent
 $paths=Get-Content (Join-Path $repoRoot '.local\paths.json') -Raw | ConvertFrom-Json
@@ -24,7 +24,7 @@ Get-ChildItem -LiteralPath $source -Recurse -File | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
 }
 # Reject conflicting test mods rather than deleting user content.
-foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear','acng_assistprobe','acng_assistlab','acng_tireplay','acng_tirecool','acng_ffblab','acng_pitlab','acng_roadheat','acng_stocklab','acng_spalab','acng_carlab','acng_controllab','acng_tireprobe','acng_tirephys')){
+foreach($other in @('acng_smoke','acng_benchmark','acng_lifecycle','acng_repeats','acng_damage','acng_hud','acng_thermal','acng_timer','acng_laps','acng_tires','acng_grip','acng_tiremodel','acng_tirewear','acng_assistprobe','acng_assistlab','acng_tireplay','acng_tirecool','acng_ffblab','acng_pitlab','acng_roadheat','acng_stocklab','acng_spalab','acng_carlab','acng_controllab','acng_tireprobe','acng_tirephys','acng_tiredirt')){
   if($other -ne $modName -and (Test-Path (Join-Path $labCurrent ('mods\unpacked\'+$other)))){throw 'Use a fresh lab profile per experiment; conflicting test harness present.'}
 }
 # Optional user-supplied content (e.g. the user's own Spa download) goes into this lab only;
@@ -39,5 +39,7 @@ $exe=Join-Path $paths.beamng 'Bin64\BeamNG.drive.x64.exe'
 $env:SteamAppId='284160'
 # Avoid -windowed: local BeamNG 0.39.4 handler calls an unavailable setFullScreen global.
 if($labParent -match '\s'){throw 'Use a whitespace-free isolated profile path for this local launch parser.'}
-$proc=Start-Process -FilePath $exe -ArgumentList @('-userpath',$labParent) -WorkingDirectory $paths.beamng -WindowStyle Hidden -PassThru
+# -Visible shows the game window so tools/film_lab.py can record it; labs stay hidden otherwise.
+$style=$(if($Visible){'Normal'}else{'Hidden'})
+$proc=Start-Process -FilePath $exe -ArgumentList @('-userpath',$labParent) -WorkingDirectory $paths.beamng -WindowStyle $style -PassThru
 Write-Output ('Started '+$Experiment+' in isolated profile, PID '+$proc.Id)

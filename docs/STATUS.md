@@ -1,4 +1,16 @@
-# Latest checkpoint - 2026-10-11: Track teal brand kit
+# Latest checkpoint - 2026-10-11: T009c tire dirt lab, lab film tool
+
+Tire dirt is now proven in game (T009c TireDirt, 19/19, stock etkc on Grid Map v2). Dirt
+builds from 0 to 1 in about 40 m of grass. On tarmac it costs exactly 8% x dirt, and it
+wears off at 1/600 per metre (measured 1.003 to 1.006 x). Reset clears it, and loose
+ground never costs grip from dirt. See [T009c](test-results/T009c-tiredirt.md).
+
+`tools/film_lab.py` films any lab experiment. It runs in a fresh lab profile, with a
+1920x1080 window and only the ACNG HUD. It records the game window with ffmpeg and cuts
+clips between the harness's film cues. The first clip (36.7 s of the dirt run) is clean:
+no menu, no account name. Next: a tire temperature clip, then the showcase edit.
+
+# Previous checkpoint - 2026-10-11: Track teal brand kit
 
 The project has a brand: Carbon, Teal, White and a little Amber. `tools/brand_kit.py`
 generates the logo, icon, video title card, lower third, thumbnail template and README
