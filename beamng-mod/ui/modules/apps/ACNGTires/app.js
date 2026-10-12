@@ -97,7 +97,7 @@
           .acng-tires .state{text-transform:uppercase}.acng-tires .state.cold{color:#7db8ff}.acng-tires .state.window{color:#6fe8a6}.acng-tires .state.hot{color:#ff9478}.acng-tires .state.failed{color:#ff6b5e}
           .acng-tires .reading{display:flex;justify-content:space-between;align-items:baseline}.acng-tires .surface{font-size:18px;font-weight:700;line-height:1.15}.acng-tires .grip{font-size:11px;font-weight:600;color:#d5dce4}
           .acng-tires .zones{display:flex;gap:2px;height:4px;margin-top:2px}.acng-tires .zones i{flex:1;border-radius:2px;transition:background .3s}
-          .acng-tires .sub{display:flex;justify-content:space-between;gap:4px;font-size:9px;letter-spacing:.5px;color:#aab4c1;margin-top:2px;white-space:nowrap}.acng-tires .sub .low{color:#7db8ff}.acng-tires .sub .high{color:#ffb070}.acng-tires .sub .flag{color:#ffcf6e;font-weight:700}
+          .acng-tires .sub{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px;font-size:9px;letter-spacing:.5px;color:#aab4c1;margin-top:2px;white-space:nowrap}.acng-tires .sub .low{color:#7db8ff}.acng-tires .sub .high{color:#ffb070}.acng-tires .sub .flag{flex-basis:100%;white-space:normal;color:#ffcf6e;font-weight:700}
           .acng-tires .bar{height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:2px}.acng-tires .bar i{display:block;height:100%;transition:width .3s}
         </style>
         <header title="{{tires.view.window}}"><span class="brand">TIRES</span><button ng-click="tires.toggle('tire_temperature')" ng-class="{active:tires.heat}" ng-disabled="!tires.available" aria-label="Toggle tire heat and grip window">HEAT</button><button ng-click="tires.toggle('tire_wear')" ng-class="{active:tires.wear}" ng-disabled="!tires.available" aria-label="Toggle tire wear">WEAR</button></header>
@@ -106,6 +106,7 @@
           <div class="reading"><span class="surface">{{t.surface}}</span><span class="grip" ng-if="tires.view.heat" title="Grip from tire heat and tread">{{t.grip}}</span><span class="grip" ng-if="!tires.view.heat">{{t.psi}}</span></div>
           <div class="zones" ng-if="t.zones.length" title="Tread heat across the tire, outer edge to the outside"><i ng-repeat="z in t.zones track by $index" ng-style="{background:z.color}" title="{{z.title}}"></i></div>
           <div class="sub" ng-if="t.pressure || t.flags.length"><span ng-class="t.pressure.state" title="Pressure now / ideal hot pressure">{{t.pressure.text}}</span><span class="flag">{{t.flags.join(' ')}}</span></div>
+          <div class="sub" ng-if="tires.view.wear"><span>TREAD {{t.tread}}</span></div>
           <div class="bar" ng-if="tires.view.wear"><i ng-style="{width:t.treadWidth,background:t.treadColor}"></i></div>
         </div></div>
       </section>`,

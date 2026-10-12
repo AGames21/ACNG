@@ -7,9 +7,9 @@
   ],
   "css": {
     "right": "16px",
-    "bottom": "16px",
-    "width": "210px",
-    "height": "130px"
+    "bottom": "60px",
+    "width": "220px",
+    "height": "210px"
   },
   "author": "ACNG",
   "version": "0.1",

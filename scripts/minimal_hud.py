@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 REMOVE={'tacho2','forcedInduction','simplePowertrainControl','dragRace','acngRacingHud'}
 PLACE={'acngControl':{'right':'24px','top':'70px','width':'150px','height':'32px','position':'absolute'},
-       'acngTires':{'right':'16px','bottom':'16px','width':'210px','height':'130px','position':'absolute'}}
+       'acngTires':{'right':'16px','bottom':'60px','width':'220px','height':'210px','position':'absolute'}}
 
 
 def minimal_layout(data):
