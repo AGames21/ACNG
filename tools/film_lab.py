@@ -50,19 +50,41 @@ def lab_settings(width, height):
     return {'GraphicDisplayModes': 'Window', 'GraphicDisplayResolutions': f'{width} {height}'}
 
 
-def film_layout():
-    """Freeroam layout with only the ACNG pill and tire tiles."""
+# BeamNG 0.39.4 stock freeroam apps; used when the game's original layout can't be read.
+STOCK_APPS = ('forcedInduction', 'simplePowertrainControl', 'damageApp', 'tacho2', 'inputHints',
+              'topLeftApps', 'topCenterApps', 'dragRace')
+
+
+def original_layout(beamng):
+    """The game's own freeroam layout (lenient JSON: trailing commas), or None."""
+    path = Path(beamng) / 'settings' / 'ui_apps' / 'originalLayouts' / 'default' / 'freeroam.uilayout.json'
+    try:
+        text = path.read_text(encoding='utf-8-sig')
+        return json.loads(re.sub(r',(\s*[}\]])', r'\1', text))
+    except (OSError, ValueError):
+        return None
+
+
+def film_layout(original=None):
+    """Freeroam layout with only the ACNG pill and tire tiles. On load the game merges every
+    versioned stock app back into a user layout unless removedApps marks it, and replaces the
+    whole layout if its version is older, so both come from the game's original layout."""
+    original = original or {}
+    stock = [a.get('appName') for a in original.get('apps', [])] or list(STOCK_APPS)
+    removed = dict(original.get('removedApps') or {})
+    removed.update({name: True for name in stock if name})
     return {'apps': [{'appName': name, 'placement': dict(PLACE[name])} for name in ('acngControl', 'acngTires')],
-            'title': 'Freeroam', 'type': 'freeroam', 'version': 0.54}
+            'removedApps': removed, 'title': 'Freeroam', 'type': 'freeroam',
+            'version': original.get('version', 0.54)}
 
 
-def prepare_profile(lab, width, height):
+def prepare_profile(lab, width, height, original=None):
     """Write the window size and HUD layout into a lab profile that does not exist yet."""
     if lab.exists():
         raise RuntimeError(f'{lab} exists; film in a fresh lab profile')
     settings = lab / 'settings' / 'settings.json'
     layout = lab / 'settings' / 'ui_apps' / 'layouts' / 'default' / 'freeroam.uilayout.json'
-    for path, data in ((settings, lab_settings(width, height)), (layout, film_layout())):
+    for path, data in ((settings, lab_settings(width, height)), (layout, film_layout(original))):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
 
@@ -170,7 +192,7 @@ def main(argv=None):
     if lab == Path(paths['beamng_user']).resolve():
         raise RuntimeError('Film in a lab profile, never the normal one')
     out_dir = lab.parent / 'film'
-    prepare_profile(lab, *args.size)
+    prepare_profile(lab, *args.size, original=original_layout(paths['beamng']))
     out_dir.mkdir(parents=True, exist_ok=True)
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
     launch = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',

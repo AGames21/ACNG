@@ -29,8 +29,22 @@ class FilmLabTests(unittest.TestCase):
             layout = json.loads((lab / 'settings/ui_apps/layouts/default/freeroam.uilayout.json').read_text(encoding='utf-8'))
             self.assertEqual([a['appName'] for a in layout['apps']], ['acngControl', 'acngTires'])
             self.assertEqual(layout['type'], 'freeroam')
+            self.assertTrue(all(layout['removedApps'][name] is True for name in film_lab.STOCK_APPS))
             with self.assertRaises(RuntimeError):
                 film_lab.prepare_profile(lab, 1920, 1080)
+
+    def test_layout_follows_the_game_original(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            orig = Path(tmp) / 'settings/ui_apps/originalLayouts/default/freeroam.uilayout.json'
+            orig.parent.mkdir(parents=True)
+            orig.write_text('{"version": 0.6, "removedApps": {"oldApp": 2},\n'
+                            ' "apps": [{"appName": "tacho2", "appVersion": 3}, {"appName": "newApp"},],}', encoding='utf-8')
+            original = film_lab.original_layout(tmp)
+            layout = film_lab.film_layout(original)
+            self.assertEqual(layout['version'], 0.6)
+            self.assertEqual(layout['removedApps'], {'oldApp': 2, 'tacho2': True, 'newApp': True})
+            self.assertEqual([a['appName'] for a in layout['apps']], ['acngControl', 'acngTires'])
+            self.assertIsNone(film_lab.original_layout(Path(tmp) / 'missing'))
 
     def test_new_cues_in_order_once(self):
         data = {'cues': [{'name': 'drive_end', 'seq': 2}, {'name': 'drive_start', 'seq': 1}]}

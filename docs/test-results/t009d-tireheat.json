@@ -1,0 +1,381 @@
+{
+ "schema_version": 1,
+ "test": "T009d tire heat lab (TireHeat)",
+ "model": "etkc",
+ "config": "kc6_360_M",
+ "level": "smallgrid",
+ "route": "55 s circle at 10 m/s, steer 0.5 (right), then 20 s straight at 18 m/s; Sport profile",
+ "game": "BeamNG.drive 0.39.4",
+ "runs": [
+  {
+   "label": "run1",
+   "note": "hidden first run",
+   "completed": true,
+   "harness_passed": true,
+   "checks": {
+    "core_reports_heat": true,
+    "core_reports_tires_off": true,
+    "default_master_off": true,
+    "default_tires_off": true,
+    "grip_written_is_product": true,
+    "hud_state_matches_window": true,
+    "load_side_hotter": true,
+    "loaded_with_heat": true,
+    "no_helper_errors": true,
+    "outer_tire_heats": true,
+    "reaches_window": true,
+    "starts_cold": true,
+    "straight_cools_hot_tire": true,
+    "tires_not_loaded_while_off": true,
+    "tires_unloaded_after_disable": true
+   },
+   "hottest": "FL",
+   "hottest_armed_c": 15,
+   "hottest_circle_end_c": 115.7,
+   "opposite_circle_end_c": 37.8,
+   "hottest_straight_end_c": 44.2,
+   "hottest_states": [
+    {
+     "state": "cold",
+     "t": 1,
+     "surface_c": 15.2
+    },
+    {
+     "state": "window",
+     "t": 19.0,
+     "surface_c": 77.2
+    },
+    {
+     "state": "hot",
+     "t": 37.0,
+     "surface_c": 105.5
+    }
+   ],
+   "state_samples": 300,
+   "worst_grip_product_error": 0.00214,
+   "grip_product_lag_samples": 0,
+   "curve_every_5s": [
+    {
+     "part": "circle",
+     "t": 5.0,
+     "FL": 27.5,
+     "FR": 18.5,
+     "RL": 26.7,
+     "RR": 35.6,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 10.0,
+     "FL": 48.2,
+     "FR": 23.6,
+     "RL": 34.8,
+     "RR": 36.9,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 15.0,
+     "FL": 66.1,
+     "FR": 27.3,
+     "RL": 41.8,
+     "RR": 36.5,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 20.0,
+     "FL": 79.5,
+     "FR": 30,
+     "RL": 48.1,
+     "RR": 36.4,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 25.0,
+     "FL": 89.9,
+     "FR": 32,
+     "RL": 52.8,
+     "RR": 36.3,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 30.0,
+     "FL": 97.6,
+     "FR": 33.5,
+     "RL": 56.6,
+     "RR": 36.2,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 35.0,
+     "FL": 103.6,
+     "FR": 34.7,
+     "RL": 59.4,
+     "RR": 36.2,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 40.0,
+     "FL": 108.1,
+     "FR": 35.6,
+     "RL": 61.5,
+     "RR": 36.1,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 45.0,
+     "FL": 111.3,
+     "FR": 36.4,
+     "RL": 63,
+     "RR": 36,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 50.0,
+     "FL": 113.9,
+     "FR": 37.2,
+     "RL": 63.9,
+     "RR": 35.9,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 55.0,
+     "FL": 115.7,
+     "FR": 37.8,
+     "RL": 64.5,
+     "RR": 35.8,
+     "FL_state": "hot"
+    },
+    {
+     "part": "straight",
+     "t": 60.0,
+     "FL": 90.3,
+     "FR": 32,
+     "RL": 54.7,
+     "RR": 33.4,
+     "FL_state": "window"
+    },
+    {
+     "part": "straight",
+     "t": 65.0,
+     "FL": 69.9,
+     "FR": 27.3,
+     "RL": 43.7,
+     "RR": 28.4,
+     "FL_state": "cold"
+    },
+    {
+     "part": "straight",
+     "t": 70.0,
+     "FL": 54.8,
+     "FR": 24,
+     "RL": 36,
+     "RR": 24.8,
+     "FL_state": "cold"
+    },
+    {
+     "part": "straight",
+     "t": 75.0,
+     "FL": 44.2,
+     "FR": 21.6,
+     "RL": 30.3,
+     "RR": 22.2,
+     "FL_state": "cold"
+    }
+   ]
+  },
+  {
+   "label": "run2",
+   "note": "filmed with tools/film_lab.py",
+   "completed": true,
+   "harness_passed": true,
+   "checks": {
+    "core_reports_heat": true,
+    "core_reports_tires_off": true,
+    "default_master_off": true,
+    "default_tires_off": true,
+    "grip_written_is_product": true,
+    "hud_state_matches_window": true,
+    "load_side_hotter": true,
+    "loaded_with_heat": true,
+    "no_helper_errors": true,
+    "outer_tire_heats": true,
+    "reaches_window": true,
+    "starts_cold": true,
+    "straight_cools_hot_tire": true,
+    "tires_not_loaded_while_off": true,
+    "tires_unloaded_after_disable": true
+   },
+   "hottest": "FL",
+   "hottest_armed_c": 15,
+   "hottest_circle_end_c": 115.7,
+   "opposite_circle_end_c": 37.8,
+   "hottest_straight_end_c": 43.8,
+   "hottest_states": [
+    {
+     "state": "cold",
+     "t": 1,
+     "surface_c": 15.2
+    },
+    {
+     "state": "window",
+     "t": 19.0,
+     "surface_c": 77.2
+    },
+    {
+     "state": "hot",
+     "t": 37.0,
+     "surface_c": 105.5
+    }
+   ],
+   "state_samples": 300,
+   "worst_grip_product_error": 0.00207,
+   "grip_product_lag_samples": 0,
+   "curve_every_5s": [
+    {
+     "part": "circle",
+     "t": 5.0,
+     "FL": 27.5,
+     "FR": 18.6,
+     "RL": 28.5,
+     "RR": 36.9,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 10.0,
+     "FL": 48.4,
+     "FR": 23.5,
+     "RL": 36.1,
+     "RR": 37.2,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 15.0,
+     "FL": 66.1,
+     "FR": 27.3,
+     "RL": 43,
+     "RR": 36.8,
+     "FL_state": "cold"
+    },
+    {
+     "part": "circle",
+     "t": 20.0,
+     "FL": 79.7,
+     "FR": 30,
+     "RL": 48.9,
+     "RR": 36.6,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 25.0,
+     "FL": 89.9,
+     "FR": 32,
+     "RL": 53.5,
+     "RR": 36.5,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 30.0,
+     "FL": 97.7,
+     "FR": 33.5,
+     "RL": 57.1,
+     "RR": 36.3,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 35.0,
+     "FL": 103.5,
+     "FR": 34.7,
+     "RL": 59.8,
+     "RR": 36.2,
+     "FL_state": "window"
+    },
+    {
+     "part": "circle",
+     "t": 40.0,
+     "FL": 108,
+     "FR": 35.6,
+     "RL": 61.8,
+     "RR": 36.1,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 45.0,
+     "FL": 111.3,
+     "FR": 36.4,
+     "RL": 63.2,
+     "RR": 36,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 50.0,
+     "FL": 113.8,
+     "FR": 37.1,
+     "RL": 64,
+     "RR": 35.9,
+     "FL_state": "hot"
+    },
+    {
+     "part": "circle",
+     "t": 55.0,
+     "FL": 115.7,
+     "FR": 37.8,
+     "RL": 64.6,
+     "RR": 35.8,
+     "FL_state": "hot"
+    },
+    {
+     "part": "straight",
+     "t": 60.0,
+     "FL": 90,
+     "FR": 32,
+     "RL": 54.4,
+     "RR": 33.2,
+     "FL_state": "window"
+    },
+    {
+     "part": "straight",
+     "t": 65.0,
+     "FL": 69.3,
+     "FR": 27.3,
+     "RL": 43.6,
+     "RR": 28.3,
+     "FL_state": "cold"
+    },
+    {
+     "part": "straight",
+     "t": 70.0,
+     "FL": 54.5,
+     "FR": 24,
+     "RL": 35.8,
+     "RR": 24.7,
+     "FL_state": "cold"
+    },
+    {
+     "part": "straight",
+     "t": 75.0,
+     "FL": 43.8,
+     "FR": 21.5,
+     "RL": 30.2,
+     "RR": 22.1,
+     "FL_state": "cold"
+    }
+   ]
+  }
+ ]
+}

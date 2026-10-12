@@ -1,3 +1,19 @@
+## 2026-10-11 - T009d tire heat lab and film layout fix
+
+New harness `tests/beamng-tireheat` (`-Experiment TireHeat`). It runs a stock etkc on Small
+Grid with the Sport profile: a 55 s circle at 10 m/s, then 20 s straight at 18 m/s.
+Result: 15/15.
+
+- The outer front heats 15 to 116 C and passes cold, window (19 s) and hot (37 s).
+- The inner front stays at 38 C or below.
+- The straight cools the hot tire to 44 C in 20 s.
+- The HUD state matches the compound window in all 300 tire samples; grip is the product.
+
+`tools/film_lab.py`: BeamNG re-adds any app of its original layout that has an
+`appVersion` unless the user layout lists it in `removedApps`. The film layout now reads
+the game's original freeroam layout and marks all its apps removed, keeping its version.
+This kept the stock speedometer out of the T009d clip (verified on frames).
+
 ## 2026-10-11 - T009c tire dirt lab and lab film tool
 
 New harness `tests/beamng-tiredirt` (`-Experiment TireDirt`). It runs a stock etkc on Grid

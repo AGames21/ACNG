@@ -1,4 +1,15 @@
-# Latest checkpoint - 2026-10-11: T009c tire dirt lab, lab film tool
+# Latest checkpoint - 2026-10-11: T009d tire heat lab and clip
+
+The tire temperature HUD is now checked in game (T009d TireHeat, 15/15, stock etkc on
+Small Grid, Sport profile). On a 55 s circle the outer front goes from 15 C to 116 C:
+cold, window at 19 s, hot at 37 s. A 20 s straight cools it back to 44 C. The HUD state
+matched the window in all 300 tire samples. See [T009d](test-results/T009d-tireheat.md).
+
+`tools/film_lab.py` now hides the stock BeamNG apps properly: the film layout marks every
+app of the game's original freeroam layout as removed, so BeamNG cannot merge the
+speedometer back in. Next: the showcase edit.
+
+# Previous checkpoint - 2026-10-11: T009c tire dirt lab, lab film tool
 
 Tire dirt is now proven in game (T009c TireDirt, 19/19, stock etkc on Grid Map v2). Dirt
 builds from 0 to 1 in about 40 m of grass. On tarmac it costs exactly 8% x dirt, and it
