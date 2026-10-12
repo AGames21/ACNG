@@ -1,3 +1,17 @@
+## 2026-10-12 - Published HUD patch and refreshed GitHub presentation
+
+- Published v0.3.1-beta from 7b35e2d; downloaded ZIP and manifest hashes match. Normal profile unchanged.
+- New original banner/feature graphics, actual HUD/control/night-burnout photos, short overview first and technical detail near the bottom.
+- Isolated film startup now waits for the native UI loading callback, uses windowed WGC and stops recording if its game closes.
+- NightBurn 05: 8/8 native checks; stationary night burnout accepted, moving night-body views rejected. V3 excludes those broken shots and the AT THE LIMIT banner.
+
+## 2026-10-12 - HUD patch and cinematic showcase revision
+
+- Tire HUD is taller and raised, pressure/damage labels wrap, and TREAD is shown only when wear is on (native v2 evidence recorded).
+- Requested AT THE LIMIT banner removed; previous steering/suspension caption retained.
+- Added isolated stock West Coast night-drive/burnout film harnesses and v3 cut plan. These tools do not ship in the player ZIP.
+- Publication authorized: v0.3.1-beta HUD patch; no normal-profile installation authorized.
+
 # 2026-10-12 - taller tire HUD and dev video v2
 
 - Tire pressure/GRAIN tags stay visible; wear ON shows TREAD percent, OFF hides it.

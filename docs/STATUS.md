@@ -1,3 +1,19 @@
+## 2026-10-12 - GitHub refresh and verified night burnout
+
+v0.3.1-beta is published/download-verified from 7b35e2d. The HUD patch is included; normal installation remains unchanged. GitHub presentation now leads with a short rundown, setup and actual HUD/control/night-burnout photos; technical evidence is at the bottom.
+
+NightBurn 05 passed 8/8 native checks. Only stationary night burnout footage is accepted; moving night-car body rendering remains broken and those views are excluded. See V003. The v3 cut retains the steering/suspension caption and removes AT THE LIMIT; final media verification is recorded in V003. Music selection and broader night-driving rendering investigation remain pending.
+
+## 2026-10-12 - Published HUD patch; night showcase testing
+
+[v0.3.1-beta](https://github.com/AGames21/ACNG/releases/tag/v0.3.1-beta) is published and downloaded-hash verified, from 7b35e2d. The raised/taller tire HUD and explicit wear row are included. Normal installation was not changed. See R006.
+
+The banner-only revised v2 video is 57.854s, 1440p/60 encoded fps with separate game audio, and stays outside Git. AT THE LIMIT is removed; the steering/suspension caption is retained. Night footage is being verified separately. A UI-readiness timeout aborted the first night burnout; native loading-screen gating passed a fresh hidden 6/6 run. ETK transparent-body shots remain rejected; stock Barstow is being used instead. See V003. Music selection remains pending.
+
+## 2026-10-12 - HUD release and night showcase
+
+User authorized GitHub push and downloadable release. Preparing v0.3.1-beta: taller tire HUD with complete pressure/tags/TREAD rows. Previous native TireHeat/Camera/Dirt/Burn checks remain 54/54; night footage must pass its own fresh native gate before inclusion. Rejected AT THE LIMIT banner removed. Normal installation remains unchanged.
+
 # Latest checkpoint - 2026-10-12: dev video v2
 
 Taller/raised tire HUD, wrapping damage tags and wear-only TREAD percentage are

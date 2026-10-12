@@ -85,20 +85,8 @@ def thumbnail(lines=('TIRES', 'THAT HEAT', 'UP')):
 
 
 def banner():
-    m, mw = mark(54, 96, 104)
-    chips = ''
-    for x, w, text, color in ((54, 170, 'FREEROAM FIRST', TEAL), (236, 160, 'OFF BY DEFAULT', WHITE)):
-        chips += (f'<rect x="{x}" y="356" width="{w}" height="36" rx="6" fill="none" stroke="{color}" stroke-opacity="0.7"/>'
-                  f'<text x="{x+w/2:.0f}" y="380" text-anchor="middle" {SANS} font-size="13" font-weight="600" letter-spacing="1.5" fill="{color}">{text}</text>')
-    return (f'<rect width="1200" height="460" rx="24" fill="{CARBON}"/>'
-            f'<path d="M880 0H1176A24 24 0 0 1 1200 24V436A24 24 0 0 1 1176 460H760Z" fill="{TEAL}" opacity="0.08"/>'
-            f'<path d="M1010 0H1176A24 24 0 0 1 1200 24V436A24 24 0 0 1 1176 460H890Z" fill="{TEAL}" opacity="0.10"/>'
-            f'<text x="56" y="74" {SANS} font-size="13" letter-spacing="4" fill="{TEAL}">A FREE BEAMNG.DRIVE MOD</text>' + m +
-            f'<text x="{54+mw+22:.0f}" y="196" {FONT} font-size="120" letter-spacing="3" fill="{WHITE}">ACNG</text>'
-            f'<text x="56" y="262" {SANS} font-size="28" font-weight="600" fill="{WHITE}">{TAGLINE}</text>'
-            f'<text x="56" y="304" {SANS} font-size="17" fill="{WHITE}" opacity="0.7">AC-style tires and assists. BeamNG suspension, deformation and damage stay in charge.</text>'
-            + chips + tag(408, 356, 'BETA', 90, 36, 15) +
-            f'<text x="56" y="430" {SANS} font-size="12" fill="{WHITE}" opacity="0.45">{DISCLAIMER}</text>')
+    from readme_visuals import banner_body
+    return banner_body()
 
 
 SIZES = {'acng-logo': (1080, 300), 'acng-logo-light': (1080, 300), 'acng-icon': (512, 512),

@@ -1,88 +1,90 @@
-<div align="center">
+# ACNG
 
-![ACNG — Racing feel. Open roads. Real consequences.](docs/assets/acng-banner.svg)
+**A freeroam-focused BeamNG mod with tires that warm up, react to pressure, collect dirt and wear down.** One compact switch turns it on; Advanced lets you choose the effects. Keep BeamNG's own suspension, steering, crashes and damage.
 
-**Assetto Corsa-inspired driving. BeamNG's living, breakable chassis.**
+[**Download 0.3.1 beta**](https://github.com/AGames21/ACNG/releases/tag/v0.3.1-beta) | [Quick setup](#start-driving) | [Roadmap](docs/ROADMAP.md)
 
-[Start driving](#start-driving) · [Features](#what-you-can-use-today) · [Evidence](#measured-progress) · [Roadmap](docs/ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md)
+**Scroll down for photos, features and setup. Technical details and test results are near the bottom.**
 
-**FREEROAM FIRST** · **MODULAR** · **OFF BY DEFAULT** · **BETA**
+![ACNG - racing feel, open roads, real consequences](docs/assets/acng-banner.svg)
 
-</div>
+## What it adds
 
-## The idea
+![Heat, pressure, wear and a compact master switch - feature illustration](docs/assets/acng-overview.svg)
 
-Bring richer tires, useful driving feedback and motorsport instruments to the
-streets of BeamNG. Let temperature and wear matter. Keep the car's native suspension,
-collisions, deformation and mechanical damage in charge.
+- **Tires with a working window:** inner, middle and outer temperatures; hot pressure; Road, Sport and Race profiles, or Auto from the fitted vanilla tire.
+- **Consequences you can feel:** dirt pickup, cold sliding damage, overheating damage and tread wear. A fully worn tire triggers BeamNG's native puncture.
+- **Your setup:** a small ON/OFF app, individual effect switches, configurable assists and optional instruments. Keep factory assists if you prefer.
+- **Freeroam first:** native BeamNG traffic and AI, stock suspension and structural damage. No automatic racing opponents.
 
-Assetto Corsa is a behavioral reference. ACNG is an original BeamNG mod: no merged
-engines or redistributed game assets. Native BeamNG traffic and AI stay native.
-The current focus is open-world driving; deeper racing systems come later.
+ACNG is a playable **beta**. It is AC-inspired, with measured tests behind its features; matching a real car or Assetto Corsa one-to-one is still research.
 
-## One switch. Your setup.
+## In game
 
-![ACNG master app in the native West Coast USA test scene](docs/assets/freeroam-control.png)
+<img src="docs/assets/tires-current.png" width="440" alt="Actual ACNG tire HUD with full pressure and tread rows">
 
-Use the **ACNG** master switch for the whole mod. Open **Advanced** for individual
-tire, assist, wheel and telemetry controls. Choices are remembered; a new game
-starts OFF. Master OFF stops active ACNG modules and its telemetry stream.
+*Actual in-game HUD. The 0.3.1 patch raises the app, makes it taller and keeps pressure, wear and damage labels visible. Existing custom layouts may need resizing after the update.*
 
-## What you can use today
+<img src="docs/assets/freeroam-control.png" width="360" alt="Actual compact ACNG ON/OFF control">
 
-| System | What it adds | Verification |
-|---|---|---|
-| **Tire model** | Inner/middle/outer tread temperatures, a pressure window around each compound's ideal hot pressure, graining when sliding cold, blistering when sliding hot, dirt off tarmac | Native T009b 28/28 on a skidpad; road feel and dirt in game pending |
-| **Tire compounds** | Auto (from fitted tires), Road, Sport or Race: own heat window, grip and wear rate; heat capped near 250 °C | Native auto-detection and race-window checks; heat cap unit-tested |
-| **Tire wear** | Slip- and heat-driven tread loss; a fully worn tire punctures; fresh tread on reset | Controlled-circle tests and native zero-tread puncture; wider road validation pending |
-| **ABS / traction control** | Factory, Off or three intervention levels | Native tests; throttle-cut TC for cars without factory TC |
-| **Force feedback** | Strength, per-car gain, minimum force, filtering and optional effects | Virtual-wheel tests; real wheel and road/kerb feel pending |
-| **Driving instruments** | Gear/speed/RPM HUD, pedals, acceleration and braking timers | Native HUD/timing evidence |
-| **Optional lap tools** | Delta, sectors and saved best-lap references | Native timing/persistence evidence |
-| **Pit service (optional)** | Timed refuel and fresh ACNG tread at a marked pit box; damage and punctures stay | Native P001b/P001c; Spa pit lane P002 |
-| **Telemetry** | Passive BeamNG capture and local AC shared-memory research | Machine-readable capture/comparison tooling |
+*One small master switch. Open Advanced to pick what you want.*
 
-FFB requires a force-feedback wheel; it does not change keyboard/gamepad steering.
-Pressure currently follows heat. Auto reads the fitted tire part; unknown tires use Road.
+![Stock Barstow burnout on West Coast USA at night](docs/assets/night-showcase.png)
 
-## Measured progress
-
-**262 Python checks + 10 Node app suites passed locally.**
-**Native in-game checks in BeamNG 0.39.4, all in isolated profiles:**
-
-- Six stock models (FWD, RWD, 3-wheel, van, 10-tire semi) driven, crashed,
-  punctured and run on a broken-off wheel: 110/110. Master OFF never repairs damage;
-  reset repairs and gives fresh tread.
-- Sustained limit driving (16 lap cycles): Road preset +1.7 psi with flat 50 °C peaks;
-  Sport +8.5 psi.
-- Tire model (T009b): tread zones, pressure window, grain, blister, reset, flat tire
-  and master OFF restore, 28/28, 0.008 ms per update.
-- Pit service 13/13, control panel, presets, saved preferences, lap timer and
-  car switching/reset checks.
-
-| Short road-speed proxy | Peak tire surface | Largest pressure rise |
-|---|---:|---:|
-| Previous Sport heat setup | 51.75°C | +0.64 psi |
-| Final Road preset | 33.87°C | +0.29 psi |
-
-Single short flat-map runs on one ETK configuration. They show a gentler thermal
-response, not AC-equivalent handling, real-compound accuracy or a fix for sustained
-pressure rise. Native rolling/deformation also affects pressure.
-
-[Thermal evidence and limits](docs/test-results/FR001-thermal-proxy.md) ·
-[Compatibility checks](docs/test-results/GUI002-FR002-road-compatibility.md) ·
-[FFB evidence](docs/test-results/T008-ffb.md)
+*Actual stock-car night burnout. The showcase uses labelled WEAR x10 to demonstrate tread loss and native punctures faster.*
 
 ## Start driving
 
-Requires your own BeamNG.drive installation. Tested on **0.39.4**; other builds
-and third-party vehicles need verification. Use an isolated profile while experimental.
+No Python or Git needed. Requires your own BeamNG.drive; tested on **0.39.4**.
 
-**Easiest:** open [Releases](https://github.com/AGames21/ACNG/releases)
-and download `acng-freeroam.zip` from the newest build. No Python or Git needed.
-Every build is a beta pre-release: playable, but still changing.
+1. With BeamNG closed, download `acng-freeroam.zip` from [Releases](https://github.com/AGames21/ACNG/releases/tag/v0.3.1-beta) and put it in the user folder's `mods` directory. The launcher has an **Open user folder** button. Disable older ACNG packages.
+2. In **UI Apps**, add **ACNG** and **ACNG Tires**.
+3. Spawn a stock car and turn ACNG **ON**. Open **Advanced** for effect switches and tire profiles. Reset the vehicle for fresh tires when comparing setups.
 
-**Or build it yourself:**
+A new game starts with ACNG **OFF**. Choices are remembered; the first ON selects tire heat/wear and keeps factory assists. Optional FFB stays OFF. Disable the mod through BeamNG's mod manager to remove it.
+
+[Freeroam guide](docs/FREEROAM.md) | [Report a bug](https://github.com/AGames21/ACNG/issues/new/choose)
+
+## Next improvements
+
+Road-speed calibration, broader vehicle compatibility and damage testing come first. Racing sessions and deeper track systems are later work. No automatic opponent spawning is planned for freeroam.
+
+[Full roadmap](docs/ROADMAP.md)
+
+---
+
+## Technical details and evidence
+
+**287 Python tests and 10 Node app suites pass locally.** Offline tests and actual game checks are recorded separately.
+
+| Native test | What it verifies |
+|---|---|
+| T009b - 28/28 | Tread zones, pressure window, grain/blister, reset, flat tire and master-OFF restoration |
+| T009c - 19/19 | Dirt pickup and cleaning on tarmac |
+| T009d / V002 - 15/15 | Cold-to-hot circle, loaded tire heating and straight-line cooling |
+| T009f / V002 - 4/4 | Genuine wear to zero and native pressure loss; showcase uses labelled WEAR x10 |
+| FR002b - 110/110 | Six stock models, crashes, punctures, missing wheels, reset and disable behavior |
+| P001b / P001c | Optional timed refuel and intact-tire tread service; damage and punctures remain |
+
+Native tests run in isolated profiles. These checks establish specific behaviors, not complete real-world tire calibration or AC-equivalent handling. The tire model's recorded T009b update cost is 0.008 ms. Pressure follows both thermal state and BeamNG's native rolling/deformation effects.
+
+[Tire evidence](docs/test-results/t009b-tirephys.json) | [Test guide](docs/TESTING.md) | [HUD release verification](docs/test-results/R006-hud-patch-release.md) | [Architecture](docs/ARCHITECTURE.md)
+
+<details>
+<summary><strong>Other modules and current limits</strong></summary>
+
+- ABS/TC: factory, off or three intervention levels. Cars without factory TC use throttle-cut intervention.
+- Driving instruments: gear/speed/RPM, pedals, acceleration and braking timers.
+- Optional lap tools: deltas, sectors and saved best-lap references.
+- Telemetry: passive BeamNG capture and local AC shared-memory research.
+- Legacy optional FFB: virtual-wheel tests exist, but physical-wheel feel remains unverified. It stays OFF; no further FFB work is planned.
+- Race Weekend is an unfinished prototype excluded from the player ZIP.
+- Optional local car-conversion and pit tools are side workflows. No cars or maps are bundled. See [conversion](docs/AC-CAR-CONVERSION.md) and [pit service](docs/SPA-AND-PITS.md).
+
+</details>
+
+<details>
+<summary><strong>Build and contribute</strong></summary>
 
 ```sh
 git clone https://github.com/AGames21/ACNG.git
@@ -90,58 +92,19 @@ cd ACNG
 python tools/build_freeroam.py
 ```
 
-1. With BeamNG closed, place `acng-freeroam.zip` (from Releases or `dist/`) in your
-   BeamNG user folder's `mods` directory. On Windows that is
-   `%LOCALAPPDATA%\BeamNG\BeamNG.drive\current\mods`; the BeamNG launcher's
-   "Open user folder" button finds it on any PC.
-   Keep only one enabled ACNG package; disable older copies.
-2. In **UI Apps**, add **ACNG**, spawn a stock vehicle and turn the master ON.
-3. Under **Advanced → Tires**, keep **Auto** or pick **Road**, **Sport** or **Race**. Reset for fresh tires
-   when comparing presets; switching alone retains current heat/tread.
-
-First ON selects heat/wear, keeps factory assists and leaves optional FFB OFF.
-The ZIP excludes unfinished racing modules and test harnesses.
-Disable/remove ACNG through BeamNG's mod manager to remove the independent mod files.
-
-[Freeroam guide](docs/FREEROAM.md) · [Testing guide](docs/TESTING.md)
-
-## What's next
-
-- **Road calibration:** city stops, cruising, winding roads and sustained-load pressure.
-- **Compatibility:** more cars/custom parts, bent suspension and performance profiling.
-- **Showcase video:** cinematic clips of the mod in action.
-- **Freeroam extras:** investigate roadside tire service, compounds and compact tire status.
-- **Track later:** sessions, pits, penalties and environment research after reliable driving.
-
-Race Weekend is an unfinished prototype excluded from the player ZIP. No automatic
-opponent spawning in the freeroam experience.
-
-## Inside ACNG
+The builder packages committed player files only and writes a SHA256 manifest. Lab harnesses, videos and converted assets are excluded.
 
 ```text
 beamng-mod/   Independent Lua extensions, UI apps and settings
-telemetry/    Capture, normalization and comparison tools
+telemetry/    Capture, normalization and comparison
 tests/        Offline contracts and isolated native-game harnesses
 scripts/      Deployment, launchers and experiment analysis
-tools/        Packaging and publication checks
+tools/        Packaging, recording and publication checks
 docs/         Architecture, research, benchmarks and evidence
 ```
 
-Code/configuration/evidence belong in Git. Private paths, game profiles, credentials,
-logs and raw capture runs stay ignored. Contributors and coding agents should read
-[AGENTS.md](AGENTS.md) before making changes.
+Read [AGENTS.md](AGENTS.md) before contributing. Include the game build, vehicle/configuration, enabled effects, reproduction steps and whether the issue also occurs with master OFF. Remove personal data from log excerpts.
 
-## Report something useful
+</details>
 
-Include your game build, car/configuration, selected effects, reproduction steps,
-and whether it also happens with master OFF. Remove personal paths from log excerpts.
-
-Offline/single-player modding only. No proprietary code, extracted models, textures,
-sounds or binaries belong here. Unofficial and unaffiliated with BeamNG or Assetto
-Corsa. Code is MIT licensed ([LICENSE](LICENSE)); BeamNG, Assetto Corsa and any maps or cars stay under their owners' terms.
-
-### Optional Spa and pit development
-
-An opt-in pit service adds timed refueling and intact-tire ACNG tread refresh to Advanced > Pits. It passed in game (P001b/P001c) and on the user's own Spa download (P002). Spa stays a separate author-distributed map; download it from its author on each PC. See [Spa and pit development](docs/SPA-AND-PITS.md).
-
-A personal converter turns your own Assetto Corsa BMW 1M into a drivable BeamNG car on fitted ETK physics with native damage (C001/C002). It adds separate interior pieces, moving steering/pedals/shifter and an experimental specification config; C002 passed 34 native checks. This is an approximation, not a complete BMW chassis or AC handling port. The car contains AC and BeamNG assets, so it is never in this repository or its Releases. The same converter also builds the AC BMW M3 E92 (DCT, C014: 53 native checks) from a per-car profile. On another PC with both games installed, rebuild it there with one command. See [AC car conversion](docs/AC-CAR-CONVERSION.md). To build, lab-test and install it in one step, or to see what importing another car (or another game's cars) involves, read [Importing cars](docs/CAR-IMPORT.md).
+Unofficial and unaffiliated with BeamNG or Assetto Corsa. Original code is [MIT licensed](LICENSE). No proprietary code, game binaries, cars, maps, textures or sounds are redistributed here. Offline/single-player modding only.
