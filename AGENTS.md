@@ -16,6 +16,6 @@ Back up before any save/config experiment. Deploy only `mods/unpacked/acng` with
 
 Tests: unit contracts and real isolated game smoke; master OFF baseline/restoration, reset/switch lifecycle, bounded telemetry, loss reporting, damage and profiling. Meaningful commits per milestone and before major experiments. Update docs/STATUS.md, MODLOG.md and research/test records immediately after discoveries.
 
-Direction: FREEROAM FIRST. The single ACNG master/Advanced app is primary. Track/AI racing work is deferred; no automatic opponent spawning or driving. Prioritize road-appropriate thermal/pressure calibration, broader vehicle/damage validation and physical FFB. Spa/pit services and the personal AC car converter are optional side workflows (docs/SPA-AND-PITS.md, docs/AC-CAR-CONVERSION.md).
+Direction: FREEROAM FIRST. The single ACNG master/Advanced app is primary. Track/AI racing work is deferred; no automatic opponent spawning or driving. Prioritize road-appropriate thermal/pressure calibration, broader vehicle/damage validation. No further FFB work (maintainer, 2026-10-11): BeamNG's own force feedback stays; the optional FFB controls remain OFF by default. Spa/pit services and the personal AC car converter are optional side workflows (docs/SPA-AND-PITS.md, docs/AC-CAR-CONVERSION.md).
 
 Publishing: run `python tools/publication_audit.py` before every push. Never force-push, change repository visibility or publish a release without a maintainer request. See docs/PUBLISHING.md.

@@ -109,7 +109,7 @@ Disable/remove ACNG through BeamNG's mod manager to remove the independent mod f
 
 - **Road calibration:** city stops, cruising, winding roads and sustained-load pressure.
 - **Compatibility:** more cars/custom parts, bent suspension and performance profiling.
-- **Wheel feel:** physical FFB testing with targeted driver feedback.
+- **Showcase video:** cinematic clips of the mod in action.
 - **Freeroam extras:** investigate roadside tire service, compounds and compact tire status.
 - **Track later:** sessions, pits, penalties and environment research after reliable driving.
 
