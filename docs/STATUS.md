@@ -7,7 +7,9 @@ matched the window in all 300 tire samples. See [T009d](test-results/T009d-tireh
 
 `tools/film_lab.py` now hides the stock BeamNG apps properly: the film layout marks every
 app of the game's original freeroam layout as removed, so BeamNG cannot merge the
-speedometer back in. Next: the showcase edit.
+speedometer back in. `tools/cut_short.py` turns film clips into a silent dev short (title
+card, lower thirds, unofficial-mod label, zoomed tire HUD); the first cut is 58.2 s.
+Next: the maintainer reviews it and picks music.
 
 # Previous checkpoint - 2026-10-11: T009c tire dirt lab, lab film tool
 

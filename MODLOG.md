@@ -14,6 +14,11 @@ Result: 15/15.
 the game's original freeroam layout and marks all its apps removed, keeping its version.
 This kept the stock speedometer out of the T009d clip (verified on frames).
 
+`tools/cut_short.py` cuts a silent dev short from film clips with a plan file
+(`tools/shorts/tires-v1.json`): the brand title card, sped-up clips with the lower third,
+an unofficial-mod label, the speed and a 3x zoom of the tire tiles. The first cut (heat,
+cool-down, re-filmed dirt) is 58.2 s at 1080p60 and stays outside the repository.
+
 ## 2026-10-11 - T009c tire dirt lab and lab film tool
 
 New harness `tests/beamng-tiredirt` (`-Experiment TireDirt`). It runs a stock etkc on Grid

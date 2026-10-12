@@ -42,3 +42,15 @@ Arial Black). The body text uses Segoe UI or Arial.
 - Use no BeamNG or Assetto Corsa logos and no game music.
 - Show only stock BeamNG cars and maps in public footage, unless the maintainer approves
   something else.
+
+## Video
+
+1. Film a lab experiment with `python tools/film_lab.py --experiment <Name>`. It runs in a
+   fresh lab profile with only the ACNG HUD and cuts clips between the harness's film cues.
+2. Cut a short with `python tools/cut_short.py tools/shorts/tires-v1.json --clip
+   name=<clip.mp4> ... --out <work>/<name>.mp4`. The plan lists title cards and clip
+   segments (start, end, speed, lower-third text, HUD inset). Each clip segment gets the
+   brand lower third, an "UNOFFICIAL MOD · BETA · STOCK CAR, LAB TEST" label, its speed,
+   and a 3x zoom of the tire tiles.
+
+The output is silent; the maintainer picks the music. Video stays outside the repository.

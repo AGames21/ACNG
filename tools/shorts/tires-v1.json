@@ -1,0 +1,13 @@
+{
+  "title": "ACNG tire model dev clip v1",
+  "segments": [
+    {"kind": "card", "seconds": 2.5},
+    {"kind": "clip", "clip": "heat", "start": 0, "end": 58, "speed": 2.5, "inset": true,
+     "head": "TIRE TEMPERATURE", "sub": "Circling heats the outer front: cold, window, hot"},
+    {"kind": "clip", "clip": "cool", "start": 0, "end": 23, "speed": 2, "inset": true,
+     "head": "COOL DOWN", "sub": "A straight brings it back out of the window"},
+    {"kind": "clip", "clip": "dirt", "start": 0, "end": 36, "speed": 2, "inset": true,
+     "head": "TIRE DIRT", "sub": "Grass picks up dirt; it costs grip on tarmac"},
+    {"kind": "card", "seconds": 3}
+  ]
+}
