@@ -1,4 +1,11 @@
-# Latest checkpoint - 2026-10-10: T009b tire model installed
+# Latest checkpoint - 2026-10-11: Track teal brand kit
+
+The project has a brand: Carbon, Teal, White and a little Amber. `tools/brand_kit.py`
+generates the logo, icon, video title card, lower third, thumbnail template and README
+banner (see [brand kit](brand/README.md)). Next: a lab-only tool that records clips with
+stock cars for the showcase video.
+
+# Previous checkpoint - 2026-10-10: T009b tire model installed
 
 The AC-style tire model passed its in-game lab, T009b TirePhys: 28/28 on the stock etkc. It is installed behind
 `tire_temperature` (OFF by default). It covers:

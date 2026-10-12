@@ -1,3 +1,12 @@
+## 2026-10-11 - Track teal brand kit
+
+Maintainer picked the Track teal colours: Carbon `#121417`, Teal `#00D1B2`, White `#F4F6F5`
+and Amber `#FFB020` for small highlights. `tools/brand_kit.py` writes the logo, icon, video
+title card, lower third and thumbnail template into `docs/brand/`, and repaints the README
+banner to match. The mark is three slanted bars for the inner, middle and outer tread zones.
+A unit test keeps the committed files in step with the generator. Docs only: nothing ships
+in the mod zip. See [brand kit](docs/brand/README.md).
+
 ## 2026-10-11 - Releases are betas
 
 Maintainer request: ACNG is not finished, so every GitHub release is a pre-release with a
